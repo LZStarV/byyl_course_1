@@ -48,6 +48,9 @@ private:
     QPushButton* btnSaveRegex;
     QPushButton* btnPickSample;
     QString selectedSamplePath;
+    QString currentRegexHash;
+    QString currentCodePath;
+    QString currentBinPath;
     Engine* engine;
     ParsedFile* parsedPtr;
     MinDFA* lastMinPtr;
@@ -56,6 +59,8 @@ private:
     void fillAllNFA();
     void fillAllDFA();
     void fillAllMin();
+    QString computeRegexHash(const QString& text);
+    QString ensureGenDir();
 private slots:
     void onConvertClicked(bool);
     void onGenCodeClicked(bool);
@@ -67,5 +72,6 @@ private slots:
     void onTokenChangedDFA(int);
     void onTokenChangedMin(int);
     void onPickSampleClicked(bool);
+    void onTabChanged(int);
 };
 #endif // MAINWINDOW_H

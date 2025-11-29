@@ -18,6 +18,8 @@
 #include <QProcess>
 #include <QDir>
 #include <QComboBox>
+#include <QDateTime>
+#include <QCryptographicHash>
 #include "../src/core/Engine.h"
 
 MainWindow::MainWindow(QWidget *parent)
@@ -29,6 +31,9 @@ MainWindow::MainWindow(QWidget *parent)
     parsedPtr = nullptr;
     lastMinPtr = nullptr;
     selectedSamplePath = QString();
+    currentRegexHash = QString();
+    currentCodePath = QString();
+    currentBinPath = QString();
     setupUiCustom();
 }
 
@@ -59,7 +64,7 @@ void MainWindow::setupUiCustom(){
     auto w6 = new QWidget; auto l6 = new QVBoxLayout(w6);
     auto h6 = new QHBoxLayout;
     auto leftCol = new QVBoxLayout; auto rightCol = new QVBoxLayout;
-    auto lblSrc = new QLabel("源程序输入（JS/TINY 片段）");
+    auto lblSrc = new QLabel("源程序输入");
     auto lblOut = new QLabel("Token 编码输出");
     txtSourceTiny = new QPlainTextEdit; txtSourceTiny->setObjectName("txtSourceTiny");
     txtLexResult = new QPlainTextEdit; txtLexResult->setObjectName("txtLexResult");
@@ -80,6 +85,7 @@ void MainWindow::setupUiCustom(){
     connect(cmbTokens, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onTokenChanged);
     connect(cmbTokensDFA, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onTokenChangedDFA);
     connect(cmbTokensMin, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onTokenChangedMin);
+    connect(tabs, &QTabWidget::currentChanged, this, &MainWindow::onTabChanged);
 }
 
 void MainWindow::fillTable(QTableWidget* tbl, const Tables& t){
@@ -93,6 +99,8 @@ void MainWindow::onConvertClicked(bool){
     auto text = txtInputRegex->toPlainText(); auto rf = engine->lexFile(text); auto parsed = engine->parseFile(rf);
     if(parsed.tokens.isEmpty()){ statusBar()->showMessage("未找到Token定义"); return; }
     parsedPtr = new ParsedFile(parsed);
+    currentRegexHash = computeRegexHash(text);
+    currentCodePath.clear(); currentBinPath.clear();
     cmbTokens->blockSignals(true);
     cmbTokens->clear(); cmbTokens->addItem("全部"); for(const auto& t : parsed.tokens){ cmbTokens->addItem(t.rule.name); }
     cmbTokens->blockSignals(false);
@@ -115,43 +123,46 @@ void MainWindow::onGenCodeClicked(bool){
     if(idx == 0){
         QVector<int> codes; auto mdfas = engine->buildAllMinDFA(*parsedPtr, codes);
         auto s = CodeGenerator::generateCombined(mdfas, codes, parsedPtr->alpha);
-        txtGeneratedCode->setPlainText(s); statusBar()->showMessage("组合扫描器代码已生成");
+        txtGeneratedCode->setPlainText(s);
+        QString base = ensureGenDir(); QString ts = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"); QString hash = currentRegexHash.isEmpty()? computeRegexHash(txtInputRegex->toPlainText()) : currentRegexHash;
+        QString savePath = base+"/tiny_"+ts+"_"+hash.mid(0,12)+".cpp";
+        QFile f(savePath); if(f.open(QIODevice::WriteOnly|QIODevice::Text)){ QTextStream o(&f); o<<s; f.close(); }
+        currentCodePath = savePath; currentBinPath = base+"/bin/"+QFileInfo(savePath).completeBaseName();
+        statusBar()->showMessage("组合扫描器代码已生成并保存到 generated/lex");
         return;
     }
     if(!lastMinPtr){ onTokenChanged(idx); if(!lastMinPtr){ statusBar()->showMessage("请先转换"); return; } }
     QMap<QString,int> codesMap; for(auto p: parsedPtr->tokens){ codesMap[p.rule.name]=p.rule.code; }
-    auto s = engine->generateCode(*lastMinPtr, codesMap); txtGeneratedCode->setPlainText(s); statusBar()->showMessage("代码已生成");
+    auto s = engine->generateCode(*lastMinPtr, codesMap);
+    txtGeneratedCode->setPlainText(s);
+    statusBar()->showMessage("代码已生成");
 }
 
 void MainWindow::onRunLexerClicked(bool){
     if(!parsedPtr){ auto text = txtInputRegex->toPlainText(); auto rf = engine->lexFile(text); auto parsed = engine->parseFile(rf); if(parsed.tokens.isEmpty()){ statusBar()->showMessage("未找到Token定义"); return; } parsedPtr = new ParsedFile(parsed); }
-    auto src = txtSourceTiny->toPlainText();
+    // 优先重用已生成代码文件；若正则改变或不存在，则生成新文件
+    QString hashNow = computeRegexHash(txtInputRegex->toPlainText());
+    if(currentCodePath.isEmpty() || currentRegexHash != hashNow || !QFileInfo::exists(currentCodePath)){
+        QVector<int> codes; auto mdfas = engine->buildAllMinDFA(*parsedPtr, codes);
+        auto s = CodeGenerator::generateCombined(mdfas, codes, parsedPtr->alpha);
+        QString base = ensureGenDir(); QString ts = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"); QString savePath = base+"/tiny_"+ts+"_"+hashNow.mid(0,12)+".cpp";
+        QFile f(savePath); if(f.open(QIODevice::WriteOnly|QIODevice::Text)){ QTextStream w(&f); w<<s; f.close(); }
+        currentRegexHash = hashNow; currentCodePath = savePath; currentBinPath = base+"/bin/"+QFileInfo(savePath).completeBaseName();
+    }
+    QProcess proc; proc.start("clang++", QStringList()<<"-std=c++17"<<currentCodePath<<"-o"<<currentBinPath); proc.waitForFinished(); if(proc.exitStatus()!=QProcess::NormalExit || proc.exitCode()!=0){ txtLexResult->setPlainText(QString::fromUtf8(proc.readAllStandardError())); statusBar()->showMessage("编译失败"); return; }
+    // 准备输入：优先选中的样例文件，其次文本框内容，再次 resources
+    QString src = txtSourceTiny->toPlainText();
     if(src.trimmed().isEmpty()){
         QString p1 = QCoreApplication::applicationDirPath()+"/../../resources/sample.tny";
         QFile f1(p1);
         if(f1.open(QIODevice::ReadOnly|QIODevice::Text)){ QTextStream in(&f1); src = in.readAll(); f1.close(); }
-        else {
-            QString p2 = QCoreApplication::applicationDirPath()+"/resources/sample.tny";
-            QFile f2(p2);
-            if(f2.open(QIODevice::ReadOnly|QIODevice::Text)){ QTextStream in(&f2); src = in.readAll(); f2.close(); }
-            else {
-                QFile f3("resources/sample.tny");
-                if(f3.open(QIODevice::ReadOnly|QIODevice::Text)){ QTextStream in(&f3); src = in.readAll(); f3.close(); }
-            }
-        }
-        if(src.trimmed().isEmpty()){
-            src = QStringLiteral("abc123 def456\nif return == var abc123\n");
-            statusBar()->showMessage("未检测到输入文本，已注入示例文本");
-        }
+        else { QString p2 = QCoreApplication::applicationDirPath()+"/resources/sample.tny"; QFile f2(p2); if(f2.open(QIODevice::ReadOnly|QIODevice::Text)){ QTextStream in(&f2); src = in.readAll(); f2.close(); } }
+        if(src.trimmed().isEmpty()){ src = QStringLiteral("read x;\n"); }
         txtSourceTiny->setPlainText(src);
     }
-    QVector<int> codes; auto mdfas = engine->buildAllMinDFA(*parsedPtr, codes); auto res = engine->runMultiple(mdfas, codes, src);
-    txtLexResult->setPlainText(res);
-    QString outPath = QCoreApplication::applicationDirPath()+"/sample.lex";
-    QFile of(outPath);
-    if(of.open(QIODevice::WriteOnly|QIODevice::Text)){ QTextStream o(&of); o << res << "\n"; of.close(); }
-    if(res.contains("ERR")) { statusBar()->showMessage("存在未识别的词法单元(ERR)，请检查正则与输入"); }
-    else { statusBar()->showMessage("测试完成"); }
+    QProcess run; QStringList args; if(!selectedSamplePath.isEmpty()) args<<selectedSamplePath; run.start(currentBinPath, args); if(args.isEmpty()){ run.write(src.toUtf8()); run.closeWriteChannel(); } run.waitForFinished(); auto output = QString::fromUtf8(run.readAllStandardOutput()); txtLexResult->setPlainText(output);
+    QString outLex = QCoreApplication::applicationDirPath()+"/sample.lex"; QFile of(outLex); if(of.open(QIODevice::WriteOnly|QIODevice::Text)){ QTextStream o(&of); o<<output<<"\n"; of.close(); }
+    if(output.contains("ERR")) statusBar()->showMessage("存在未识别的词法单元(ERR)，请检查正则与输入"); else statusBar()->showMessage("测试完成");
 }
 
 void MainWindow::onSaveRegexClicked(bool){
@@ -262,4 +273,20 @@ void MainWindow::fillAllMin(){
         }
     }
     fillTable(tblMinDFA, t);
+}
+QString MainWindow::computeRegexHash(const QString& text){ auto h = QCryptographicHash::hash(text.toUtf8(), QCryptographicHash::Sha256); return QString(h.toHex()); }
+QString MainWindow::ensureGenDir(){ QString base = QCoreApplication::applicationDirPath()+"/../../generated/lex"; QDir d(base); if(!d.exists()) d.mkpath("."); QDir b(base+"/bin"); if(!b.exists()) b.mkpath("."); return base; }
+void MainWindow::onTabChanged(int idx){
+    if(idx<0) return;
+    auto w = tabs->widget(idx);
+    if(!w) return;
+    auto codeView = w->findChild<QPlainTextEdit*>("txtGeneratedCode");
+    if(codeView && !currentCodePath.isEmpty()){
+        QFile f(currentCodePath);
+        if(f.open(QIODevice::ReadOnly|QIODevice::Text)){
+            QTextStream in(&f);
+            codeView->setPlainText(in.readAll());
+            f.close();
+        }
+    }
 }
