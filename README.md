@@ -116,6 +116,14 @@ classDiagram
 - 运行：`open build-macos/byyl.app` 或 `build-macos/byyl.app/Contents/MacOS/byyl`
 - 测试：`ctest --test-dir build-macos -V`
 
+### 关于 UI 文件变更
+- 变更 `*.ui` 文件后，需要重新编译一次（`cmake --build build-macos -j`）以便 `AUTOUIC` 重新生成 `ui_*.h` 并链接到可执行文件。
+- 一般情况下，无需重新配置（不必再次运行 `qt-cmake`），除非你：
+  - 修改了 `CMakeLists.txt` 配置；
+  - 新增/删除了源文件、目标或依赖组件；
+  - 变更了 Qt 版本或工具链。
+- 开发流推荐：修改 UI → 执行 `cmake --build build-macos -j` → 运行 `open build-macos/byyl.app` 查看效果。
+
 ## 设计与规范
 - 正则文件格式：宏 `name=expr`；Token `_nameNNN=...`、组 `_nameNNNS=x|y|z...`
 - 日志：建议启用 `export QT_LOGGING_RULES="*.debug=true"`

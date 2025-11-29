@@ -3,7 +3,7 @@
 #include <QRegularExpression>
 static bool parseTokenHeader(const QString& name, int& code, bool& isGroup){
     if(!name.startsWith('_')) return false;
-    QRegularExpression re("^_([A-Za-z][A-Za-z0-9_]*)\\s*(\\d+)(S)?$");
+    QRegularExpression re("^_([A-Za-z][A-Za-z0-9_]*?)(\\d+)(S)?$");
     auto m = re.match(name);
     if(!m.hasMatch()) return false;
     code = m.captured(2).toInt();

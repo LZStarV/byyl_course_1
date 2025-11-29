@@ -16,8 +16,22 @@ Tables Engine::dfaTable(const DFA& dfa){ return tableFromDFA(dfa);}
 Tables Engine::minTable(const MinDFA& dfa){ return tableFromMin(dfa);} 
 QString Engine::generateCode(const MinDFA& mdfa, const QMap<QString,int>& tokenCodes){ return CodeGenerator::generate(mdfa, tokenCodes);} 
 static int classify(const MinDFA& mdfa, QChar ch){ if(mdfa.alpha.hasLetter && ch.isLetter()) return 1; if(mdfa.alpha.hasDigit && ch.isDigit()) return 0; return -2; }
-QString Engine::run(const MinDFA& mdfa, const QString& source, int tokenCode){ QString out; int pos=0; while(pos<source.size()){ QChar ch=source[pos++]; if(ch==' '||ch=='\t'||ch=='\n'||ch=='\r') continue; if(ch=='{'){ while(pos<source.size() && source[pos++]!='}'){} continue; } int state=mdfa.start; bool acc=false; while(true){ bool moved=false; for(auto a: mdfa.alpha.ordered()){ int t=mdfa.states[state].trans.value(a,-1); if(t==-1) continue; if(a.compare("letter",Qt::CaseInsensitive)==0){ if(ch.isLetter()){ state=t; moved=true; if(pos<source.size()) ch=source[pos++]; else break; } } else if(a.compare("digit",Qt::CaseInsensitive)==0){ if(ch.isDigit()){ state=t; moved=true; if(pos<source.size()) ch=source[pos++]; else break; } } else { if(a.size()==1 && ch==a[0]){ state=t; moved=true; if(pos<source.size()) ch=source[pos++]; else break; } } }
-            if(!moved) break; acc = mdfa.states[state].accept; }
+QString Engine::run(const MinDFA& mdfa, const QString& source, int tokenCode){ QString out; int pos=0; while(pos<source.size()){ QChar ch=source[pos++]; if(ch==' '||ch=='\t'||ch=='\n'||ch=='\r') continue; if(ch=='{'){ while(pos<source.size() && source[pos++]!='}'){} continue; } int state=mdfa.start; bool acc=false; while(true){ bool moved=false; for(auto a: mdfa.alpha.ordered()){ int t=mdfa.states[state].trans.value(a,-1); if(t==-1) continue; if(a.compare("letter",Qt::CaseInsensitive)==0){ if(ch.isLetter()){ state=t; moved=true; if(pos<source.size()) ch=source[pos++]; else { ch=QChar(); } break; } } else if(a.compare("digit",Qt::CaseInsensitive)==0){ if(ch.isDigit()){ state=t; moved=true; if(pos<source.size()) ch=source[pos++]; else { ch=QChar(); } break; } } else { if(a.size()==1 && ch==a[0]){ state=t; moved=true; if(pos<source.size()) ch=source[pos++]; else { ch=QChar(); } break; } } }
+            if(!moved || ch.isNull()) break; acc = mdfa.states[state].accept; }
         if(acc){ out += QString::number(tokenCode)+" "; } else { out += "ERR "; }
+    }
+    return out.trimmed(); }
+
+static void collectAlternatives(ASTNode* n, QVector<ASTNode*>& out){ if(!n) return; if(n->type==ASTNode::Union){ collectAlternatives(n->children[0], out); collectAlternatives(n->children[1], out); } else { out.push_back(n); } }
+
+QVector<MinDFA> Engine::buildAllMinDFA(const ParsedFile& pf, QVector<int>& codes){ QVector<MinDFA> result; codes.clear(); for(const auto& pt : pf.tokens){ if(pt.rule.isGroup){ QVector<ASTNode*> alts; collectAlternatives(pt.ast, alts); int base = pt.rule.code; int idx=0; for(auto alt : alts){ auto nfa = buildNFA(alt, pf.alpha); auto dfa = buildDFA(nfa); auto mdfa = buildMinDFA(dfa); result.push_back(mdfa); codes.push_back(base + (idx++)); } } else { auto nfa = buildNFA(pt.ast, pf.alpha); auto dfa = buildDFA(nfa); auto mdfa = buildMinDFA(dfa); result.push_back(mdfa); codes.push_back(pt.rule.code); } } return result; }
+
+static int matchLen(const MinDFA& mdfa, const QString& src, int pos){ int state=mdfa.start; int i=pos; int lastAcc=-1; while(i<src.size()){ QChar ch=src[i]; bool moved=false; for(auto a: mdfa.alpha.ordered()){ int t=mdfa.states[state].trans.value(a,-1); if(t==-1) continue; if(a.compare("letter",Qt::CaseInsensitive)==0){ if(ch.isLetter()){ state=t; moved=true; break; } } else if(a.compare("digit",Qt::CaseInsensitive)==0){ if(ch.isDigit()){ state=t; moved=true; break; } } else if(a.size()==1){ if(ch==a[0]){ state=t; moved=true; break; } } }
+        if(!moved) break; i++; if(mdfa.states[state].accept) lastAcc=i; }
+    return lastAcc==-1?0:(lastAcc-pos); }
+
+static auto codeWeight = [](int c){ if(c>=220) return 3; if(c>=200) return 4; if(c>=100) return 1; return 0; };
+QString Engine::runMultiple(const QVector<MinDFA>& mdfas, const QVector<int>& codes, const QString& source){ QString out; int pos=0; while(pos<source.size()){ QChar ch=source[pos]; if(ch==' '||ch=='\t'||ch=='\n'||ch=='\r'){ pos++; continue; } if(ch=='{'){ pos++; while(pos<source.size() && source[pos++]!='}'){} continue; } int bestLen=0; int bestIdx=-1; int bestW=-1; for(int i=0;i<mdfas.size();++i){ int len = matchLen(mdfas[i], source, pos); int w = codeWeight(codes[i]); if(len>bestLen || (len==bestLen && w>bestW)){ bestLen=len; bestIdx=i; bestW=w; } }
+        if(bestLen>0){ out += QString::number(codes[bestIdx])+" "; pos += bestLen; } else { out += "ERR "; pos++; }
     }
     return out.trimmed(); }

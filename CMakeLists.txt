@@ -71,3 +71,16 @@ target_sources(CliRegexTest PRIVATE
 )
 target_link_libraries(CliRegexTest PRIVATE Qt6::Core Qt6::Test)
 add_test(NAME CliRegexTest COMMAND CliRegexTest)
+
+add_executable(CodegenTest tests/codegen_compile_run_test.cpp)
+target_sources(CodegenTest PRIVATE
+    src/core/regex/RegexLexer.cpp
+    src/core/regex/RegexParser.cpp
+    src/core/automata/Thompson.cpp
+    src/core/automata/SubsetConstruction.cpp
+    src/core/automata/Hopcroft.cpp
+    src/core/generator/CodeGenerator.cpp
+    src/core/Engine.cpp
+)
+target_link_libraries(CodegenTest PRIVATE Qt6::Core Qt6::Test)
+add_test(NAME CodegenTest COMMAND CodegenTest)

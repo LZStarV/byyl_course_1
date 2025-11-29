@@ -21,4 +21,6 @@ public:
     Tables minTable(const MinDFA& dfa);
     QString generateCode(const MinDFA& mdfa, const QMap<QString,int>& tokenCodes);
     QString run(const MinDFA& mdfa, const QString& source, int tokenCode);
+    QVector<MinDFA> buildAllMinDFA(const ParsedFile& pf, QVector<int>& codes);
+    QString runMultiple(const QVector<MinDFA>& mdfas, const QVector<int>& codes, const QString& source);
 };

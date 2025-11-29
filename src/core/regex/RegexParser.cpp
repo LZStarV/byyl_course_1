@@ -34,7 +34,10 @@ ASTNode* parseExpr(const QString& s,int& i,const QMap<QString,Rule>& macros){ au
 static void collectAlphabet(ASTNode* n,Alphabet& a,const QMap<QString,Rule>& macros){ if(!n) return; switch(n->type){
         case ASTNode::Symbol: if(!n->value.isEmpty()) a.add(QString(n->value[0])); break;
         case ASTNode::CharSet: for(auto ch: n->value) a.add(QString(ch)); break;
-        case ASTNode::Ref: if(n->value.compare("letter",Qt::CaseInsensitive)==0) a.hasLetter=true; else if(n->value.compare("digit",Qt::CaseInsensitive)==0) a.hasDigit=true; break;
+        case ASTNode::Ref:
+            if(n->value.compare("letter",Qt::CaseInsensitive)==0){ a.hasLetter=true; a.add("letter"); }
+            else if(n->value.compare("digit",Qt::CaseInsensitive)==0){ a.hasDigit=true; a.add("digit"); }
+            break;
         default: break;
     }
     for(auto c: n->children) collectAlphabet(c,a,macros);
