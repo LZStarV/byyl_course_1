@@ -1,0 +1,57 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Build outputs (CMake/Ninja)
+/build/
+/build-macos/
+/build-*/
+**/CMakeCache.txt
+**/CMakeFiles/
+**/Testing/
+**/CTestTestfile.cmake
+**/Makefile
+**/*.ninja
+**/.ninja_deps
+**/.ninja_log
+**/compile_commands.json
+
+# Qt autogen & artifacts
+**/*_autogen/
+**/*.qm
+**/*.rcc
+**/*.qrc.dep
+
+# Binaries & libraries
+**/*.o
+**/*.obj
+**/*.a
+**/*.lib
+**/*.dll
+**/*.so
+**/*.dylib
+**/*.dSYM
+**/*.exe
+**/*.app
+
+# Logs
+app.log
+**/*.log
+
+# Test-generated files
+/gen_lex.cpp
+/gen_lex_bin
+
+# Qt Creator / IDE files
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+*.qmlproject.user*
+*.qtcworkspace
+CMakeLists.txt.user*
+.vscode/
+.idea/
+.cache/
+
