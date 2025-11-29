@@ -38,8 +38,10 @@ private:
     QPlainTextEdit* txtLexResult;
     QPushButton* btnStartConvert;
     QPushButton* btnGenCode;
+    QPushButton* btnCompileRun;
     QPushButton* btnRunLexer;
     QPushButton* btnLoadRegex;
+    QPushButton* btnSaveRegex;
     Engine* engine;
     ParsedFile* parsedPtr;
     MinDFA* lastMinPtr;
@@ -48,7 +50,9 @@ private:
 private slots:
     void onConvertClicked(bool);
     void onGenCodeClicked(bool);
+    void onCompileRunClicked(bool);
     void onRunLexerClicked(bool);
     void onLoadRegexClicked(bool);
+    void onSaveRegexClicked(bool);
 };
 #endif // MAINWINDOW_H

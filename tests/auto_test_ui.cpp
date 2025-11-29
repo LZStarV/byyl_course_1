@@ -2,6 +2,7 @@
 #include <QTextEdit>
 #include <QPushButton>
 #include <QTableWidget>
+#include <QPlainTextEdit>
 #include "../byyl_course_design_1/mainwindow.h"
 class TestGui: public QObject {
     Q_OBJECT
@@ -14,6 +15,32 @@ private slots:
         QVERIFY(edit != nullptr);
         QVERIFY(btn != nullptr);
         QVERIFY(table != nullptr);
+        QTextStream(stdout) << "【界面测试】控件已加载：正则编辑、转换按钮、NFA表" << "\n";
+    }
+    void testLabels(){
+        MainWindow window; window.show();
+        auto src = window.findChild<QPlainTextEdit*>("txtSourceTiny");
+        auto out = window.findChild<QPlainTextEdit*>("txtLexResult");
+        QVERIFY(src != nullptr);
+        QVERIFY(out != nullptr);
+        QTextStream(stdout) << "【测试与验证】左侧为源程序输入，右侧为Token编码输出" << "\n";
+    }
+    void testRunLexerPanel(){
+        MainWindow window; window.show();
+        auto edit = window.findChild<QTextEdit*>("txtInputRegex");
+        auto btnConvert = window.findChild<QPushButton*>("btnStartConvert");
+        auto src = window.findChild<QPlainTextEdit*>("txtSourceTiny");
+        auto btnRun = window.findChild<QPushButton*>("btnRunLexer");
+        auto out = window.findChild<QPlainTextEdit*>("txtLexResult");
+        QVERIFY(edit && btnConvert && src && btnRun && out);
+        edit->setPlainText(QStringLiteral("letter = [A-Za-z_]\n")+
+                           QStringLiteral("digit = [0-9]\n")+
+                           QStringLiteral("_identifier100 = letter(letter|digit)*\n")+
+                           QStringLiteral("_number101 = digit+\n"));
+        QTest::mouseClick(btnConvert, Qt::LeftButton);
+        src->setPlainText(QStringLiteral("abc123 def456"));
+        QTest::mouseClick(btnRun, Qt::LeftButton);
+        QVERIFY(!out->toPlainText().trimmed().isEmpty());
     }
 };
 QTEST_MAIN(TestGui)

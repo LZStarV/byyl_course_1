@@ -12,6 +12,8 @@ static ASTNode* parseCharset(const QString& s,int& i){ QSet<QChar> set; i++; boo
 }
 static ASTNode* makeSeqFromString(const QString& text){ if(text.isEmpty()) return nullptr; ASTNode* left = make(ASTNode::Symbol, QString(text[0])); for(int k=1;k<text.size();++k){ auto right = make(ASTNode::Symbol, QString(text[k])); left = concat(left, right); } return left; }
 static ASTNode* parseAtom(const QString& s,int& i,const QMap<QString,Rule>& macros){ if(i>=s.size()) return nullptr; QChar c=s[i];
+    while(i<s.size() && (s[i]==' '||s[i]=='\t'||s[i]=='\n'||s[i]=='\r')){ i++; }
+    if(i>=s.size()) return nullptr; c=s[i];
     if(c=='('){ i++; auto e=parseExpr(s,i,macros); if(i<s.size() && s[i]==')') i++; return e; }
     if(c=='['){ return parseCharset(s,i); }
     if(c=='\\'){ if(i+1<s.size()){ i++; QChar d=s[i++]; return make(ASTNode::Symbol,QString(d)); } }

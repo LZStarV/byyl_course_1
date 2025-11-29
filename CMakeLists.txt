@@ -57,7 +57,7 @@ target_sources(GuiTest PRIVATE
     src/core/Engine.cpp
 )
 target_link_libraries(GuiTest PRIVATE Qt6::Widgets Qt6::Test)
-add_test(NAME GuiTest COMMAND GuiTest)
+add_test(NAME 界面测试 COMMAND GuiTest)
 
 add_executable(CliRegexTest tests/cli_regex_test.cpp)
 target_sources(CliRegexTest PRIVATE
@@ -70,7 +70,7 @@ target_sources(CliRegexTest PRIVATE
     src/core/Engine.cpp
 )
 target_link_libraries(CliRegexTest PRIVATE Qt6::Core Qt6::Test)
-add_test(NAME CliRegexTest COMMAND CliRegexTest)
+add_test(NAME 命令行正则测试 COMMAND CliRegexTest)
 
 add_executable(CodegenTest tests/codegen_compile_run_test.cpp)
 target_sources(CodegenTest PRIVATE
@@ -83,4 +83,4 @@ target_sources(CodegenTest PRIVATE
     src/core/Engine.cpp
 )
 target_link_libraries(CodegenTest PRIVATE Qt6::Core Qt6::Test)
-add_test(NAME CodegenTest COMMAND CodegenTest)
+add_test(NAME 代码生成器测试 COMMAND CodegenTest)
