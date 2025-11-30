@@ -1,6 +1,6 @@
-letter = [A-Za-z_]
+letter = [A-Za-z_$]
 digit = [0-9]
 _identifier100 = letter(letter|digit)*
-_number101 = digit+
+_number101 = digit+ ( \. digit+ )?
 _keywords200S = if | else | return | function | class | import | from | as | for | while | break | continue | let | const | var
-_operators220S = \+ | - | \* | / | % | == | === | != | !== | < | <= | > | >= | = | => | \(| \) | \[ | \] | \{ | \} | , | ;
+_operators220S = \+ | - | \* | / | % | == | === | != | !== | < | <= | > | >= | = | => | \( | \) | \[ | \] | \{ | \} | , | ; | \. | :

@@ -1,7 +1,7 @@
 #include <QtTest>
 #include <QFile>
 #include <QTextStream>
-#include "../src/Engine.h"
+#include "../../src/Engine.h"
 class CliRegexTest: public QObject {
     Q_OBJECT
 private:
@@ -37,7 +37,6 @@ private slots:
         QTextStream(stdout) << "【编码列表(前10个)】";
         for(int i=0;i<codes.size() && i<10;i++){ QTextStream(stdout) << codes[i] << (i+1<codes.size() && i<9?"," : "\n"); }
         QVERIFY(mdfas.size() == codes.size());
-        // 用例1：标识符与数字，无 ERR
         auto src_ok = QStringLiteral("abc123 456 def789");
         auto out_ok = eng.runMultiple(mdfas, codes, src_ok);
         auto toks_ok = out_ok.split(' ', Qt::SkipEmptyParts);
@@ -47,7 +46,6 @@ private slots:
         QTextStream(stdout) << "【用例1Token数量】" << toks_ok.size() << "，【ERR数量】" << err_ok << "\n";
         QVERIFY(err_ok == 0);
 
-        // 用例2：混合关键字/运算符/标识符，严格要求无 ERR
         auto src_mix = QStringLiteral("if return == var abc123");
         auto out_mix = eng.runMultiple(mdfas, codes, src_mix);
         auto toks_mix = out_mix.split(' ', Qt::SkipEmptyParts);
@@ -57,7 +55,6 @@ private slots:
         QTextStream(stdout) << "【用例2Token数量】" << toks_mix.size() << "，【ERR数量】" << err_mix << "\n";
         QVERIFY(err_mix == 0);
 
-        // 用例3：合并输入行，严格要求无 ERR
         auto src_all = QStringLiteral("abc123 def456\nif return == var abc123");
         auto out_all = eng.runMultiple(mdfas, codes, src_all);
         auto toks_all = out_all.split(' ', Qt::SkipEmptyParts);
@@ -97,3 +94,4 @@ private slots:
 };
 QTEST_MAIN(CliRegexTest)
 #include "cli_regex_test.moc"
+

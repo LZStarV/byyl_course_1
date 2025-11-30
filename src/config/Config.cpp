@@ -84,3 +84,153 @@ QString Config::generatedOutputDir(){
     QDir d(s_outDir); if(!d.exists()) d.mkpath(".");
     return s_outDir;
 }
+
+bool Config::skipBraceComment(){
+    load();
+    QByteArray env = qgetenv("LEXER_SKIP_BRACE_COMMENT");
+    if(!env.isEmpty()){
+        auto v = QString::fromUtf8(env).trimmed().toLower();
+        if(v=="1" || v=="true" || v=="yes") return true;
+        if(v=="0" || v=="false" || v=="no") return false;
+    }
+    QString appDir = QCoreApplication::applicationDirPath();
+    QString cfgPath1 = appDir + "/../../config/lexer.json";
+    QString cfgPath2 = appDir + "/config/lexer.json";
+    QString usePath;
+    if(QFile::exists(cfgPath1)) usePath = cfgPath1; else if(QFile::exists(cfgPath2)) usePath = cfgPath2;
+    if(!usePath.isEmpty()){
+        QFile f(usePath);
+        if(f.open(QIODevice::ReadOnly|QIODevice::Text)){
+            auto data = f.readAll(); f.close();
+            auto doc = QJsonDocument::fromJson(data);
+            if(doc.isObject()){
+                auto obj = doc.object();
+                if(obj.contains("skip_brace_comment")) return obj.value("skip_brace_comment").toBool(false);
+            }
+        }
+    }
+    return false;
+}
+
+static bool envFlag(const char* name, bool defv){
+    QByteArray env = qgetenv(name);
+    if(env.isEmpty()) return defv;
+    auto v = QString::fromUtf8(env).trimmed().toLower();
+    if(v=="1" || v=="true" || v=="yes") return true;
+    if(v=="0" || v=="false" || v=="no") return false;
+    return defv;
+}
+
+bool Config::skipLineComment(){
+    if(envFlag("LEXER_SKIP_LINE_COMMENT", true)) return true;
+    QString appDir = QCoreApplication::applicationDirPath();
+    QString cfgPath1 = appDir + "/../../config/lexer.json";
+    QString cfgPath2 = appDir + "/config/lexer.json";
+    QString usePath;
+    if(QFile::exists(cfgPath1)) usePath = cfgPath1; else if(QFile::exists(cfgPath2)) usePath = cfgPath2;
+    if(!usePath.isEmpty()){
+        QFile f(usePath);
+        if(f.open(QIODevice::ReadOnly|QIODevice::Text)){
+            auto data=f.readAll(); f.close(); auto doc=QJsonDocument::fromJson(data);
+            if(doc.isObject()){
+                auto obj=doc.object(); return obj.value("skip_line_comment").toBool(true);
+            }
+        }
+    }
+    return false;
+}
+
+bool Config::skipBlockComment(){
+    if(envFlag("LEXER_SKIP_BLOCK_COMMENT", true)) return true;
+    QString appDir = QCoreApplication::applicationDirPath();
+    QString cfgPath1 = appDir + "/../../config/lexer.json";
+    QString cfgPath2 = appDir + "/config/lexer.json";
+    QString usePath;
+    if(QFile::exists(cfgPath1)) usePath = cfgPath1; else if(QFile::exists(cfgPath2)) usePath = cfgPath2;
+    if(!usePath.isEmpty()){
+        QFile f(usePath);
+        if(f.open(QIODevice::ReadOnly|QIODevice::Text)){
+            auto data=f.readAll(); f.close(); auto doc=QJsonDocument::fromJson(data);
+            if(doc.isObject()){
+                auto obj=doc.object(); return obj.value("skip_block_comment").toBool(true);
+            }
+        }
+    }
+    return false;
+}
+
+bool Config::skipSingleQuoteString(){
+    if(envFlag("LEXER_SKIP_SQ_STRING", true)) return true;
+    QString appDir = QCoreApplication::applicationDirPath();
+    QString cfgPath1 = appDir + "/../../config/lexer.json";
+    QString cfgPath2 = appDir + "/config/lexer.json";
+    QString usePath;
+    if(QFile::exists(cfgPath1)) usePath = cfgPath1; else if(QFile::exists(cfgPath2)) usePath = cfgPath2;
+    if(!usePath.isEmpty()){
+        QFile f(usePath);
+        if(f.open(QIODevice::ReadOnly|QIODevice::Text)){
+            auto data=f.readAll(); f.close(); auto doc=QJsonDocument::fromJson(data);
+            if(doc.isObject()){
+                auto obj=doc.object(); return obj.value("skip_single_quote_string").toBool(true);
+            }
+        }
+    }
+    return false;
+}
+
+bool Config::skipDoubleQuoteString(){
+    if(envFlag("LEXER_SKIP_DQ_STRING", true)) return true;
+    QString appDir = QCoreApplication::applicationDirPath();
+    QString cfgPath1 = appDir + "/../../config/lexer.json";
+    QString cfgPath2 = appDir + "/config/lexer.json";
+    QString usePath;
+    if(QFile::exists(cfgPath1)) usePath = cfgPath1; else if(QFile::exists(cfgPath2)) usePath = cfgPath2;
+    if(!usePath.isEmpty()){
+        QFile f(usePath);
+        if(f.open(QIODevice::ReadOnly|QIODevice::Text)){
+            auto data=f.readAll(); f.close(); auto doc=QJsonDocument::fromJson(data);
+            if(doc.isObject()){
+                auto obj=doc.object(); return obj.value("skip_double_quote_string").toBool(true);
+            }
+        }
+    }
+    return false;
+}
+
+bool Config::skipTemplateString(){
+    if(envFlag("LEXER_SKIP_TPL_STRING", true)) return true;
+    QString appDir = QCoreApplication::applicationDirPath();
+    QString cfgPath1 = appDir + "/../../config/lexer.json";
+    QString cfgPath2 = appDir + "/config/lexer.json";
+    QString usePath;
+    if(QFile::exists(cfgPath1)) usePath = cfgPath1; else if(QFile::exists(cfgPath2)) usePath = cfgPath2;
+    if(!usePath.isEmpty()){
+        QFile f(usePath);
+        if(f.open(QIODevice::ReadOnly|QIODevice::Text)){
+            auto data=f.readAll(); f.close(); auto doc=QJsonDocument::fromJson(data);
+            if(doc.isObject()){
+                auto obj=doc.object(); return obj.value("skip_template_string").toBool(true);
+            }
+        }
+    }
+    return false;
+}
+
+bool Config::skipHashComment(){
+    if(envFlag("LEXER_SKIP_HASH_COMMENT", true)) return true;
+    QString appDir = QCoreApplication::applicationDirPath();
+    QString cfgPath1 = appDir + "/../../config/lexer.json";
+    QString cfgPath2 = appDir + "/config/lexer.json";
+    QString usePath;
+    if(QFile::exists(cfgPath1)) usePath = cfgPath1; else if(QFile::exists(cfgPath2)) usePath = cfgPath2;
+    if(!usePath.isEmpty()){
+        QFile f(usePath);
+        if(f.open(QIODevice::ReadOnly|QIODevice::Text)){
+            auto data=f.readAll(); f.close(); auto doc=QJsonDocument::fromJson(data);
+            if(doc.isObject()){
+                auto obj=doc.object(); return obj.value("skip_hash_comment").toBool(true);
+            }
+        }
+    }
+    return true;
+}

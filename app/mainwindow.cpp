@@ -162,7 +162,6 @@ void MainWindow::onRunLexerClicked(bool){
         txtSourceTiny->setPlainText(src);
     }
     QProcess run; QStringList args; if(!selectedSamplePath.isEmpty()) args<<selectedSamplePath; run.start(currentBinPath, args); if(args.isEmpty()){ run.write(src.toUtf8()); run.closeWriteChannel(); } run.waitForFinished(); auto output = QString::fromUtf8(run.readAllStandardOutput()); txtLexResult->setPlainText(output);
-    QString outLex = QCoreApplication::applicationDirPath()+"/sample.lex"; QFile of(outLex); if(of.open(QIODevice::WriteOnly|QIODevice::Text)){ QTextStream o(&of); o<<output<<"\n"; of.close(); }
     if(output.contains("ERR")) statusBar()->showMessage("存在未识别的词法单元(ERR)，请检查正则与输入"); else statusBar()->showMessage("测试完成");
 }
 
@@ -192,13 +191,16 @@ void MainWindow::onPickSampleClicked(bool){
 void MainWindow::onCompileRunClicked(bool){
     if(!parsedPtr){ auto text = txtInputRegex->toPlainText(); auto rf = engine->lexFile(text); auto parsed = engine->parseFile(rf); if(parsed.tokens.isEmpty()){ statusBar()->showMessage("未找到Token定义"); return; } parsedPtr = new ParsedFile(parsed); }
     QVector<int> codes; auto mdfas = engine->buildAllMinDFA(*parsedPtr, codes);
+    QString base = ensureGenDir();
+    QString ts = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    QString hash = computeRegexHash(txtInputRegex->toPlainText()).mid(0,12);
+    QString outCpp = currentCodePath.isEmpty()? (base+"/lex_"+ts+"_"+hash+".cpp") : currentCodePath;
     auto srcCombined = CodeGenerator::generateCombined(mdfas, codes, parsedPtr->alpha);
-    QString outCpp = QCoreApplication::applicationDirPath()+"/gen_combined.cpp";
     QFile f(outCpp); if(!f.open(QIODevice::WriteOnly|QIODevice::Text)){ statusBar()->showMessage("生成代码写入失败"); return; } QTextStream w(&f); w<<srcCombined; f.close();
-    QProcess proc; QString bin = QCoreApplication::applicationDirPath()+"/gen_combined_bin"; proc.start("clang++", QStringList()<<"-std=c++17"<<outCpp<<"-o"<<bin); proc.waitForFinished(); if(proc.exitStatus()!=QProcess::NormalExit || proc.exitCode()!=0){ txtLexResult->setPlainText(QString::fromUtf8(proc.readAllStandardError())); statusBar()->showMessage("编译失败"); return; }
+    currentCodePath = outCpp; currentBinPath = base+"/bin/"+QFileInfo(outCpp).completeBaseName();
+    QProcess proc; QString bin = base+"/bin/"+QFileInfo(outCpp).completeBaseName(); proc.start("clang++", QStringList()<<"-std=c++17"<<outCpp<<"-o"<<bin); proc.waitForFinished(); if(proc.exitStatus()!=QProcess::NormalExit || proc.exitCode()!=0){ txtLexResult->setPlainText(QString::fromUtf8(proc.readAllStandardError())); statusBar()->showMessage("编译失败"); return; } currentBinPath = bin;
     QStringList args; if(!selectedSamplePath.isEmpty()) args<<selectedSamplePath; QProcess run; run.start(bin, args); if(!selectedSamplePath.isEmpty()){ run.waitForFinished(); } else { run.write(txtSourceTiny->toPlainText().toUtf8()); run.closeWriteChannel(); run.waitForFinished(); }
     auto output = QString::fromUtf8(run.readAllStandardOutput()); txtLexResult->setPlainText(output);
-    QString outLex = selectedSamplePath.isEmpty()? (QCoreApplication::applicationDirPath()+"/sample.lex") : (QFileInfo(selectedSamplePath).absolutePath()+"/"+QFileInfo(selectedSamplePath).completeBaseName()+".lex"); QFile lf(outLex); if(lf.open(QIODevice::WriteOnly|QIODevice::Text)){ QTextStream o(&lf); o<<output<<"\n"; lf.close(); }
     statusBar()->showMessage("生成器运行完成");
 }
 void MainWindow::onTokenChanged(int idx){

@@ -11,7 +11,7 @@
 - 表格展示：动态列头（字母表与 `#` 表示 ε），首列标记（`-` 初态、`+` 终态）
 - 代码生成：从 MinDFA 生成 C/C++ 源码（方法二：Switch-Case）
 - 生成代码持久化与复用：完整合并扫描器源码按时间戳+正则哈希保存至 `byyl.app/generated/lex`，并编译到 `byyl.app/generated/lex/bin`；在未更换正则表达式时，GUI 与测试复用当前生成文件
-- 测试与验证：并行扫描所有 Token 规则，最长匹配 + 权重策略，跳过空白与 `{...}` 注释
+- 测试与验证：并行扫描所有 Token 规则，最长匹配 + 权重策略；跳过空白；按配置跳过注释/字符串（默认跳过 `//`、`/*...*/`、`#` 注释及 `'"`、`""`、`` `...${...}` `` 字符串；TINY 的 `{...}` 注释默认关闭）
 
 ## 界面使用
 - 页签与控件（objectName）：
@@ -55,6 +55,13 @@
 - 环境变量覆盖：
   - `BYYL_GEN_DIR`：覆盖生成代码保存目录
   - `LEXER_WEIGHTS`：生成器可执行程序读取的权重配置，格式 `min:weight` 逗号分隔，例如：`220:3,200:4,100:1,0:0`
+  - 注释/字符串跳过：
+    - `LEXER_SKIP_LINE_COMMENT`：`1`/`true` 开启 `//` 单行注释跳过（默认开启）
+    - `LEXER_SKIP_BLOCK_COMMENT`：开启 `/*...*/` 块注释跳过（默认开启）
+    - `LEXER_SKIP_HASH_COMMENT`：开启 `#` 行注释跳过（默认开启）
+    - `LEXER_SKIP_SQ_STRING`：开启 `'...'` 字符串跳过（默认开启，含转义）
+    - `LEXER_SKIP_DQ_STRING`：开启 `"..."` 字符串跳过（默认开启，含转义）
+    - `LEXER_SKIP_TPL_STRING`：开启模板字符串 `` `...${...}` `` 跳过（默认开启，含嵌套插值与转义）
 - 默认回退：若未提供配置或环境变量，系统按当前内置阈值与目录工作，确保行为不变。
 
 ## 目录结构
@@ -66,8 +73,12 @@
   - `generator/`：`CodeGenerator.*`
   - `model/`：`Alphabet.h`，`Automata.h`
   - `Engine.*`：统一编排与运行器（构建所有规则的 MinDFA 并并行扫描）
-- `tests/`：`GuiTest`、`CliRegexTest`、`CodegenTest`
-- 新增测试：`ConfigWeightTest`（权重配置覆盖）、`GenDirConfigTest`（生成目录覆盖）
+- `tests/`：
+  - `ui/auto_test_ui.cpp`（目标：`GuiTest`）
+  - `cli/cli_regex_test.cpp`（目标：`CliRegexTest`）
+  - `codegen/codegen_compile_run_test.cpp`（目标：`CodegenTest`）
+  - `config/config_weight_test.cpp`（目标：`ConfigWeightTest`）
+  - `config/gen_dir_config_test.cpp`（目标：`GenDirConfigTest`）
 - `tests/sample/`：示例源代码（`javascript/`、`python/`、`tiny/`）
 - `generated/lex/`：保存生成的合并扫描器源码（时间戳+哈希命名）
 - `generated/lex/bin/`：GUI 编译输出的可执行文件

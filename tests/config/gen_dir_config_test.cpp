@@ -1,5 +1,5 @@
 #include <QtTest>
-#include "../src/config/Config.h"
+#include "../../src/config/Config.h"
 
 class GenDirConfigTest: public QObject {
     Q_OBJECT
@@ -8,7 +8,6 @@ private slots:
         qunsetenv("BYYL_GEN_DIR");
         auto dir_default = Config::generatedOutputDir();
         QVERIFY(!dir_default.isEmpty());
-        // 环境变量覆盖
         qputenv("BYYL_GEN_DIR", QByteArray("/tmp/byyl_gen"));
         auto dir_env = Config::generatedOutputDir();
         QVERIFY(!dir_env.isEmpty());
@@ -21,3 +20,4 @@ private slots:
 
 QTEST_MAIN(GenDirConfigTest)
 #include "gen_dir_config_test.moc"
+

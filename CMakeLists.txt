@@ -45,7 +45,7 @@ set_target_properties(byyl PROPERTIES
 )
 
 enable_testing()
-add_executable(GuiTest tests/auto_test_ui.cpp)
+add_executable(GuiTest tests/ui/auto_test_ui.cpp)
 target_sources(GuiTest PRIVATE
     app/mainwindow.cpp
     app/mainwindow.h
@@ -62,7 +62,7 @@ target_sources(GuiTest PRIVATE
 target_link_libraries(GuiTest PRIVATE Qt6::Widgets Qt6::Test)
 add_test(NAME 界面测试 COMMAND GuiTest)
 
-add_executable(CliRegexTest tests/cli_regex_test.cpp)
+add_executable(CliRegexTest tests/cli/cli_regex_test.cpp)
 target_sources(CliRegexTest PRIVATE
     src/regex/RegexLexer.cpp
     src/regex/RegexParser.cpp
@@ -76,7 +76,7 @@ target_sources(CliRegexTest PRIVATE
 target_link_libraries(CliRegexTest PRIVATE Qt6::Core Qt6::Test)
 add_test(NAME 命令行正则测试 COMMAND CliRegexTest)
 
-add_executable(CodegenTest tests/codegen_compile_run_test.cpp)
+add_executable(CodegenTest tests/codegen/codegen_compile_run_test.cpp)
 target_sources(CodegenTest PRIVATE
     src/regex/RegexLexer.cpp
     src/regex/RegexParser.cpp
@@ -90,7 +90,7 @@ target_sources(CodegenTest PRIVATE
 target_link_libraries(CodegenTest PRIVATE Qt6::Core Qt6::Test)
 add_test(NAME 代码生成器测试 COMMAND CodegenTest)
 
-add_executable(ConfigWeightTest tests/config_weight_test.cpp)
+add_executable(ConfigWeightTest tests/config/config_weight_test.cpp)
 target_sources(ConfigWeightTest PRIVATE
     src/regex/RegexLexer.cpp
     src/regex/RegexParser.cpp
@@ -104,7 +104,7 @@ target_sources(ConfigWeightTest PRIVATE
 target_link_libraries(ConfigWeightTest PRIVATE Qt6::Core Qt6::Test)
 add_test(NAME 权重配置测试 COMMAND ConfigWeightTest)
 
-add_executable(GenDirConfigTest tests/gen_dir_config_test.cpp)
+add_executable(GenDirConfigTest tests/config/gen_dir_config_test.cpp)
 target_sources(GenDirConfigTest PRIVATE
     src/config/Config.cpp
 )

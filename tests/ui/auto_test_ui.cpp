@@ -3,7 +3,7 @@
 #include <QPushButton>
 #include <QTableWidget>
 #include <QPlainTextEdit>
-#include "../app/mainwindow.h"
+#include "../../app/mainwindow.h"
 class TestGui: public QObject {
     Q_OBJECT
 private slots:
@@ -45,3 +45,4 @@ private slots:
 };
 QTEST_MAIN(TestGui)
 #include "auto_test_ui.moc"
+

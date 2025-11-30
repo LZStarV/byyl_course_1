@@ -2,7 +2,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <QProcess>
-#include "../src/Engine.h"
+#include "../../src/Engine.h"
 class CodegenTest: public QObject {
     Q_OBJECT
 private:
@@ -44,3 +44,4 @@ private slots:
 };
 QTEST_MAIN(CodegenTest)
 #include "codegen_compile_run_test.moc"
+

@@ -28,7 +28,7 @@ QString CodeGenerator::generate(const MinDFA& mdfa, const QMap<QString,int>& tok
         for(auto a: mdfa.alpha.ordered()){
             int t=it->trans.value(a,-1);
             if(t!=-1){
-                if(a.compare("letter",Qt::CaseInsensitive)==0){ code += "            if (isalpha((unsigned char)ch)) return "+QString::number(t)+";\n"; }
+                if(a.compare("letter",Qt::CaseInsensitive)==0){ code += "            if (isalpha((unsigned char)ch) || ch=='_' || ch=='$') return "+QString::number(t)+";\n"; }
                 else if(a.compare("digit",Qt::CaseInsensitive)==0){ code += "            if (isdigit((unsigned char)ch)) return "+QString::number(t)+";\n"; }
                 else { code += "            if (ch=='"+a+"') return "+QString::number(t)+";\n"; }
             }
@@ -64,7 +64,7 @@ static QString genStepI(const MinDFA& mdfa, int idx){
         for(auto a: mdfa.alpha.ordered()){
             int t=it->trans.value(a,-1);
             if(t!=-1){
-                if(a.compare("letter",Qt::CaseInsensitive)==0){ code += "            if (isalpha((unsigned char)ch)) return "+QString::number(t)+";\n"; }
+                if(a.compare("letter",Qt::CaseInsensitive)==0){ code += "            if (isalpha((unsigned char)ch) || ch=='_' || ch=='$') return "+QString::number(t)+";\n"; }
                 else if(a.compare("digit",Qt::CaseInsensitive)==0){ code += "            if (isdigit((unsigned char)ch)) return "+QString::number(t)+";\n"; }
                 else { code += "            if (ch=='"+a+"') return "+QString::number(t)+";\n"; }
             }
@@ -83,7 +83,10 @@ QString CodeGenerator::generateCombined(const QVector<MinDFA>& mdfas, const QVec
     out += "#include <iostream>\n";
     out += "#include <cstdlib>\n";
     out += "using namespace std;\n\n";
+    out += "// 自动生成的组合词法分析器\n";
+    out += "// 程序根据提供的正则规则构建多个 DFA，并对输入进行扫描。\n";
 
+    out += "// 按字母表配置将字符划分为 letter/digit 类别\n";
     out += "static inline int Judgechar(char ch)\n";
     out += "{\n";
     if(alpha.hasLetter){ out += "    if (isalpha((unsigned char)ch)) return 1;\n"; }
@@ -93,6 +96,20 @@ QString CodeGenerator::generateCombined(const QVector<MinDFA>& mdfas, const QVec
 
     for(int i=0;i<mdfas.size();++i){ out += genAcceptStateI(mdfas[i], i); out += genStepI(mdfas[i], i); }
 
+    out += "// 每个 Token 的 DFA 函数分发表\n";
+    out += "typedef int (*StepFn)(int,char);\n";
+    out += "typedef bool (*AcceptFn)(int);\n";
+    out += "static StepFn STEPS["+QString::number(mdfas.size())+"]={";
+    for(int i=0;i<mdfas.size();++i){ out += "Step_"+QString::number(i); if(i+1<mdfas.size()) out += ","; }
+    out += "};\n";
+    out += "static AcceptFn ACCEPTS["+QString::number(mdfas.size())+"]={";
+    for(int i=0;i<mdfas.size();++i){ out += "AcceptState_"+QString::number(i); if(i+1<mdfas.size()) out += ","; }
+    out += "};\n";
+    out += "static int STARTS["+QString::number(mdfas.size())+"]={";
+    for(int i=0;i<mdfas.size();++i){ out += QString::number(mdfas[i].start); if(i+1<mdfas.size()) out += ","; }
+    out += "};\n\n";
+
+    out += "// 权重函数：用于在匹配长度相同的情况下进行优先级决策\n";
     out += "static inline int codeWeight(int c)\n";
     out += "{\n";
     out += "    static bool inited=false;\n";
@@ -117,25 +134,26 @@ QString CodeGenerator::generateCombined(const QVector<MinDFA>& mdfas, const QVec
     out += "    return 0;\n";
     out += "}\n\n";
 
-    for(int i=0;i<mdfas.size();++i){
-        out += "static int matchLen_"+QString::number(i)+"(const string& src, size_t pos)\n";
-        out += "{\n";
-        out += "    int state="+QString::number(mdfas[i].start)+";\n";
-        out += "    size_t p=pos;\n";
-        out += "    int last=-1;\n";
-        out += "    while (p<src.size())\n";
-        out += "    {\n";
-        out += "        char ch=src[p];\n";
-        out += "        int ns=Step_"+QString::number(i)+"(state,ch);\n";
-        out += "        if (ns==-1) break;\n";
-        out += "        state=ns;\n";
-        out += "        p++;\n";
-        out += "        if (AcceptState_"+QString::number(i)+"(state)) last=(int)p;\n";
-        out += "    }\n";
-        out += "    return last==-1?0:(int)(last-pos);\n";
-        out += "}\n\n";
-    }
+    out += "// 计算从位置 pos 开始，DFA[idx] 可接受的最长前缀长度\n";
+    out += "static inline int matchLen(int idx, const string& src, size_t pos)\n";
+    out += "{\n";
+    out += "    int state=STARTS[idx];\n";
+    out += "    size_t p=pos;\n";
+    out += "    int last=-1;\n";
+    out += "    StepFn step=STEPS[idx]; AcceptFn acc=ACCEPTS[idx];\n";
+    out += "    while (p<src.size())\n";
+    out += "    {\n";
+    out += "        char ch=src[p];\n";
+    out += "        int ns=step(state,ch);\n";
+    out += "        if (ns==-1) break;\n";
+    out += "        state=ns;\n";
+    out += "        p++;\n";
+    out += "        if (acc(state)) last=(int)p;\n";
+    out += "    }\n";
+    out += "    return last==-1?0:(int)(last-pos);\n";
+    out += "}\n\n";
 
+    out += "// 主扫描流程：按配置跳过注释/空白，选择最长匹配（权重用于并列决策）\n";
     out += "static string runMultiple(const string& src)\n";
     out += "{\n";
     out += "    string out;\n";
@@ -143,15 +161,73 @@ QString CodeGenerator::generateCombined(const QVector<MinDFA>& mdfas, const QVec
     out += "    while (pos<src.size())\n";
     out += "    {\n";
     out += "        char ch=src[pos];\n";
+    out += "        const char* envSkip = getenv(\"LEXER_SKIP_BRACE_COMMENT\");\n";
+    out += "        bool skipBrace = false;\n";
+    out += "        if (envSkip) {\n";
+    out += "            string v(envSkip);\n";
+    out += "            for (auto &c : v) c = tolower(c);\n";
+    out += "            skipBrace = (v==\"1\" || v==\"true\" || v==\"yes\");\n";
+    out += "        }\n";
+
+    out += "        const char* envLine = getenv(\"LEXER_SKIP_LINE_COMMENT\");\n";
+    out += "        bool skipLine = true;\n";
+    out += "        if (envLine) {\n";
+    out += "            string v(envLine);\n";
+    out += "            for (auto &c : v) c = tolower(c);\n";
+    out += "            skipLine = (v==\"1\" || v==\"true\" || v==\"yes\");\n";
+    out += "        }\n";
+
+    out += "        const char* envHash = getenv(\"LEXER_SKIP_HASH_COMMENT\");\n";
+    out += "        bool skipHash = true;\n";
+    out += "        if (envHash) {\n";
+    out += "            string v(envHash);\n";
+    out += "            for (auto &c : v) c = tolower(c);\n";
+    out += "            skipHash = (v==\"1\" || v==\"true\" || v==\"yes\");\n";
+    out += "        }\n";
+
+    out += "        const char* envBlock = getenv(\"LEXER_SKIP_BLOCK_COMMENT\");\n";
+    out += "        bool skipBlock = true;\n";
+    out += "        if (envBlock) {\n";
+    out += "            string v(envBlock);\n";
+    out += "            for (auto &c : v) c = tolower(c);\n";
+    out += "            skipBlock = (v==\"1\" || v==\"true\" || v==\"yes\");\n";
+    out += "        }\n";
     out += "        if (ch==' '||ch=='\\t'||ch=='\\n'||ch=='\\r'){ pos++; continue; }\n";
-    out += "        if (ch=='{'){ pos++; while(pos<src.size() && src[pos++]!='}'){} continue; }\n";
+    out += "        if (skipBrace && ch=='{'){ pos++; while(pos<src.size() && src[pos++]!='}'){} continue; }\n";
+    out += "        if (skipLine && ch=='/' && pos+1<src.size() && src[pos+1]=='/'){ pos+=2; while(pos<src.size() && src[pos++]!='\\n'){} continue; }\n";
+    out += "        if (skipHash && ch==35){ pos++; while(pos<src.size() && src[pos++]!='\\n'){} continue; }\n";
+    out += "        if (skipBlock && ch=='/' && pos+1<src.size() && src[pos+1]=='*'){ pos+=2; while(pos+1<src.size()){ if(src[pos]=='*' && src[pos+1]=='/'){ pos+=2; break; } pos++; } continue; }\n";
+    out += "        const char* envSq = getenv(\"LEXER_SKIP_SQ_STRING\");\n";
+    out += "        bool skipSq = true;\n";
+    out += "        if (envSq) {\n";
+    out += "            string v(envSq);\n";
+    out += "            for (auto &c : v) c = tolower(c);\n";
+    out += "            skipSq = (v==\"1\" || v==\"true\" || v==\"yes\");\n";
+    out += "        }\n";
+
+    out += "        const char* envDq = getenv(\"LEXER_SKIP_DQ_STRING\");\n";
+    out += "        bool skipDq = true;\n";
+    out += "        if (envDq) {\n";
+    out += "            string v(envDq);\n";
+    out += "            for (auto &c : v) c = tolower(c);\n";
+    out += "            skipDq = (v==\"1\" || v==\"true\" || v==\"yes\");\n";
+    out += "        }\n";
+
+    out += "        const char* envTpl = getenv(\"LEXER_SKIP_TPL_STRING\");\n";
+    out += "        bool skipTpl = true;\n";
+    out += "        if (envTpl) {\n";
+    out += "            string v(envTpl);\n";
+    out += "            for (auto &c : v) c = tolower(c);\n";
+    out += "            skipTpl = (v==\"1\" || v==\"true\" || v==\"yes\");\n";
+    out += "        }\n";
+    out += "        if (skipSq && ch==39){ pos++; while(pos<src.size()){ char c=src[pos++]; if(c==92){ if(pos<src.size()) pos++; continue; } if(c==39) break; } continue; }\n";
+    out += "        if (skipDq && ch==34){ pos++; while(pos<src.size()){ char c=src[pos++]; if(c==92){ if(pos<src.size()) pos++; continue; } if(c==34) break; } continue; }\n";
+    out += "        if (skipTpl && ch==96){ pos++; while(pos<src.size()){ char c=src[pos++]; if(c==92){ if(pos<src.size()) pos++; continue; } if(c==96) break; if(c==36 && pos<src.size() && src[pos]==123){ pos++; int depth=1; while(pos<src.size() && depth>0){ char c2=src[pos++]; if(c2==92){ if(pos<src.size()) pos++; continue; } if(c2==123) depth++; else if(c2==125) depth--; } } } continue; }\n";
     out += "        int bestLen=0; int bestIdx=-1; int bestW=-1;\n";
     out += "        int codeList["+QString::number(codes.size())+"]={";
     for(int i=0;i<codes.size();++i){ out += QString::number(codes[i]); if(i+1<codes.size()) out += ","; }
     out += "};\n";
-    for(int i=0;i<mdfas.size();++i){
-        out += "        { int len=matchLen_"+QString::number(i)+"(src,pos); int w=codeWeight(codeList["+QString::number(i)+"]); if(len>bestLen || (len==bestLen && w>bestW)){ bestLen=len; bestIdx="+QString::number(i)+"; bestW=w; } }\n";
-    }
+    out += "        for(int i=0;i<"+QString::number(mdfas.size())+"; ++i){ int len=matchLen(i,src,pos); int w=codeWeight(codeList[i]); if(len>bestLen || (len==bestLen && w>bestW)){ bestLen=len; bestIdx=i; bestW=w; } }\n";
     out += "        if (bestLen>0){ if(!out.empty()) out+=' '; out+=to_string(codeList[bestIdx]); pos+=bestLen; } else { if(!out.empty()) out+=' '; out+=string(\"ERR\"); pos++; }\n";
     out += "    }\n";
     out += "    return out;\n";
