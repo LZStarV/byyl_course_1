@@ -126,7 +126,7 @@ void MainWindow::onGenCodeClicked(bool){
         auto s = CodeGenerator::generateCombined(mdfas, codes, parsedPtr->alpha);
         txtGeneratedCode->setPlainText(s);
         QString base = ensureGenDir(); QString ts = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"); QString hash = currentRegexHash.isEmpty()? computeRegexHash(txtInputRegex->toPlainText()) : currentRegexHash;
-        QString savePath = base+"/tiny_"+ts+"_"+hash.mid(0,12)+".cpp";
+        QString savePath = base+"/lex_"+ts+"_"+hash.mid(0,12)+".cpp";
         QFile f(savePath); if(f.open(QIODevice::WriteOnly|QIODevice::Text)){ QTextStream o(&f); o<<s; f.close(); }
         currentCodePath = savePath; currentBinPath = base+"/bin/"+QFileInfo(savePath).completeBaseName();
         statusBar()->showMessage("组合扫描器代码已生成并保存到 generated/lex");
@@ -146,7 +146,7 @@ void MainWindow::onRunLexerClicked(bool){
     if(currentCodePath.isEmpty() || currentRegexHash != hashNow || !QFileInfo::exists(currentCodePath)){
         QVector<int> codes; auto mdfas = engine->buildAllMinDFA(*parsedPtr, codes);
         auto s = CodeGenerator::generateCombined(mdfas, codes, parsedPtr->alpha);
-        QString base = ensureGenDir(); QString ts = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"); QString savePath = base+"/tiny_"+ts+"_"+hashNow.mid(0,12)+".cpp";
+        QString base = ensureGenDir(); QString ts = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"); QString savePath = base+"/lex_"+ts+"_"+hashNow.mid(0,12)+".cpp";
         QFile f(savePath); if(f.open(QIODevice::WriteOnly|QIODevice::Text)){ QTextStream w(&f); w<<s; f.close(); }
         currentRegexHash = hashNow; currentCodePath = savePath; currentBinPath = base+"/bin/"+QFileInfo(savePath).completeBaseName();
     }
@@ -183,7 +183,7 @@ void MainWindow::onLoadRegexClicked(bool){
 }
 void MainWindow::onPickSampleClicked(bool){
     QString root = QCoreApplication::applicationDirPath()+"/../../tests/sample";
-    auto path = QFileDialog::getOpenFileName(this, QStringLiteral("选择样例文件"), root, QStringLiteral("Text (*.tny *.txt);;All (*)"));
+    auto path = QFileDialog::getOpenFileName(this, QStringLiteral("选择样例文件"), root, QStringLiteral("Code/Text (*.tny *.txt *.js *.ts *.py *.c *.cpp *.java *.go *.rs *.md);;All (*)"));
     if(path.isEmpty()) return;
     QFile f(path);
     if(!f.open(QIODevice::ReadOnly | QIODevice::Text)){ statusBar()->showMessage("样例文件打开失败"); return; }

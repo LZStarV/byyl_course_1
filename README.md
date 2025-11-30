@@ -22,8 +22,8 @@
 - 操作步骤：
   - 在“正则编辑”页点击“从文件加载”，选择正则文件（示例：`tests/regex/javascript.regex`）
   - 点击“转换”查看三阶段状态表
-  - 切到“代码查看”，点击“生成代码”：显示完整合并扫描器源码，并保存到 `generated/lex/tiny_<yyyyMMdd_HHmmss>_<hash12>.cpp`
-  - 切到“测试与验证”，左侧输入源文本（JS/TINY 片段），点击“运行词法分析”：若当前未有生成文件或正则更换，会先编译当前源码到 `generated/lex/bin/` 并执行；右侧展示 Token 编码输出
+  - 切到“代码查看”，点击“生成代码”：显示完整合并扫描器源码，并保存到 `generated/lex/lex_<yyyyMMdd_HHmmss>_<hash12>.cpp`
+  - 切到“测试与验证”，左侧输入源文本（示例片段，支持多语言），点击“运行词法分析”：若当前未有生成文件或正则更换，会先编译当前源码到 `generated/lex/bin/` 并执行；右侧展示 Token 编码输出
   - 若左侧为空，系统会尝试加载 `tests/sample/tiny/tiny1.tny`；仍为空则注入示例文本并提示状态栏
   - 也可点击“选择样例文件”从 `tests/sample/` 目录选择 JS（`javascript/`）、Python（`python/`）或 TINY（`tiny/`）的示例文件
   - 若输出包含 `ERR`，状态栏会提示“存在未识别的词法单元(ERR)，请检查正则与输入”
@@ -44,7 +44,7 @@
 ## 代码生成
 - 生成方法：Switch-Case 状态机（方法二）
 - 生成内容包含：`Judgechar`、`AcceptState`、`Step` 等函数，完整合并扫描器源码
-- 在“代码查看”页点击“生成代码”，会显示完整源码并保存到 `byyl.app/generated/lex/tiny_<yyyyMMdd_HHmmss>_<hash12>.cpp`
+- 在“代码查看”页点击“生成代码”，会显示完整源码并保存到 `byyl.app/generated/lex/lex_<yyyyMMdd_HHmmss>_<hash12>.cpp`
 - GUI 会将该源码编译到 `byyl.app/generated/lex/bin/` 并在“测试与验证”页通过“运行词法分析”执行；未更换正则时复用同一份生成代码与二进制
 
 ## 配置
