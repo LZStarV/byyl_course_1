@@ -339,7 +339,7 @@ void MainWindow::onRunLexerClicked(bool)
     QString src = txtSourceTiny->toPlainText();
     if (src.trimmed().isEmpty())
     {
-        QString p1 = QCoreApplication::applicationDirPath() + "/../../tests/sample/tiny/tiny1.tny";
+        QString p1 = QCoreApplication::applicationDirPath() + "/../../tests/test_data/sample/tiny/tiny1.tny";
         QFile   f1(p1);
         if (f1.open(QIODevice::ReadOnly | QIODevice::Text))
         {
@@ -349,7 +349,7 @@ void MainWindow::onRunLexerClicked(bool)
         }
         else
         {
-            QString p2 = QCoreApplication::applicationDirPath() + "/tests/sample/tiny/tiny1.tny";
+            QString p2 = QCoreApplication::applicationDirPath() + "/tests/test_data/sample/tiny/tiny1.tny";
             QFile   f2(p2);
             if (f2.open(QIODevice::ReadOnly | QIODevice::Text))
             {
@@ -424,7 +424,7 @@ void MainWindow::onLoadRegexClicked(bool)
 }
 void MainWindow::onPickSampleClicked(bool)
 {
-    QString root = QCoreApplication::applicationDirPath() + "/../../tests/sample";
+    QString root = QCoreApplication::applicationDirPath() + "/../../tests/test_data/sample";
     auto    path = QFileDialog::getOpenFileName(
         this,
         QStringLiteral("选择样例文件"),

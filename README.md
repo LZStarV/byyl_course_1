@@ -20,12 +20,12 @@
   - 代码查看：`txtGeneratedCode`，`btnGenCode`
   - 测试与验证：左侧 `txtSourceTiny`（标签：源程序输入），右侧 `txtLexResult`（标签：Token 编码输出），`btnRunLexer`
 - 操作步骤：
-  - 在“正则编辑”页点击“从文件加载”，选择正则文件（示例：`tests/regex/javascript.regex`）
+    - 在“正则编辑”页点击“从文件加载”，选择正则文件（示例：`tests/test_data/regex/javascript.regex`）
   - 点击“转换”查看三阶段状态表
   - 切到“代码查看”，点击“生成代码”：显示完整合并扫描器源码，并保存到 `generated/lex/lex_<yyyyMMdd_HHmmss>_<hash12>.cpp`
   - 切到“测试与验证”，左侧输入源文本（示例片段，支持多语言），点击“运行词法分析”：若当前未有生成文件或正则更换，会先编译当前源码到 `generated/lex/bin/` 并执行；右侧展示 Token 编码输出
-  - 若左侧为空，系统会尝试加载 `tests/sample/tiny/tiny1.tny`；仍为空则注入示例文本并提示状态栏
-  - 也可点击“选择样例文件”从 `tests/sample/` 目录选择 JS（`javascript/`）、Python（`python/`）或 TINY（`tiny/`）的示例文件
+    - 若左侧为空，系统会尝试加载 `tests/test_data/sample/tiny/tiny1.tny`；仍为空则注入示例文本并提示状态栏
+    - 也可点击“选择样例文件”从 `tests/test_data/sample/` 目录选择 JS（`javascript/`）、Python（`python/`）或 TINY（`tiny/`）的示例文件
   - 若输出包含 `ERR`，状态栏会提示“存在未识别的词法单元(ERR)，请检查正则与输入”
 
 ## 命令行测试
@@ -79,7 +79,8 @@
   - `codegen/codegen_compile_run_test.cpp`（目标：`CodegenTest`）
   - `config/config_weight_test.cpp`（目标：`ConfigWeightTest`）
   - `config/gen_dir_config_test.cpp`（目标：`GenDirConfigTest`）
-- `tests/sample/`：示例源代码（`javascript/`、`python/`、`tiny/`）
+- `tests/test_data/sample/`：示例源代码（`javascript/`、`python/`、`tiny/`、`cpp/`、`java/`、`go/`、`rs/`）
+- `tests/test_data/regex/`：供 GUI 选择加载的正则定义文件
 - `generated/lex/`：保存生成的合并扫描器源码（时间戳+哈希命名）
 - `generated/lex/bin/`：GUI 编译输出的可执行文件
 - `CMakeLists.txt`：应用与测试目标定义
