@@ -8,6 +8,7 @@ class QPlainTextEdit;
 class QTableWidget;
 class QPushButton;
 class QComboBox;
+class QLineEdit;
 class Engine;
 struct ParsedFile;
 struct MinDFA;
@@ -46,6 +47,15 @@ class MainWindow : public QMainWindow
     QComboBox*      cmbTokens;
     QComboBox*      cmbTokensDFA;
     QComboBox*      cmbTokensMin;
+    QPushButton*    btnExportNFA;
+    QPushButton*    btnPreviewNFA;
+    QPushButton*    btnExportDFA;
+    QPushButton*    btnPreviewDFA;
+    QPushButton*    btnExportMin;
+    QPushButton*    btnPreviewMin;
+    QLineEdit*      edtGraphDpiNfa;
+    QLineEdit*      edtGraphDpiDfa;
+    QLineEdit*      edtGraphDpiMin;
     QPlainTextEdit* txtGeneratedCode;
     QPlainTextEdit* txtSourceTiny;
     QPlainTextEdit* txtLexResult;
@@ -70,6 +80,21 @@ class MainWindow : public QMainWindow
     void            fillAllMin();
     QString         computeRegexHash(const QString& text);
     QString         ensureGenDir();
+    QString         ensureGraphDir();
+    bool            renderDotWithGraphviz(const QString& dotPath,
+                                          const QString& outPath,
+                                          const QString& fmt,
+                                          int            dpi);
+    QString         pickDotSavePath(const QString& suggestedName);
+    bool            renderDotFromContent(const QString& dotContent,
+                                         QString&       outPngPath,
+                                         int            dpi);
+    bool            renderDotToFile(const QString& dotContent,
+                                    const QString& outPath,
+                                    const QString& fmt,
+                                    int            dpi);
+    void            showImagePreview(const QString& pngPath, const QString& title);
+    QString         pickImageSavePath(const QString& suggestedName, const QString& fmt);
    private slots:
     void onConvertClicked(bool);
     void onGenCodeClicked(bool);
@@ -82,5 +107,17 @@ class MainWindow : public QMainWindow
     void onTokenChangedMin(int);
     void onPickSampleClicked(bool);
     void onTabChanged(int);
+    void onExportNFAClicked(bool);
+    void onPreviewNFAClicked(bool);
+    void onExportDFAClicked(bool);
+    void onPreviewDFAClicked(bool);
+    void onExportMinClicked(bool);
+    void onPreviewMinClicked(bool);
+    void onExportNFADot();
+    void onExportNFAImage();
+    void onExportDFADot();
+    void onExportDFAImage();
+    void onExportMinDot();
+    void onExportMinImage();
 };
 #endif  // MAINWINDOW_H

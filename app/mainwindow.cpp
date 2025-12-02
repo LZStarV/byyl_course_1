@@ -18,11 +18,19 @@
 #include <QProcess>
 #include <QDir>
 #include <QComboBox>
+#include <QLineEdit>
+#include <QDialog>
+#include <QLabel>
+#include <QGraphicsView>
+#include <QGraphicsScene>
+#include <QMenu>
+#include <QAction>
 #include "ui/ToastManager.h"
 #include "ui/SettingsDialog.h"
 #include <QDateTime>
 #include <QCryptographicHash>
 #include "../src/Engine.h"
+#include "../src/visual/DotExporter.h"
 #include "../src/config/Config.h"
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWindow)
@@ -93,7 +101,20 @@ void MainWindow::setupUiCustom()
     cmbTokens->setObjectName("cmbTokens");
     h2->addWidget(lblTok);
     h2->addWidget(cmbTokens);
+    auto h2b = new QHBoxLayout;
+    btnExportNFA = new QPushButton("导出(NFA)");
+    btnExportNFA->setObjectName("btnExportNFA");
+    btnPreviewNFA = new QPushButton("预览(NFA)");
+    btnPreviewNFA->setObjectName("btnPreviewNFA");
+    edtGraphDpiNfa = new QLineEdit;
+    edtGraphDpiNfa->setObjectName("edtGraphDpiNfa");
+    edtGraphDpiNfa->setPlaceholderText("DPI(默认150)");
+    h2b->addWidget(btnExportNFA);
+    h2b->addWidget(btnPreviewNFA);
+    h2b->addWidget(new QLabel("分辨率DPI"));
+    h2b->addWidget(edtGraphDpiNfa);
     l2->addLayout(h2);
+    l2->addLayout(h2b);
     tblNFA = new QTableWidget;
     tblNFA->setObjectName("tblNFA");
     l2->addWidget(tblNFA);
@@ -106,7 +127,20 @@ void MainWindow::setupUiCustom()
     cmbTokensDFA->setObjectName("cmbTokensDFA");
     h3->addWidget(lblTokD);
     h3->addWidget(cmbTokensDFA);
+    auto h3b = new QHBoxLayout;
+    btnExportDFA = new QPushButton("导出(DFA)");
+    btnExportDFA->setObjectName("btnExportDFA");
+    btnPreviewDFA = new QPushButton("预览(DFA)");
+    btnPreviewDFA->setObjectName("btnPreviewDFA");
+    edtGraphDpiDfa = new QLineEdit;
+    edtGraphDpiDfa->setObjectName("edtGraphDpiDfa");
+    edtGraphDpiDfa->setPlaceholderText("DPI(默认150)");
+    h3b->addWidget(btnExportDFA);
+    h3b->addWidget(btnPreviewDFA);
+    h3b->addWidget(new QLabel("分辨率DPI"));
+    h3b->addWidget(edtGraphDpiDfa);
     l3->addLayout(h3);
+    l3->addLayout(h3b);
     tblDFA = new QTableWidget;
     tblDFA->setObjectName("tblDFA");
     l3->addWidget(tblDFA);
@@ -119,7 +153,20 @@ void MainWindow::setupUiCustom()
     cmbTokensMin->setObjectName("cmbTokensMin");
     h4->addWidget(lblTokM);
     h4->addWidget(cmbTokensMin);
+    auto h4b = new QHBoxLayout;
+    btnExportMin = new QPushButton("导出(MinDFA)");
+    btnExportMin->setObjectName("btnExportMin");
+    btnPreviewMin = new QPushButton("预览(MinDFA)");
+    btnPreviewMin->setObjectName("btnPreviewMin");
+    edtGraphDpiMin = new QLineEdit;
+    edtGraphDpiMin->setObjectName("edtGraphDpiMin");
+    edtGraphDpiMin->setPlaceholderText("DPI(默认150)");
+    h4b->addWidget(btnExportMin);
+    h4b->addWidget(btnPreviewMin);
+    h4b->addWidget(new QLabel("分辨率DPI"));
+    h4b->addWidget(edtGraphDpiMin);
     l4->addLayout(h4);
+    l4->addLayout(h4b);
     tblMinDFA = new QTableWidget;
     tblMinDFA->setObjectName("tblMinDFA");
     btnGenCode = new QPushButton("生成代码");
@@ -161,26 +208,38 @@ void MainWindow::setupUiCustom()
     l6->addWidget(btnPickSample);
     l6->addWidget(btnRunLexer);
     tabs->addTab(w6, "测试与验证");
-    connect(btnStartConvert, &QPushButton::clicked, this, &MainWindow::onConvertClicked);
-    connect(btnGenCode, &QPushButton::clicked, this, &MainWindow::onGenCodeClicked);
-    connect(btnRunLexer, &QPushButton::clicked, this, &MainWindow::onRunLexerClicked);
-    connect(btnPickSample, &QPushButton::clicked, this, &MainWindow::onPickSampleClicked);
-    connect(btnCompileRun, &QPushButton::clicked, this, &MainWindow::onCompileRunClicked);
-    connect(btnLoadRegex, &QPushButton::clicked, this, &MainWindow::onLoadRegexClicked);
-    connect(btnSaveRegex, &QPushButton::clicked, this, &MainWindow::onSaveRegexClicked);
-    connect(cmbTokens,
-            QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this,
-            &MainWindow::onTokenChanged);
-    connect(cmbTokensDFA,
-            QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this,
-            &MainWindow::onTokenChangedDFA);
-    connect(cmbTokensMin,
-            QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this,
-            &MainWindow::onTokenChangedMin);
-    connect(tabs, &QTabWidget::currentChanged, this, &MainWindow::onTabChanged);
+    connect(btnStartConvert, &QPushButton::clicked, [this](bool b){ onConvertClicked(b); });
+    connect(btnGenCode, &QPushButton::clicked, [this](bool b){ onGenCodeClicked(b); });
+    connect(btnRunLexer, &QPushButton::clicked, [this](bool b){ onRunLexerClicked(b); });
+    connect(btnPickSample, &QPushButton::clicked, [this](bool b){ onPickSampleClicked(b); });
+    connect(btnCompileRun, &QPushButton::clicked, [this](bool b){ onCompileRunClicked(b); });
+    connect(btnLoadRegex, &QPushButton::clicked, [this](bool b){ onLoadRegexClicked(b); });
+    connect(btnSaveRegex, &QPushButton::clicked, [this](bool b){ onSaveRegexClicked(b); });
+    connect(cmbTokens, QOverload<int>::of(&QComboBox::currentIndexChanged), [this](int i){ onTokenChanged(i); });
+    connect(cmbTokensDFA, QOverload<int>::of(&QComboBox::currentIndexChanged), [this](int i){ onTokenChangedDFA(i); });
+    connect(cmbTokensMin, QOverload<int>::of(&QComboBox::currentIndexChanged), [this](int i){ onTokenChangedMin(i); });
+    connect(tabs, &QTabWidget::currentChanged, [this](int i){ onTabChanged(i); });
+    QMenu* menuNfa = new QMenu(btnExportNFA);
+    QAction* actNfaDot = menuNfa->addAction("导出DOT...");
+    QAction* actNfaImg = menuNfa->addAction("导出图片...");
+    btnExportNFA->setMenu(menuNfa);
+    connect(actNfaDot, &QAction::triggered, this, &MainWindow::onExportNFADot);
+    connect(actNfaImg, &QAction::triggered, this, &MainWindow::onExportNFAImage);
+    connect(btnPreviewNFA, &QPushButton::clicked, [this](bool b){ onPreviewNFAClicked(b); });
+    QMenu* menuDfa = new QMenu(btnExportDFA);
+    QAction* actDfaDot = menuDfa->addAction("导出DOT...");
+    QAction* actDfaImg = menuDfa->addAction("导出图片...");
+    btnExportDFA->setMenu(menuDfa);
+    connect(actDfaDot, &QAction::triggered, this, &MainWindow::onExportDFADot);
+    connect(actDfaImg, &QAction::triggered, this, &MainWindow::onExportDFAImage);
+    connect(btnPreviewDFA, &QPushButton::clicked, [this](bool b){ onPreviewDFAClicked(b); });
+    QMenu* menuMin = new QMenu(btnExportMin);
+    QAction* actMinDot = menuMin->addAction("导出DOT...");
+    QAction* actMinImg = menuMin->addAction("导出图片...");
+    btnExportMin->setMenu(menuMin);
+    connect(actMinDot, &QAction::triggered, this, &MainWindow::onExportMinDot);
+    connect(actMinImg, &QAction::triggered, this, &MainWindow::onExportMinImage);
+    connect(btnPreviewMin, &QPushButton::clicked, [this](bool b){ onPreviewMinClicked(b); });
 }
 
 void MainWindow::fillTable(QTableWidget* tbl, const Tables& t)
@@ -827,6 +886,160 @@ QString MainWindow::ensureGenDir()
         b.mkpath(".");
     return base;
 }
+QString MainWindow::ensureGraphDir()
+{
+    QString base = Config::generatedOutputDir();
+    QDir g(base + "/graphs");
+    if (!g.exists()) g.mkpath(".");
+    return g.absolutePath();
+}
+bool MainWindow::renderDotWithGraphviz(const QString& dotPath,
+                                       const QString& outPath,
+                                       const QString& fmt,
+                                       int            dpi)
+{
+    QProcess proc;
+    QStringList args;
+    args << ("-T" + fmt) << dotPath << "-o" << outPath;
+    if (dpi > 0) args << ("-Gdpi=" + QString::number(dpi));
+    proc.start("dot", args);
+    proc.waitForFinished();
+    return proc.exitStatus() == QProcess::NormalExit && proc.exitCode() == 0 && QFileInfo(outPath).exists();
+}
+
+QString MainWindow::pickDotSavePath(const QString& suggestedName)
+{
+    QString root = ensureGraphDir();
+    QString def  = root + "/" + suggestedName;
+    return QFileDialog::getSaveFileName(this,
+                                        QStringLiteral("保存DOT为"),
+                                        def,
+                                        QStringLiteral("Graphviz DOT (*.dot);;All (*)"));
+}
+
+bool MainWindow::renderDotFromContent(const QString& dotContent, QString& outPngPath, int dpi)
+{
+    QString tmpDir = QDir::tempPath();
+    QString ts     = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss_zzz");
+    outPngPath     = tmpDir + "/byyl_preview_" + ts + ".png";
+    QProcess proc;
+    QStringList args;
+    args << "-Tpng" << "-o" << outPngPath;
+    if (dpi > 0) args << ("-Gdpi=" + QString::number(dpi));
+    proc.start("dot", args);
+    if (!proc.waitForStarted())
+    {
+        statusBar()->showMessage("Graphviz启动失败，请检查dot安装");
+        return false;
+    }
+    proc.write(dotContent.toUtf8());
+    proc.closeWriteChannel();
+    if (!proc.waitForFinished(20000))
+    {
+        proc.kill();
+        statusBar()->showMessage("Graphviz渲染超时，请降低DPI或导出DOT后用外部查看器");
+        return false;
+    }
+    bool ok = proc.exitStatus() == QProcess::NormalExit && proc.exitCode() == 0 && QFileInfo(outPngPath).exists();
+    if (!ok)
+    {
+        auto err = QString::fromUtf8(proc.readAllStandardError());
+        if (!err.trimmed().isEmpty())
+            statusBar()->showMessage("Graphviz错误：" + err.left(200));
+    }
+    return ok;
+}
+
+bool MainWindow::renderDotToFile(const QString& dotContent,
+                                 const QString& outPath,
+                                 const QString& fmt,
+                                 int            dpi)
+{
+    QProcess proc;
+    QStringList args;
+    args << ("-T" + fmt) << "-o" << outPath;
+    if (dpi > 0) args << ("-Gdpi=" + QString::number(dpi));
+    proc.start("dot", args);
+    if (!proc.waitForStarted())
+    {
+        statusBar()->showMessage("Graphviz启动失败，请检查dot安装");
+        return false;
+    }
+    proc.write(dotContent.toUtf8());
+    proc.closeWriteChannel();
+    if (!proc.waitForFinished(20000))
+    {
+        proc.kill();
+        statusBar()->showMessage("Graphviz渲染超时，请降低DPI或导出DOT后用外部查看器");
+        return false;
+    }
+    bool ok = proc.exitStatus() == QProcess::NormalExit && proc.exitCode() == 0 && QFileInfo(outPath).exists();
+    if (!ok)
+    {
+        auto err = QString::fromUtf8(proc.readAllStandardError());
+        if (!err.trimmed().isEmpty())
+            statusBar()->showMessage("Graphviz错误：" + err.left(200));
+    }
+    return ok;
+}
+
+void MainWindow::showImagePreview(const QString& pngPath, const QString& title)
+{
+    QDialog dlg(this);
+    dlg.setWindowTitle(title);
+    auto v   = new QVBoxLayout(&dlg);
+    auto h   = new QHBoxLayout;
+    auto btnZoomIn  = new QPushButton("缩放+");
+    auto btnZoomOut = new QPushButton("缩放-");
+    auto btnFit     = new QPushButton("适应窗口");
+    auto btnReset   = new QPushButton("100%");
+    h->addWidget(btnZoomIn);
+    h->addWidget(btnZoomOut);
+    h->addWidget(btnFit);
+    h->addWidget(btnReset);
+    v->addLayout(h);
+    auto scene = new QGraphicsScene(&dlg);
+    auto view  = new QGraphicsView(scene);
+    view->setDragMode(QGraphicsView::ScrollHandDrag);
+    QPixmap px(pngPath);
+    if (!px.isNull())
+    {
+        scene->addPixmap(px);
+    }
+    else
+    {
+        auto warn = new QLabel("图像加载失败或为空，请降低DPI或导出DOT使用外部查看器");
+        v->addWidget(warn);
+    }
+    v->addWidget(view);
+    QObject::connect(btnZoomIn, &QPushButton::clicked, [&]() {
+        view->scale(1.2, 1.2);
+    });
+    QObject::connect(btnZoomOut, &QPushButton::clicked, [&]() {
+        view->scale(1.0 / 1.2, 1.0 / 1.2);
+    });
+    QObject::connect(btnFit, &QPushButton::clicked, [&]() {
+        view->resetTransform();
+        view->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
+    });
+    QObject::connect(btnReset, &QPushButton::clicked, [&]() {
+        view->resetTransform();
+    });
+    dlg.resize(900, 700);
+    dlg.exec();
+}
+
+QString MainWindow::pickImageSavePath(const QString& suggestedName, const QString& fmt)
+{
+    QString root = ensureGraphDir();
+    QString def  = root + "/" + suggestedName;
+    QString filter = fmt.compare("png", Qt::CaseInsensitive) == 0 ? QStringLiteral("PNG (*.png);;All (*)")
+                                                                   : QStringLiteral("Image (*.*);;All (*)");
+    return QFileDialog::getSaveFileName(this,
+                                        QStringLiteral("保存图片为"),
+                                        def,
+                                        filter);
+}
 void MainWindow::onTabChanged(int idx)
 {
     if (idx < 0)
@@ -845,4 +1058,291 @@ void MainWindow::onTabChanged(int idx)
             f.close();
         }
     }
+}
+
+void MainWindow::onExportNFAClicked(bool)
+{
+    if (!parsedPtr) return;
+    int idx = cmbTokens ? cmbTokens->currentIndex() : -1;
+    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
+    {
+        statusBar()->showMessage("请选择具体Token后再导出NFA");
+        ToastManager::instance().showWarning("请选择具体Token");
+        return;
+    }
+    auto pt = parsedPtr->tokens[idx - 1];
+    auto nfa = engine->buildNFA(pt.ast, parsedPtr->alpha);
+    QString ts = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    QString suggest = "nfa_" + pt.rule.name + "_" + ts + ".dot";
+    QString dotPath = pickDotSavePath(suggest);
+    if (dotPath.isEmpty()) return;
+    if (!DotExporter::exportToDot(nfa, dotPath))
+    {
+        statusBar()->showMessage("DOT文件写入失败");
+        ToastManager::instance().showError("DOT文件写入失败");
+        return;
+    }
+    statusBar()->showMessage("NFA DOT已导出: " + dotPath);
+    ToastManager::instance().showInfo("NFA DOT已导出");
+}
+
+void MainWindow::onExportNFADot()
+{
+    if (!parsedPtr) return;
+    int idx = cmbTokens ? cmbTokens->currentIndex() : -1;
+    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
+        return;
+    auto pt  = parsedPtr->tokens[idx - 1];
+    auto nfa = engine->buildNFA(pt.ast, parsedPtr->alpha);
+    QString ts      = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    QString suggest = "nfa_" + pt.rule.name + "_" + ts + ".dot";
+    QString outPath = pickDotSavePath(suggest);
+    if (outPath.isEmpty()) return;
+    if (!DotExporter::exportToDot(nfa, outPath))
+    {
+        statusBar()->showMessage("DOT文件写入失败");
+        ToastManager::instance().showError("DOT文件写入失败");
+        return;
+    }
+    statusBar()->showMessage("NFA DOT已导出: " + outPath);
+}
+
+void MainWindow::onExportNFAImage()
+{
+    if (!parsedPtr) return;
+    int idx = cmbTokens ? cmbTokens->currentIndex() : -1;
+    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
+        return;
+    auto pt  = parsedPtr->tokens[idx - 1];
+    auto nfa = engine->buildNFA(pt.ast, parsedPtr->alpha);
+    int  dpi = (edtGraphDpiNfa && !edtGraphDpiNfa->text().trimmed().isEmpty()) ? edtGraphDpiNfa->text().trimmed().toInt() : 150;
+    QString ts      = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    QString suggest = "nfa_" + pt.rule.name + "_" + ts + ".png";
+    QString outPath = pickImageSavePath(suggest, "png");
+    if (outPath.isEmpty()) return;
+    if (!renderDotToFile(DotExporter::toDot(nfa), outPath, "png", dpi))
+    {
+        statusBar()->showMessage("图片导出失败");
+        ToastManager::instance().showError("图片导出失败");
+        return;
+    }
+    statusBar()->showMessage("NFA 图片已导出: " + outPath);
+}
+
+void MainWindow::onPreviewNFAClicked(bool)
+{
+    if (!parsedPtr) return;
+    int idx = cmbTokens ? cmbTokens->currentIndex() : -1;
+    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
+    {
+        statusBar()->showMessage("请选择具体Token后预览NFA");
+        ToastManager::instance().showWarning("请选择具体Token");
+        return;
+    }
+    auto pt = parsedPtr->tokens[idx - 1];
+    auto nfa = engine->buildNFA(pt.ast, parsedPtr->alpha);
+    int dpi = (edtGraphDpiNfa && !edtGraphDpiNfa->text().trimmed().isEmpty()) ? edtGraphDpiNfa->text().trimmed().toInt() : 150;
+    QString pngPath;
+    if (!renderDotFromContent(DotExporter::toDot(nfa), pngPath, dpi))
+    {
+        statusBar()->showMessage("Graphviz渲染失败，请确认已安装dot");
+        ToastManager::instance().showError("Graphviz渲染失败");
+        return;
+    }
+    showImagePreview(pngPath, "NFA 预览");
+    QFile::remove(pngPath);
+}
+
+void MainWindow::onExportDFAClicked(bool)
+{
+    if (!parsedPtr) return;
+    int idx = cmbTokensDFA ? cmbTokensDFA->currentIndex() : -1;
+    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
+    {
+        statusBar()->showMessage("请选择具体Token后再导出DFA");
+        ToastManager::instance().showWarning("请选择具体Token");
+        return;
+    }
+    auto pt = parsedPtr->tokens[idx - 1];
+    auto nfa = engine->buildNFA(pt.ast, parsedPtr->alpha);
+    auto dfa = engine->buildDFA(nfa);
+    QString ts = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    QString suggest = "dfa_" + pt.rule.name + "_" + ts + ".dot";
+    QString dotPath = pickDotSavePath(suggest);
+    if (dotPath.isEmpty()) return;
+    if (!DotExporter::exportToDot(dfa, dotPath))
+    {
+        statusBar()->showMessage("DOT文件写入失败");
+        ToastManager::instance().showError("DOT文件写入失败");
+        return;
+    }
+    statusBar()->showMessage("DFA DOT已导出: " + dotPath);
+    ToastManager::instance().showInfo("DFA DOT已导出");
+}
+
+void MainWindow::onExportDFADot()
+{
+    if (!parsedPtr) return;
+    int idx = cmbTokensDFA ? cmbTokensDFA->currentIndex() : -1;
+    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size()) return;
+    auto pt  = parsedPtr->tokens[idx - 1];
+    auto nfa = engine->buildNFA(pt.ast, parsedPtr->alpha);
+    auto dfa = engine->buildDFA(nfa);
+    QString ts      = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    QString suggest = "dfa_" + pt.rule.name + "_" + ts + ".dot";
+    QString outPath = pickDotSavePath(suggest);
+    if (outPath.isEmpty()) return;
+    if (!DotExporter::exportToDot(dfa, outPath))
+    {
+        statusBar()->showMessage("DOT文件写入失败");
+        ToastManager::instance().showError("DOT文件写入失败");
+        return;
+    }
+    statusBar()->showMessage("DFA DOT已导出: " + outPath);
+}
+
+void MainWindow::onExportDFAImage()
+{
+    if (!parsedPtr) return;
+    int idx = cmbTokensDFA ? cmbTokensDFA->currentIndex() : -1;
+    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size()) return;
+    auto pt  = parsedPtr->tokens[idx - 1];
+    auto nfa = engine->buildNFA(pt.ast, parsedPtr->alpha);
+    auto dfa = engine->buildDFA(nfa);
+    int  dpi = (edtGraphDpiDfa && !edtGraphDpiDfa->text().trimmed().isEmpty()) ? edtGraphDpiDfa->text().trimmed().toInt() : 150;
+    QString ts      = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    QString suggest = "dfa_" + pt.rule.name + "_" + ts + ".png";
+    QString outPath = pickImageSavePath(suggest, "png");
+    if (outPath.isEmpty()) return;
+    if (!renderDotToFile(DotExporter::toDot(dfa), outPath, "png", dpi))
+    {
+        statusBar()->showMessage("图片导出失败");
+        ToastManager::instance().showError("图片导出失败");
+        return;
+    }
+    statusBar()->showMessage("DFA 图片已导出: " + outPath);
+}
+
+void MainWindow::onPreviewDFAClicked(bool)
+{
+    if (!parsedPtr) return;
+    int idx = cmbTokensDFA ? cmbTokensDFA->currentIndex() : -1;
+    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
+    {
+        statusBar()->showMessage("请选择具体Token后预览DFA");
+        ToastManager::instance().showWarning("请选择具体Token");
+        return;
+    }
+    auto pt = parsedPtr->tokens[idx - 1];
+    auto nfa = engine->buildNFA(pt.ast, parsedPtr->alpha);
+    auto dfa = engine->buildDFA(nfa);
+    int dpi = (edtGraphDpiDfa && !edtGraphDpiDfa->text().trimmed().isEmpty()) ? edtGraphDpiDfa->text().trimmed().toInt() : 150;
+    QString pngPath;
+    if (!renderDotFromContent(DotExporter::toDot(dfa), pngPath, dpi))
+    {
+        statusBar()->showMessage("Graphviz渲染失败，请确认已安装dot");
+        ToastManager::instance().showError("Graphviz渲染失败");
+        return;
+    }
+    showImagePreview(pngPath, "DFA 预览");
+    QFile::remove(pngPath);
+}
+
+void MainWindow::onExportMinClicked(bool)
+{
+    if (!parsedPtr) return;
+    int idx = cmbTokensMin ? cmbTokensMin->currentIndex() : -1;
+    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
+    {
+        statusBar()->showMessage("请选择具体Token后再导出MinDFA");
+        ToastManager::instance().showWarning("请选择具体Token");
+        return;
+    }
+    auto pt = parsedPtr->tokens[idx - 1];
+    auto nfa = engine->buildNFA(pt.ast, parsedPtr->alpha);
+    auto dfa = engine->buildDFA(nfa);
+    auto mdfa = engine->buildMinDFA(dfa);
+    QString ts = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    QString suggest = "mindfa_" + pt.rule.name + "_" + ts + ".dot";
+    QString dotPath = pickDotSavePath(suggest);
+    if (dotPath.isEmpty()) return;
+    if (!DotExporter::exportToDot(mdfa, dotPath))
+    {
+        statusBar()->showMessage("DOT文件写入失败");
+        ToastManager::instance().showError("DOT文件写入失败");
+        return;
+    }
+    statusBar()->showMessage("MinDFA DOT已导出: " + dotPath);
+    ToastManager::instance().showInfo("MinDFA DOT已导出");
+}
+
+void MainWindow::onExportMinDot()
+{
+    if (!parsedPtr) return;
+    int idx = cmbTokensMin ? cmbTokensMin->currentIndex() : -1;
+    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size()) return;
+    auto pt  = parsedPtr->tokens[idx - 1];
+    auto nfa = engine->buildNFA(pt.ast, parsedPtr->alpha);
+    auto dfa = engine->buildDFA(nfa);
+    auto mdfa = engine->buildMinDFA(dfa);
+    QString ts      = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    QString suggest = "mindfa_" + pt.rule.name + "_" + ts + ".dot";
+    QString outPath = pickDotSavePath(suggest);
+    if (outPath.isEmpty()) return;
+    if (!DotExporter::exportToDot(mdfa, outPath))
+    {
+        statusBar()->showMessage("DOT文件写入失败");
+        ToastManager::instance().showError("DOT文件写入失败");
+        return;
+    }
+    statusBar()->showMessage("MinDFA DOT已导出: " + outPath);
+}
+
+void MainWindow::onExportMinImage()
+{
+    if (!parsedPtr) return;
+    int idx = cmbTokensMin ? cmbTokensMin->currentIndex() : -1;
+    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size()) return;
+    auto pt  = parsedPtr->tokens[idx - 1];
+    auto nfa = engine->buildNFA(pt.ast, parsedPtr->alpha);
+    auto dfa = engine->buildDFA(nfa);
+    auto mdfa = engine->buildMinDFA(dfa);
+    int  dpi = (edtGraphDpiMin && !edtGraphDpiMin->text().trimmed().isEmpty()) ? edtGraphDpiMin->text().trimmed().toInt() : 150;
+    QString ts      = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    QString suggest = "mindfa_" + pt.rule.name + "_" + ts + ".png";
+    QString outPath = pickImageSavePath(suggest, "png");
+    if (outPath.isEmpty()) return;
+    if (!renderDotToFile(DotExporter::toDot(mdfa), outPath, "png", dpi))
+    {
+        statusBar()->showMessage("图片导出失败");
+        ToastManager::instance().showError("图片导出失败");
+        return;
+    }
+    statusBar()->showMessage("MinDFA 图片已导出: " + outPath);
+}
+
+void MainWindow::onPreviewMinClicked(bool)
+{
+    if (!parsedPtr) return;
+    int idx = cmbTokensMin ? cmbTokensMin->currentIndex() : -1;
+    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
+    {
+        statusBar()->showMessage("请选择具体Token后预览MinDFA");
+        ToastManager::instance().showWarning("请选择具体Token");
+        return;
+    }
+    auto pt = parsedPtr->tokens[idx - 1];
+    auto nfa = engine->buildNFA(pt.ast, parsedPtr->alpha);
+    auto dfa = engine->buildDFA(nfa);
+    auto mdfa = engine->buildMinDFA(dfa);
+    int dpi = (edtGraphDpiMin && !edtGraphDpiMin->text().trimmed().isEmpty()) ? edtGraphDpiMin->text().trimmed().toInt() : 150;
+    QString pngPath;
+    if (!renderDotFromContent(DotExporter::toDot(mdfa), pngPath, dpi))
+    {
+        statusBar()->showMessage("Graphviz渲染失败，请确认已安装dot");
+        ToastManager::instance().showError("Graphviz渲染失败");
+        return;
+    }
+    showImagePreview(pngPath, "MinDFA 预览");
+    QFile::remove(pngPath);
 }

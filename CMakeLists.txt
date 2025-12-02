@@ -34,6 +34,8 @@ set(APP_SOURCES
     src/automata/Hopcroft.cpp
     src/generator/CodeGenerator.h
     src/generator/CodeGenerator.cpp
+    src/visual/DotExporter.h
+    src/visual/DotExporter.cpp
     src/Engine.h
     src/Engine.cpp
     src/config/Config.h
@@ -59,6 +61,7 @@ target_sources(GuiTest PRIVATE
     app/ui/ToastWidget.cpp
     app/ui/ToastManager.cpp
     app/ui/SettingsDialog.cpp
+    src/visual/DotExporter.cpp
     src/regex/RegexLexer.cpp
     src/regex/RegexParser.cpp
     src/automata/Thompson.cpp
@@ -74,6 +77,7 @@ add_test(NAME 界面测试 COMMAND GuiTest)
 add_executable(CliRegexTest tests/cli/cli_regex_test.cpp)
 target_sources(CliRegexTest PRIVATE
     tests/cli/cli_regex_test.h
+    src/visual/DotExporter.cpp
     src/regex/RegexLexer.cpp
     src/regex/RegexParser.cpp
     src/automata/Thompson.cpp
@@ -89,6 +93,7 @@ add_test(NAME 命令行正则测试 COMMAND CliRegexTest)
 add_executable(CodegenTest tests/codegen/codegen_compile_run_test.cpp)
 target_sources(CodegenTest PRIVATE
     tests/codegen/codegen_compile_run_test.h
+    src/visual/DotExporter.cpp
     src/regex/RegexLexer.cpp
     src/regex/RegexParser.cpp
     src/automata/Thompson.cpp
@@ -104,6 +109,7 @@ add_test(NAME 代码生成器测试 COMMAND CodegenTest)
 add_executable(ConfigWeightTest tests/config/config_weight_test.cpp)
 target_sources(ConfigWeightTest PRIVATE
     tests/config/config_weight_test.h
+    src/visual/DotExporter.cpp
     src/regex/RegexLexer.cpp
     src/regex/RegexParser.cpp
     src/automata/Thompson.cpp
@@ -131,3 +137,19 @@ target_sources(ConfigGuiPersistTest PRIVATE
 )
 target_link_libraries(ConfigGuiPersistTest PRIVATE Qt6::Core Qt6::Test)
 add_test(NAME 配置持久化测试 COMMAND ConfigGuiPersistTest)
+
+add_executable(DotExportTest tests/automata/dot_export_test.cpp)
+target_sources(DotExportTest PRIVATE
+    tests/automata/dot_export_test.h
+    src/visual/DotExporter.cpp
+    src/regex/RegexLexer.cpp
+    src/regex/RegexParser.cpp
+    src/automata/Thompson.cpp
+    src/automata/SubsetConstruction.cpp
+    src/automata/Hopcroft.cpp
+    src/Engine.cpp
+    src/generator/CodeGenerator.cpp
+    src/config/Config.cpp
+)
+target_link_libraries(DotExportTest PRIVATE Qt6::Core Qt6::Test)
+add_test(NAME DOT导出测试 COMMAND DotExportTest)

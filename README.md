@@ -48,6 +48,7 @@
 - 正则解析：支持连接、`|`、`*`、`+`、`?`、`[]`、`()`、`\` 转义、命名宏 `name = expr`
 - 自动机转换：RE→NFA（Thompson）、NFA→DFA（子集构造）、DFA→MinDFA（Hopcroft）
 - 表格展示：动态列头（字母表与 `#` 表示 ε），首列标记（`-` 初态、`+` 终态）
+- DOT 导出与可视化：一键导出 NFA/DFA/MinDFA 为 Graphviz DOT，支持调用系统 `dot` 渲染 PNG 预览与分辨率设置
 - 代码生成：从 MinDFA 生成 C/C++ 源码（方法二：Switch-Case）
 - 生成代码持久化与复用：完整合并扫描器源码按时间戳+正则哈希保存至 `byyl.app/generated/lex`，并编译到 `byyl.app/generated/lex/bin`；在未更换正则表达式时，GUI 与测试复用当前生成文件
 - 测试与验证：并行扫描所有 Token 规则，最长匹配 + 权重策略；跳过空白；按配置跳过注释/字符串（默认跳过 `//`、`/*...*/`、`#` 注释及 `'"`、`""`、`` `...${...}` `` 字符串；TINY 的 `{...}` 注释默认关闭）
@@ -81,12 +82,14 @@
 - 页签与控件（objectName）：
   - 正则编辑：`txtInputRegex`，`btnLoadRegex`，`btnStartConvert`
   - NFA/DFA/MinDFA 表：`tblNFA`，`tblDFA`，`tblMinDFA`
+  - DOT 导出与预览：`btnExportNFA`、`btnPreviewNFA`、`btnExportDFA`、`btnPreviewDFA`、`btnExportMin`、`btnPreviewMin`，分辨率输入 `edtGraphDpi`
   - 代码查看：`txtGeneratedCode`，`btnGenCode`
   - 测试与验证：左侧 `txtSourceTiny`（标签：源程序输入），右侧 `txtLexResult`（标签：Token 编码输出），`btnRunLexer`
 - 操作步骤：
     - 在“正则编辑”页点击“从文件加载”，选择正则文件（示例：`tests/test_data/regex/javascript.regex`）
   - 点击“转换”查看三阶段状态表
   - 切到“代码查看”，点击“生成代码”：显示完整合并扫描器源码，并保存到 `generated/lex/lex_<yyyyMMdd_HHmmss>_<hash12>.cpp`
+  - 在各自动机页点击“导出DOT”生成对应 DOT 文件到 `generated/lex/graphs/`；点击“预览”将调用 `dot` 渲染并弹窗显示 PNG，支持通过右侧 DPI 输入调整清晰度
   - 切到“测试与验证”，左侧输入源文本（示例片段，支持多语言），点击“运行词法分析”：若当前未有生成文件或正则更换，会先编译当前源码到 `generated/lex/bin/` 并执行；右侧展示 Token 编码输出
     - 若左侧为空，系统会尝试加载 `tests/test_data/sample/tiny/tiny1.tny`；仍为空则注入示例文本并提示状态栏
     - 也可点击“选择样例文件”从 `tests/test_data/sample/` 目录选择 JS（`javascript/`）、Python（`python/`）或 TINY（`tiny/`）的示例文件
@@ -162,3 +165,10 @@
 - 日志：建议启用 `export QT_LOGGING_RULES="*.debug=true"`，在关键路径输出结构化日志
 - 跨平台：路径用 `QDir/QFileInfo`，文件用 `QTextStream`；兼容 `\n/\r`；布局使用 `QLayout`；源码 UTF-8
 - UI 自动化：关键控件均设置 `objectName`，`Qt Test` 通过 `findChild` 与 `QTest` 进行交互与断言
+- Graphviz：若需预览，请确保已安装 Graphviz 并可在 PATH 中调用 `dot`（macOS：`brew install graphviz`）
+
+## DOT 格式规范（开发者）
+- NFA：节点编号为状态 ID，接受态 `shape=doublecircle`；起始态通过隐含点 `__start -> <start>` 指示；ε 转移的标签为 `ε`
+- DFA：节点编号为状态 ID，`label` 显示对应 NFA 集合（如 `{1, 2}`）；转移标签按字母表符号输出（含 `letter`/`digit`）
+- MinDFA：节点编号为代表 ID；接受态 `shape=doublecircle`；其余与 DFA 一致
+- 所有标签进行基本转义（`"` 与 `\`），图布局 `rankdir=LR`
