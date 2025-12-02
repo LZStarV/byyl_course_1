@@ -2,5 +2,5 @@ letter = [A-Za-z_]
 digit = [0-9]
 _identifier100 = letter(letter|digit)*
 _number101 = digit+
-_keywords200S = class | interface | enum | package | import | public | private | protected | static | final | abstract | synchronized | volatile | transient | this | super | extends | implements | new | return | if | else | for | while | do | switch | case | break | continue | try | catch | finally | throw | throws | boolean | byte | short | int | long | float | double | char | void | true | false | null
-_operators220S = \+ | - | \* | / | % | == | != | < | <= | > | >= | = | \+\+ | -- | && | \|\| | ! | \( | \) | \[ | \] | \{ | \} | , | ; | \.
+_keywords200S = class | interface | enum | package | import | public | private | protected | static | final | abstract | synchronized | volatile | transient | this | super | extends | implements | new | return | if | else | for | while | do | switch | case | break | continue | try | catch | finally | throw | throws | boolean | byte | short | int | long | float | double | char | void | true | false | null | instanceof | assert
+_operators220S = \+ | - | \* | / | % | == | != | < | <= | > | >= | = | \+\+ | -- | && | \|\| | ! | & | \| | \^ | << | >> | >>> | \( | \) | \[ | \] | \{ | \} | , | ; | : | \. | \" | \'

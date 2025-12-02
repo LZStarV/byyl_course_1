@@ -3,4 +3,4 @@ digit = [0-9]
 _identifier100 = letter(letter|digit)*
 _number101 = digit+
 _keywords200S = fn | let | mut | const | static | struct | enum | trait | impl | mod | use | pub | crate | super | self | Self | type | where | as | match | if | else | loop | while | for | in | break | continue | return | move | async | await
-_operators220S = \+ | - | \* | / | % | == | != | < | <= | > | >= | = | && | \|\| | ! | & | \| | \^ | << | >> | :: | \. | : | -> | => | \( | \) | \[ | \] | \{ | \} | , | ;
+_operators220S = \+ | - | \* | / | % | == | != | < | <= | > | >= | = | && | \|\| | ! | & | \| | \^ | << | >> | :: | \. | : | -> | => | \( | \) | \[ | \] | \{ | \} | , | ; | \"

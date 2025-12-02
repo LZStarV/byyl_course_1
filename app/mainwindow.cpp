@@ -336,50 +336,26 @@ void MainWindow::onGenCodeClicked(bool)
         statusBar()->showMessage("请先转换");
         return;
     }
-    int idx = cmbTokens ? cmbTokens->currentIndex() : -1;
-    if (idx == 0)
-    {
-        QVector<int> codes;
-        auto         mdfas = engine->buildAllMinDFA(*parsedPtr, codes);
-        auto         s     = CodeGenerator::generateCombined(mdfas, codes, parsedPtr->alpha);
-        txtGeneratedCode->setPlainText(s);
-        QString base = ensureGenDir();
-        QString ts   = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
-        QString hash = currentRegexHash.isEmpty() ? computeRegexHash(txtInputRegex->toPlainText())
-                                                  : currentRegexHash;
-        QString savePath = base + "/lex_" + ts + "_" + hash.mid(0, 12) + ".cpp";
-        QFile   f(savePath);
-        if (f.open(QIODevice::WriteOnly | QIODevice::Text))
-        {
-            QTextStream o(&f);
-            o << s;
-            f.close();
-        }
-        currentCodePath = savePath;
-        currentBinPath  = base + "/bin/" + QFileInfo(savePath).completeBaseName();
-        statusBar()->showMessage("组合扫描器代码已生成并保存到 generated/lex");
-        ToastManager::instance().showInfo("组合扫描器代码已生成");
-        return;
-    }
-    if (!lastMinPtr)
-    {
-        onTokenChanged(idx);
-        if (!lastMinPtr)
-        {
-            statusBar()->showMessage("请先转换");
-            ToastManager::instance().showWarning("请先转换");
-            return;
-        }
-    }
-    QMap<QString, int> codesMap;
-    for (auto p : parsedPtr->tokens)
-    {
-        codesMap[p.rule.name] = p.rule.code;
-    }
-    auto s = engine->generateCode(*lastMinPtr, codesMap);
+    QVector<int> codes;
+    auto         mdfas = engine->buildAllMinDFA(*parsedPtr, codes);
+    auto         s     = CodeGenerator::generateCombined(mdfas, codes, parsedPtr->alpha);
     txtGeneratedCode->setPlainText(s);
-    statusBar()->showMessage("代码已生成");
-    ToastManager::instance().showInfo("代码已生成");
+    QString base = ensureGenDir();
+    QString ts   = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    QString hash = currentRegexHash.isEmpty() ? computeRegexHash(txtInputRegex->toPlainText())
+                                              : currentRegexHash;
+    QString savePath = base + "/lex_" + ts + "_" + hash.mid(0, 12) + ".cpp";
+    QFile   f(savePath);
+    if (f.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        QTextStream o(&f);
+        o << s;
+        f.close();
+    }
+    currentCodePath = savePath;
+    currentBinPath  = base + "/bin/" + QFileInfo(savePath).completeBaseName();
+    statusBar()->showMessage("组合扫描器代码已生成并保存到 generated/lex");
+    ToastManager::instance().showInfo("组合扫描器代码已生成");
 }
 
 void MainWindow::onRunLexerClicked(bool)
