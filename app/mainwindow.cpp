@@ -4,6 +4,7 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QTabWidget>
+#include <QStackedWidget>
 #include <QTextEdit>
 #include <QPlainTextEdit>
 #include <QTableWidget>
@@ -27,6 +28,9 @@
 #include <QAction>
 #include "ui/ToastManager.h"
 #include "ui/SettingsDialog.h"
+#include "pages/home/HomePage.h"
+#include "pages/exp1/Exp1Page.h"
+#include "pages/exp2/Exp2Page.h"
 #include <QDateTime>
 #include <QCryptographicHash>
 #include "../src/Engine.h"
@@ -36,6 +40,7 @@
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    setWindowTitle(QStringLiteral("编译原理课程设计"));
     engine             = new Engine();
     parsedPtr          = nullptr;
     lastMinPtr         = nullptr;
@@ -65,9 +70,14 @@ MainWindow::~MainWindow()
 
 void MainWindow::setupUiCustom()
 {
-    tabs   = new QTabWidget(ui->centralwidget);
+    stack  = new QStackedWidget(ui->centralwidget);
     auto v = new QVBoxLayout;
     ui->centralwidget->setLayout(v);
+    v->addWidget(stack);
+    auto home = new HomePage;
+    auto exp1 = new Exp1Page;
+    auto exp2 = new Exp2Page;
+    tabs       = new QTabWidget(exp1->contentWidget());
     auto mbar = menuBar();
     auto mSettings = mbar->addMenu("设置");
     auto actOpenSettings = mSettings->addAction("打开设置…");
@@ -75,7 +85,8 @@ void MainWindow::setupUiCustom()
         SettingsDialog dlg(this);
         dlg.exec();
     });
-    v->addWidget(tabs);
+    if (exp1->contentWidget() && exp1->contentWidget()->layout())
+        exp1->contentWidget()->layout()->addWidget(tabs);
     auto w1       = new QWidget;
     auto l1       = new QVBoxLayout(w1);
     txtInputRegex = new QTextEdit;
@@ -183,6 +194,14 @@ void MainWindow::setupUiCustom()
     l5->addWidget(txtGeneratedCode);
     l5->addWidget(btnCompileRun);
     tabs->addTab(w5, "代码查看");
+    stack->addWidget(home);
+    stack->addWidget(exp1);
+    stack->addWidget(exp2);
+    stack->setCurrentIndex(0);
+    connect(home, &HomePage::openExp1, [this]() { stack->setCurrentIndex(1); });
+    connect(home, &HomePage::openExp2, [this]() { stack->setCurrentIndex(2); });
+    connect(exp1, &Exp1Page::requestBack, [this]() { stack->setCurrentIndex(0); });
+    connect(exp2, &Exp2Page::requestBack, [this]() { stack->setCurrentIndex(0); });
     auto w6       = new QWidget;
     auto l6       = new QVBoxLayout(w6);
     auto h6       = new QHBoxLayout;

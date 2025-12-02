@@ -20,6 +20,12 @@ set(APP_SOURCES
     app/ui/ToastManager.cpp
     app/ui/SettingsDialog.h
     app/ui/SettingsDialog.cpp
+    app/pages/home/HomePage.h
+    app/pages/home/HomePage.cpp
+    app/pages/exp1/Exp1Page.h
+    app/pages/exp1/Exp1Page.cpp
+    app/pages/exp2/Exp2Page.h
+    app/pages/exp2/Exp2Page.cpp
     src/model/Alphabet.h
     src/model/Automata.h
     src/regex/RegexLexer.h
@@ -61,6 +67,9 @@ target_sources(GuiTest PRIVATE
     app/ui/ToastWidget.cpp
     app/ui/ToastManager.cpp
     app/ui/SettingsDialog.cpp
+    app/pages/home/HomePage.cpp
+    app/pages/exp1/Exp1Page.cpp
+    app/pages/exp2/Exp2Page.cpp
     src/visual/DotExporter.cpp
     src/regex/RegexLexer.cpp
     src/regex/RegexParser.cpp

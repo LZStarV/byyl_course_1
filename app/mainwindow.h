@@ -8,6 +8,7 @@ class QPlainTextEdit;
 class QTableWidget;
 class QPushButton;
 class QComboBox;
+class QStackedWidget;
 class QLineEdit;
 class Engine;
 struct ParsedFile;
@@ -39,6 +40,7 @@ class MainWindow : public QMainWindow
 
    private:
     Ui::MainWindow* ui;
+    QStackedWidget* stack;
     QTabWidget*     tabs;
     QTextEdit*      txtInputRegex;
     QTableWidget*   tblNFA;
