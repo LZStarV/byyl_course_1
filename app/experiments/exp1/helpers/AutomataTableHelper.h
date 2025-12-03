@@ -2,7 +2,7 @@
 #include <QVector>
 #include <QString>
 #include <QTableWidget>
-#include "../../../src/Engine.h"
+#include "../../../../src/Engine.h"
 
 class AutomataTableHelper
 {

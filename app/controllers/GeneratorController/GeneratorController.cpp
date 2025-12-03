@@ -28,8 +28,6 @@ void GeneratorController::bind(QWidget* regexTab, QWidget* codeViewTab)
 {
     regexTab_ = regexTab;
     codeTab_  = codeViewTab;
-    if (auto btn = regexTab_->findChild<QPushButton*>("btnStartConvert"))
-        QObject::connect(btn, &QPushButton::clicked, this, &GeneratorController::convert);
     if (auto genBtn = codeViewTab->findChild<QPushButton*>("btnCompileRun"))
         QObject::connect(genBtn, &QPushButton::clicked, this, &GeneratorController::compileAndRun);
     if (auto minTab = mw_->findChild<QWidget*>(QString()))
@@ -127,15 +125,5 @@ void GeneratorController::compileAndRun()
         }
         mw_->setParsed(new ParsedFile(parsed));
     }
-    QVector<int> codes;
-    auto         mdfas   = engine_->buildAllMinDFA(*mw_->getParsed(), codes);
-    auto         outPane = mw_->findChild<QPlainTextEdit*>("txtLexResult");
-    auto         srcPane = mw_->findChild<QPlainTextEdit*>("txtSourceTiny");
-    QString      src     = srcPane ? srcPane->toPlainText() : QString();
-    if (src.trimmed().isEmpty())
-        src = QStringLiteral("abc123 def456");
-    auto output = engine_->runMultiple(mdfas, codes, src);
-    if (outPane)
-        outPane->setPlainText(output);
-    notify_->info("生成器运行完成");
+    notify_->info("生成器编译完成");
 }

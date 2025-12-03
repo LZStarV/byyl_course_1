@@ -1,0 +1,15 @@
+// This is a simple minic program to calculate factorial
+// minic1.minic @
+
+int main() {
+    int x = 5;
+    int fact = 1;
+    int i;
+
+    for (i = 1; i <= x; i++) {
+        fact = fact * i;
+    }
+
+    // Print the result
+    return fact;
+}

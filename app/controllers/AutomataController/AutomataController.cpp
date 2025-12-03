@@ -11,6 +11,7 @@
 #include <QStatusBar>
 #include "../../mainwindow.h"
 #include "../../services/DotService/DotService.h"
+#include "../../components/ToastManager/ToastManager.h"
 #include "../../experiments/exp1/helpers/AutomataTableHelper.h"
 #include "../../../src/Engine.h"
 #include "../../../src/visual/DotExporter.h"
@@ -381,6 +382,7 @@ void AutomataController::previewNfa()
     if (idx <= 0 || idx - 1 >= parsed->tokens.size())
     {
         mw_->statusBar()->showMessage("请选择具体Token后预览NFA");
+        ToastManager::instance().showWarning("请选择具体Token后预览NFA");
         return;
     }
     auto pt      = parsed->tokens[idx - 1];
@@ -458,6 +460,7 @@ void AutomataController::previewDfa()
     if (idx <= 0 || idx - 1 >= parsed->tokens.size())
     {
         mw_->statusBar()->showMessage("请选择具体Token后预览DFA");
+        ToastManager::instance().showWarning("请选择具体Token后预览DFA");
         return;
     }
     auto pt      = parsed->tokens[idx - 1];
@@ -538,6 +541,7 @@ void AutomataController::previewMin()
     if (idx <= 0 || idx - 1 >= parsed->tokens.size())
     {
         mw_->statusBar()->showMessage("请选择具体Token后预览MinDFA");
+        ToastManager::instance().showWarning("请选择具体Token后预览MinDFA");
         return;
     }
     auto pt      = parsed->tokens[idx - 1];

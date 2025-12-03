@@ -540,7 +540,8 @@ QString Engine::runMultiple(const QVector<MinDFA>& mdfas,
         {
             int len = matchLen(mdfas[i], source, pos);
             int w   = Config::weightForCode(codes[i]);
-            if (len > bestLen || (len == bestLen && w > bestW))
+            // 最长匹配优先，仅在长度相同时考虑权重，权重相同则按顺序优先
+            if (len > bestLen || (len == bestLen && (w > bestW || (w == bestW && (bestIdx == -1 || i < bestIdx)))))
             {
                 bestLen = len;
                 bestIdx = i;

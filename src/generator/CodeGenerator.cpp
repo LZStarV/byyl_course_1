@@ -252,23 +252,6 @@ QString CodeGenerator::generateCombined(const QVector<MinDFA>& mdfas,
     out += "    while (p<src.size())\n";
     out += "    {\n";
     out += "        char ch=src[p];\n";
-    out += "        int ns=step(state,ch);\n";
-    out += "        if (ns==-1) break;\n";
-    out += "        state=ns;\n";
-    out += "        p++;\n";
-    out += "        if (acc(state)) last=(int)p;\n";
-    out += "    }\n";
-    out += "    return last==-1?0:(int)(last-pos);\n";
-    out += "}\n\n";
-
-    out += "// 主扫描流程：按配置跳过注释/空白，选择最长匹配（权重用于并列决策）\n";
-    out += "static string runMultiple(const string& src)\n";
-    out += "{\n";
-    out += "    string out;\n";
-    out += "    size_t pos=0;\n";
-    out += "    while (pos<src.size())\n";
-    out += "    {\n";
-    out += "        char ch=src[pos];\n";
     out += "        const char* envSkip = getenv(\"LEXER_SKIP_BRACE_COMMENT\");\n";
     out += "        bool skipBrace = false;\n";
     out += "        if (envSkip) {\n";
@@ -413,7 +396,7 @@ QString CodeGenerator::generateCombined(const QVector<MinDFA>& mdfas,
     out += "        {\n";
     out += "            int len = matchLen(i, src, pos);\n";
     out += "            int w   = codeWeight(codeList[i]);\n";
-    out += "            if (len > bestLen || (len == bestLen && w > bestW))\n";
+    out += "            if (len > bestLen || (len == bestLen && (w > bestW || (w == bestW && (bestIdx == -1 || i < bestIdx)))))\n";
     out += "            {\n";
     out += "                bestLen = len;\n";
     out += "                bestIdx = i;\n";
