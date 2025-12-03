@@ -5,6 +5,7 @@
 #include <QDateTime>
 #include <QProcess>
 #include "../../mainwindow.h"
+#include "../../components/ImagePreviewDialog/ImagePreviewDialog.h"
 #include "../NotificationService/NotificationService.h"
 #include "../../../src/config/Config.h"
 
@@ -59,6 +60,9 @@ bool DotService::renderToTempPng(const QString& dotContent, QString& outPngPath,
 
 void DotService::previewPng(const QString& pngPath, const QString& title) const
 {
-    if (mw_) mw_->previewImage(pngPath, title);
+    if (!mw_) return;
+    ImagePreviewDialog dlg(mw_);
+    dlg.setWindowTitle(title);
+    dlg.loadImage(pngPath);
+    dlg.exec();
 }
-

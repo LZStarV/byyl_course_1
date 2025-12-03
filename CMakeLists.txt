@@ -20,12 +20,26 @@ set(APP_SOURCES
     app/components/ToastManager/ToastManager.cpp
     app/components/SettingsDialog/SettingsDialog.h
     app/components/SettingsDialog/SettingsDialog.cpp
+    app/components/ImagePreviewDialog/ImagePreviewDialog.h
+    app/components/ImagePreviewDialog/ImagePreviewDialog.cpp
     app/pages/home/HomePage.h
     app/pages/home/HomePage.cpp
     app/pages/exp1/Exp1Page.h
     app/pages/exp1/Exp1Page.cpp
     app/pages/exp2/Exp2Page.h
     app/pages/exp2/Exp2Page.cpp
+    app/experiments/exp1/tabs/RegexEditorTab.h
+    app/experiments/exp1/tabs/RegexEditorTab.cpp
+    app/experiments/exp1/tabs/NFAViewTab.h
+    app/experiments/exp1/tabs/NFAViewTab.cpp
+    app/experiments/exp1/tabs/DFAViewTab.h
+    app/experiments/exp1/tabs/DFAViewTab.cpp
+    app/experiments/exp1/tabs/MinDFAViewTab.h
+    app/experiments/exp1/tabs/MinDFAViewTab.cpp
+    app/experiments/exp1/tabs/CodeViewTab.h
+    app/experiments/exp1/tabs/CodeViewTab.cpp
+    app/experiments/exp1/tabs/TestValidationTab.h
+    app/experiments/exp1/tabs/TestValidationTab.cpp
     app/controllers/SyntaxController/SyntaxController.h
     app/controllers/SyntaxController/SyntaxController.cpp
     app/controllers/TestValidationController/TestValidationController.h
@@ -109,9 +123,16 @@ target_sources(GuiTest PRIVATE
     app/components/ToastWidget/ToastWidget.cpp
     app/components/ToastManager/ToastManager.cpp
     app/components/SettingsDialog/SettingsDialog.cpp
+    app/components/ImagePreviewDialog/ImagePreviewDialog.cpp
     app/pages/home/HomePage.cpp
     app/pages/exp1/Exp1Page.cpp
     app/pages/exp2/Exp2Page.cpp
+    app/experiments/exp1/tabs/RegexEditorTab.cpp
+    app/experiments/exp1/tabs/NFAViewTab.cpp
+    app/experiments/exp1/tabs/DFAViewTab.cpp
+    app/experiments/exp1/tabs/MinDFAViewTab.cpp
+    app/experiments/exp1/tabs/CodeViewTab.cpp
+    app/experiments/exp1/tabs/TestValidationTab.cpp
     src/syntax/Grammar.cpp
     src/syntax/GrammarParser.cpp
     src/syntax/LL1.cpp

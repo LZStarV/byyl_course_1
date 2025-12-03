@@ -1,4 +1,10 @@
 #include "mainwindow.h"
+#include "experiments/exp1/tabs/RegexEditorTab.h"
+#include "experiments/exp1/tabs/NFAViewTab.h"
+#include "experiments/exp1/tabs/DFAViewTab.h"
+#include "experiments/exp1/tabs/MinDFAViewTab.h"
+#include "experiments/exp1/tabs/CodeViewTab.h"
+#include "experiments/exp1/tabs/TestValidationTab.h"
 #include "ui_mainwindow.h"
 #include <QStatusBar>
 #include <QDesktopServices>
@@ -30,6 +36,7 @@
 #include "pages/home/HomePage.h"
 #include "pages/exp1/Exp1Page.h"
 #include "pages/exp2/Exp2Page.h"
+// removed duplicate includes
 #include <QDateTime>
 #include <QCryptographicHash>
 #include "../src/Engine.h"
@@ -135,112 +142,15 @@ void MainWindow::setupUiCustom()
     }
     if (exp1->contentWidget() && exp1->contentWidget()->layout())
         exp1->contentWidget()->layout()->addWidget(tabs);
-    auto w1       = new QWidget;
-    auto l1       = new QVBoxLayout(w1);
-    txtInputRegex = new QTextEdit;
-    txtInputRegex->setObjectName("txtInputRegex");
-    auto h1      = new QHBoxLayout;
-    btnLoadRegex = new QPushButton("从文件加载");
-    btnLoadRegex->setObjectName("btnLoadRegex");
-    btnSaveRegex = new QPushButton("保存正则");
-    btnSaveRegex->setObjectName("btnSaveRegex");
-    btnStartConvert = new QPushButton("转换");
-    btnStartConvert->setObjectName("btnStartConvert");
-    h1->addWidget(btnLoadRegex);
-    h1->addWidget(btnSaveRegex);
-    h1->addWidget(btnStartConvert);
-    l1->addWidget(txtInputRegex);
-    l1->addLayout(h1);
+    auto w1 = new RegexEditorTab;
     tabs->addTab(w1, "正则编辑");
-    auto w2     = new QWidget;
-    auto l2     = new QVBoxLayout(w2);
-    auto h2     = new QHBoxLayout;
-    auto lblTok = new QLabel("选择Token");
-    cmbTokens   = new QComboBox;
-    cmbTokens->setObjectName("cmbTokens");
-    h2->addWidget(lblTok);
-    h2->addWidget(cmbTokens);
-    auto h2b = new QHBoxLayout;
-    btnExportNFA = new QPushButton("导出(NFA)");
-    btnExportNFA->setObjectName("btnExportNFA");
-    btnPreviewNFA = new QPushButton("预览(NFA)");
-    btnPreviewNFA->setObjectName("btnPreviewNFA");
-    edtGraphDpiNfa = new QLineEdit;
-    edtGraphDpiNfa->setObjectName("edtGraphDpiNfa");
-    edtGraphDpiNfa->setPlaceholderText("DPI(默认150)");
-    h2b->addWidget(btnExportNFA);
-    h2b->addWidget(btnPreviewNFA);
-    h2b->addWidget(new QLabel("分辨率DPI"));
-    h2b->addWidget(edtGraphDpiNfa);
-    l2->addLayout(h2);
-    l2->addLayout(h2b);
-    tblNFA = new QTableWidget;
-    tblNFA->setObjectName("tblNFA");
-    l2->addWidget(tblNFA);
+    auto w2 = new NFAViewTab;
     tabs->addTab(w2, "NFA状态表");
-    auto w3      = new QWidget;
-    auto l3      = new QVBoxLayout(w3);
-    auto h3      = new QHBoxLayout;
-    auto lblTokD = new QLabel("选择Token");
-    cmbTokensDFA = new QComboBox;
-    cmbTokensDFA->setObjectName("cmbTokensDFA");
-    h3->addWidget(lblTokD);
-    h3->addWidget(cmbTokensDFA);
-    auto h3b = new QHBoxLayout;
-    btnExportDFA = new QPushButton("导出(DFA)");
-    btnExportDFA->setObjectName("btnExportDFA");
-    btnPreviewDFA = new QPushButton("预览(DFA)");
-    btnPreviewDFA->setObjectName("btnPreviewDFA");
-    edtGraphDpiDfa = new QLineEdit;
-    edtGraphDpiDfa->setObjectName("edtGraphDpiDfa");
-    edtGraphDpiDfa->setPlaceholderText("DPI(默认150)");
-    h3b->addWidget(btnExportDFA);
-    h3b->addWidget(btnPreviewDFA);
-    h3b->addWidget(new QLabel("分辨率DPI"));
-    h3b->addWidget(edtGraphDpiDfa);
-    l3->addLayout(h3);
-    l3->addLayout(h3b);
-    tblDFA = new QTableWidget;
-    tblDFA->setObjectName("tblDFA");
-    l3->addWidget(tblDFA);
+    auto w3 = new DFAViewTab;
     tabs->addTab(w3, "DFA状态表");
-    auto w4      = new QWidget;
-    auto l4      = new QVBoxLayout(w4);
-    auto h4      = new QHBoxLayout;
-    auto lblTokM = new QLabel("选择Token");
-    cmbTokensMin = new QComboBox;
-    cmbTokensMin->setObjectName("cmbTokensMin");
-    h4->addWidget(lblTokM);
-    h4->addWidget(cmbTokensMin);
-    auto h4b = new QHBoxLayout;
-    btnExportMin = new QPushButton("导出(MinDFA)");
-    btnExportMin->setObjectName("btnExportMin");
-    btnPreviewMin = new QPushButton("预览(MinDFA)");
-    btnPreviewMin->setObjectName("btnPreviewMin");
-    edtGraphDpiMin = new QLineEdit;
-    edtGraphDpiMin->setObjectName("edtGraphDpiMin");
-    edtGraphDpiMin->setPlaceholderText("DPI(默认150)");
-    h4b->addWidget(btnExportMin);
-    h4b->addWidget(btnPreviewMin);
-    h4b->addWidget(new QLabel("分辨率DPI"));
-    h4b->addWidget(edtGraphDpiMin);
-    l4->addLayout(h4);
-    l4->addLayout(h4b);
-    tblMinDFA = new QTableWidget;
-    tblMinDFA->setObjectName("tblMinDFA");
-    btnGenCode = new QPushButton("生成代码");
-    btnGenCode->setObjectName("btnGenCode");
-    l4->addWidget(tblMinDFA);
-    l4->addWidget(btnGenCode);
+    auto w4 = new MinDFAViewTab;
     tabs->addTab(w4, "最小化DFA");
-    auto w5          = new QWidget;
-    auto l5          = new QVBoxLayout(w5);
-    txtGeneratedCode = new QPlainTextEdit;
-    txtGeneratedCode->setObjectName("txtGeneratedCode");
-    btnCompileRun = new QPushButton("编译并运行生成器");
-    btnCompileRun->setObjectName("btnCompileRun");
-    l5->addWidget(txtGeneratedCode);
-    l5->addWidget(btnCompileRun);
+    auto w5 = new CodeViewTab;
     tabs->addTab(w5, "代码查看");
     stack->addWidget(home);
     stack->addWidget(exp1);
@@ -250,39 +160,13 @@ void MainWindow::setupUiCustom()
     connect(home, &HomePage::openExp2, [this]() { stack->setCurrentIndex(2); });
     connect(exp1, &Exp1Page::requestBack, [this]() { stack->setCurrentIndex(0); });
     connect(exp2Page, &Exp2Page::requestBack, [this]() { stack->setCurrentIndex(0); });
-    auto w6       = new QWidget;
-    auto l6       = new QVBoxLayout(w6);
-    auto h6       = new QHBoxLayout;
-    auto leftCol  = new QVBoxLayout;
-    auto rightCol = new QVBoxLayout;
-    auto lblSrc   = new QLabel("源程序输入");
-    auto lblOut   = new QLabel("Token 编码输出");
-    txtSourceTiny = new QPlainTextEdit;
-    txtSourceTiny->setObjectName("txtSourceTiny");
-    txtLexResult = new QPlainTextEdit;
-    txtLexResult->setObjectName("txtLexResult");
-    btnPickSample = new QPushButton("选择样例文件");
-    btnPickSample->setObjectName("btnPickSample");
-    leftCol->addWidget(lblSrc);
-    leftCol->addWidget(txtSourceTiny);
-    rightCol->addWidget(lblOut);
-    rightCol->addWidget(txtLexResult);
-    h6->addLayout(leftCol);
-    h6->addLayout(rightCol);
-    btnRunLexer = new QPushButton("运行词法分析");
-    btnRunLexer->setObjectName("btnRunLexer");
-    auto btnSaveLexAs = new QPushButton("另存为...");
-    btnSaveLexAs->setObjectName("btnSaveLexResultAs");
-    l6->addLayout(h6);
-    auto hButtons = new QHBoxLayout;
-    hButtons->addWidget(btnPickSample);
-    hButtons->addWidget(btnRunLexer);
-    hButtons->addWidget(btnSaveLexAs);
-    l6->addLayout(hButtons);
+    auto w6 = new TestValidationTab;
     tabs->addTab(w6, "测试与验证");
     // 由页面控制器接管按钮事件
-    connect(btnGenCode, &QPushButton::clicked, [this](bool b){ onGenCodeClicked(b); });
-    connect(btnCompileRun, &QPushButton::clicked, [this](bool b){ onCompileRunClicked(b); });
+    if (auto genBtn = w4->findChild<QPushButton*>("btnGenCode"))
+        connect(genBtn, &QPushButton::clicked, [this](bool b){ onGenCodeClicked(b); });
+    if (auto runBtn = w5->findChild<QPushButton*>("btnCompileRun"))
+        connect(runBtn, &QPushButton::clicked, [this](bool b){ onCompileRunClicked(b); });
     {
         auto codeViewController = new CodeViewController(this);
         codeViewController->bind(tabs);
