@@ -1,6 +1,6 @@
 #pragma once
 #include <QDialog>
-#include "../../../src/syntax/SLR.h"
+#include "../../../../src/syntax/SLR.h"
 class QLabel;
 class QPlainTextEdit;
 class SLRCheckDialog : public QDialog

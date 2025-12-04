@@ -5,6 +5,7 @@
 #include <QTableWidget>
 #include <QPushButton>
 #include <QLineEdit>
+#include <QComboBox>
 #include "../../mainwindow.h"
 #include "../../services/NotificationService/NotificationService.h"
 #include "../../services/DotService/DotService.h"
@@ -33,6 +34,7 @@ class LR1Controller : public QObject
 
     void                    loadDefault();
     void                    pickSource();
+    void                    onPickSourceActivated(int index);
     void                    runLR1Process();
     void                    previewTree();
     void                    setupExportButton();

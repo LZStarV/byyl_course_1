@@ -7,6 +7,7 @@ class QLineEdit;
 class QTableWidget;
 class QCheckBox;
 class QPushButton;
+class QFileDialog;
 
 class SettingsDialog : public QDialog
 {
@@ -16,6 +17,7 @@ class SettingsDialog : public QDialog
 
    private:
     QLineEdit*    edtOutDir;
+    QPushButton*  btnBrowseOutDir;
     QTableWidget* tblTiers;
     QCheckBox*    chkSkipBrace;
     QCheckBox*    chkSkipLine;

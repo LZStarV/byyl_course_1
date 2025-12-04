@@ -386,10 +386,18 @@ void AutomataController::exportNfaDot()
 {
     auto parsed = mw_->getParsed();
     if (!parsed)
+    {
+        mw_->statusBar()->showMessage("请先解析源码再导出NFA DOT文件");
+        ToastManager::instance().showWarning("请先解析源码再导出NFA DOT文件");
         return;
+    }
     int idx = cmbTok_ ? cmbTok_->currentIndex() : -1;
     if (idx <= 0 || idx - 1 >= parsed->tokens.size())
+    {
+        mw_->statusBar()->showMessage("请选择具体Token后导出NFA DOT文件");
+        ToastManager::instance().showWarning("请选择具体Token后导出NFA DOT文件");
         return;
+    }
     auto    pt      = parsed->tokens[idx - 1];
     auto    nfa     = mw_->getEngine()->buildNFA(pt.ast, parsed->alpha);
     QString ts      = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
@@ -409,10 +417,18 @@ void AutomataController::exportNfaImage()
 {
     auto parsed = mw_->getParsed();
     if (!parsed)
+    {
+        mw_->statusBar()->showMessage("请先解析源码再导出NFA图片");
+        ToastManager::instance().showWarning("请先解析源码再导出NFA图片");
         return;
+    }
     int idx = cmbTok_ ? cmbTok_->currentIndex() : -1;
     if (idx <= 0 || idx - 1 >= parsed->tokens.size())
+    {
+        mw_->statusBar()->showMessage("请选择具体Token后导出NFA图片");
+        ToastManager::instance().showWarning("请选择具体Token后导出NFA图片");
         return;
+    }
     auto pt      = parsed->tokens[idx - 1];
     auto nfa     = mw_->getEngine()->buildNFA(pt.ast, parsed->alpha);
     auto dpiEdit = root_->findChild<QLineEdit*>("edtGraphDpiNfa");
@@ -435,7 +451,11 @@ void AutomataController::previewNfa()
 {
     auto parsed = mw_->getParsed();
     if (!parsed)
+    {
+        mw_->statusBar()->showMessage("请先解析源码再预览NFA");
+        ToastManager::instance().showWarning("请先解析源码再预览NFA");
         return;
+    }
     int idx = cmbTok_ ? cmbTok_->currentIndex() : -1;
     if (idx <= 0 || idx - 1 >= parsed->tokens.size())
     {
@@ -462,10 +482,18 @@ void AutomataController::exportDfaDot()
 {
     auto parsed = mw_->getParsed();
     if (!parsed)
+    {
+        mw_->statusBar()->showMessage("请先解析源码再导出DFA DOT文件");
+        ToastManager::instance().showWarning("请先解析源码再导出DFA DOT文件");
         return;
+    }
     int idx = cmbTokDfa_ ? cmbTokDfa_->currentIndex() : -1;
     if (idx <= 0 || idx - 1 >= parsed->tokens.size())
+    {
+        mw_->statusBar()->showMessage("请选择具体Token后导出DFA DOT文件");
+        ToastManager::instance().showWarning("请选择具体Token后导出DFA DOT文件");
         return;
+    }
     auto    pt      = parsed->tokens[idx - 1];
     auto    nfa     = mw_->getEngine()->buildNFA(pt.ast, parsed->alpha);
     auto    dfa     = mw_->getEngine()->buildDFA(nfa);
@@ -486,10 +514,18 @@ void AutomataController::exportDfaImage()
 {
     auto parsed = mw_->getParsed();
     if (!parsed)
+    {
+        mw_->statusBar()->showMessage("请先解析源码再导出DFA图片");
+        ToastManager::instance().showWarning("请先解析源码再导出DFA图片");
         return;
+    }
     int idx = cmbTokDfa_ ? cmbTokDfa_->currentIndex() : -1;
     if (idx <= 0 || idx - 1 >= parsed->tokens.size())
+    {
+        mw_->statusBar()->showMessage("请选择具体Token后导出DFA图片");
+        ToastManager::instance().showWarning("请选择具体Token后导出DFA图片");
         return;
+    }
     auto pt      = parsed->tokens[idx - 1];
     auto nfa     = mw_->getEngine()->buildNFA(pt.ast, parsed->alpha);
     auto dfa     = mw_->getEngine()->buildDFA(nfa);
@@ -513,7 +549,11 @@ void AutomataController::previewDfa()
 {
     auto parsed = mw_->getParsed();
     if (!parsed)
+    {
+        mw_->statusBar()->showMessage("请先解析源码再预览DFA");
+        ToastManager::instance().showWarning("请先解析源码再预览DFA");
         return;
+    }
     int idx = cmbTokDfa_ ? cmbTokDfa_->currentIndex() : -1;
     if (idx <= 0 || idx - 1 >= parsed->tokens.size())
     {
@@ -541,10 +581,18 @@ void AutomataController::exportMinDot()
 {
     auto parsed = mw_->getParsed();
     if (!parsed)
+    {
+        mw_->statusBar()->showMessage("请先解析源码再导出MinDFA DOT文件");
+        ToastManager::instance().showWarning("请先解析源码再导出MinDFA DOT文件");
         return;
+    }
     int idx = cmbTokMin_ ? cmbTokMin_->currentIndex() : -1;
     if (idx <= 0 || idx - 1 >= parsed->tokens.size())
+    {
+        mw_->statusBar()->showMessage("请选择具体Token后导出MinDFA DOT文件");
+        ToastManager::instance().showWarning("请选择具体Token后导出MinDFA DOT文件");
         return;
+    }
     auto    pt      = parsed->tokens[idx - 1];
     auto    nfa     = mw_->getEngine()->buildNFA(pt.ast, parsed->alpha);
     auto    dfa     = mw_->getEngine()->buildDFA(nfa);
@@ -566,10 +614,18 @@ void AutomataController::exportMinImage()
 {
     auto parsed = mw_->getParsed();
     if (!parsed)
+    {
+        mw_->statusBar()->showMessage("请先解析源码再导出MinDFA图片");
+        ToastManager::instance().showWarning("请先解析源码再导出MinDFA图片");
         return;
+    }
     int idx = cmbTokMin_ ? cmbTokMin_->currentIndex() : -1;
     if (idx <= 0 || idx - 1 >= parsed->tokens.size())
+    {
+        mw_->statusBar()->showMessage("请选择具体Token后导出MinDFA图片");
+        ToastManager::instance().showWarning("请选择具体Token后导出MinDFA图片");
         return;
+    }
     auto pt      = parsed->tokens[idx - 1];
     auto nfa     = mw_->getEngine()->buildNFA(pt.ast, parsed->alpha);
     auto dfa     = mw_->getEngine()->buildDFA(nfa);
@@ -594,7 +650,11 @@ void AutomataController::previewMin()
 {
     auto parsed = mw_->getParsed();
     if (!parsed)
+    {
+        mw_->statusBar()->showMessage("请先解析源码再预览MinDFA");
+        ToastManager::instance().showWarning("请先解析源码再预览MinDFA");
         return;
+    }
     int idx = cmbTokMin_ ? cmbTokMin_->currentIndex() : -1;
     if (idx <= 0 || idx - 1 >= parsed->tokens.size())
     {

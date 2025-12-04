@@ -10,13 +10,24 @@ LR1ProcessTab::LR1ProcessTab(QWidget* parent) : QWidget(parent)
     auto hBtns     = new QHBoxLayout;
     btnLoadDefault = new QPushButton("加载默认源程序");
     btnLoadDefault->setObjectName("btnLoadDefaultLR1");
-    btnPickSource = new QPushButton("选择源程序文件");
-    btnPickSource->setObjectName("btnPickSourceLR1");
+    cmbPickSource = new QComboBox();
+    cmbPickSource->addItem(QStringLiteral("导入源程序"));
+    cmbPickSource->addItem(QStringLiteral("导入Token序列"));
+    cmbPickSource->addItem(QStringLiteral("导入当前文法"));
+    cmbPickSource->setObjectName("cmbPickSourceLR1");
     btnRunLR1 = new QPushButton("运行LR(1)分析（每句）");
     btnRunLR1->setObjectName("btnRunLR1Process");
+    
+    // 设置按钮最小宽度并使其可扩展
+    btnLoadDefault->setMinimumWidth(150);
+    btnRunLR1->setMinimumWidth(150);
+    btnLoadDefault->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    btnRunLR1->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    
+    hBtns->addWidget(cmbPickSource);
     hBtns->addWidget(btnLoadDefault);
-    hBtns->addWidget(btnPickSource);
     hBtns->addWidget(btnRunLR1);
+    hBtns->setSpacing(10); // 设置按钮间间距
     v->addLayout(hBtns);
     auto h = new QHBoxLayout;
     // 左：源程序
@@ -24,6 +35,7 @@ LR1ProcessTab::LR1ProcessTab(QWidget* parent) : QWidget(parent)
     auto l1       = new QLabel("源程序");
     txtSourceView = new QPlainTextEdit;
     txtSourceView->setObjectName("txtSourceViewLR1");
+    txtSourceView->setReadOnly(true);
     left->addWidget(l1);
     left->addWidget(txtSourceView);
     // 中：Token 序列

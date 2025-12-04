@@ -66,13 +66,49 @@ void LR1Controller::bind(QWidget* exp2Page)
         return;
     if (auto b = page_->findChild<QPushButton*>("btnLoadDefaultLR1"))
         connect(b, &QPushButton::clicked, this, &LR1Controller::loadDefault);
-    if (auto b = page_->findChild<QPushButton*>("btnPickSourceLR1"))
-        connect(b, &QPushButton::clicked, this, &LR1Controller::pickSource);
+    if (auto cmb = page_->findChild<QComboBox*>("cmbPickSourceLR1"))
+        connect(cmb, QOverload<int>::of(&QComboBox::activated), this, &LR1Controller::onPickSourceActivated);
     if (auto b = page_->findChild<QPushButton*>("btnRunLR1Process"))
         connect(b, &QPushButton::clicked, this, &LR1Controller::runLR1Process);
     if (auto b = page_->findChild<QPushButton*>("btnPreviewLR1Tree"))
         connect(b, &QPushButton::clicked, this, &LR1Controller::previewTree);
     setupExportButton();
+}
+
+void LR1Controller::onPickSourceActivated(int index)
+{
+    // 索引从0开始，0表示"源程序"，1表示"Token序列"，2表示"当前文法"
+    QString filePath = QFileDialog::getOpenFileName(
+        mw_,
+        QStringLiteral("选择文件"),
+        "",
+        QStringLiteral("所有文件 (*)"));
+    
+    if (filePath.isEmpty()) return;
+    
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        notify_->error(QStringLiteral("无法打开文件: ") + filePath);
+        return;
+    }
+    
+    QTextStream in(&file);
+    QString content = in.readAll();
+    file.close();
+    
+    if (auto txtSourceView = page_->findChild<QPlainTextEdit*>("txtSourceViewLR1")) {
+        if (index == 0) { // 源程序
+            txtSourceView->setPlainText(content);
+        } else if (index == 1) { // Token序列
+            if (auto txtTokensView = page_->findChild<QPlainTextEdit*>("txtTokensViewLR1")) {
+                txtTokensView->setPlainText(content);
+            }
+        } else if (index == 2) { // 当前文法
+            if (auto txtGrammarView = page_->findChild<QPlainTextEdit*>("txtGrammarViewLR1")) {
+                txtGrammarView->setPlainText(content);
+            }
+        }
+    }
 }
 
 void LR1Controller::loadDefault()

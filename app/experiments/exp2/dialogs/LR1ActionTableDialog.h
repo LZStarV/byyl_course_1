@@ -1,7 +1,7 @@
 #pragma once
 #include <QDialog>
 #include <QTableWidget>
-#include "../../../src/syntax/LR1.h"
+#include "../../../../src/syntax/LR1.h"
 class LR1ActionTableDialog : public QDialog
 {
     Q_OBJECT

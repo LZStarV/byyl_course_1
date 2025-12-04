@@ -5,6 +5,7 @@
 #include <QFile>
 #include <QTextStream>
 #include "../../services/DotService/DotService.h"
+#include "../ToastManager/ToastManager.h"
 
 ExportGraphButton::ExportGraphButton(const QString& text, QWidget* parent) :
     QPushButton(text, parent)
@@ -48,7 +49,10 @@ void ExportGraphButton::exportDot()
         return;
     QString dot = supplier_();
     if (dot.trimmed().isEmpty())
+    {
+        ToastManager::instance().showWarning(QStringLiteral("没有可导出的内容"));
         return;
+    }
     QString ts   = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
     QString def  = base_ + ts + ".dot";
     QString path = svc_->pickDotSavePath(def);
@@ -70,7 +74,10 @@ void ExportGraphButton::exportImage()
     int     dpi = dpiProvider_ ? dpiProvider_() : 150;
     QString dot = supplier_();
     if (dot.trimmed().isEmpty())
+    {
+        ToastManager::instance().showWarning(QStringLiteral("没有可导出的内容"));
         return;
+    }
     QString ts   = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
     QString def  = base_ + ts + ".png";
     QString path = svc_->pickImageSavePath(def, "png");

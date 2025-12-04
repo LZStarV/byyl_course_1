@@ -12,6 +12,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QMessageBox>
+#include <QFileDialog>
 #include "../../../src/config/Config.h"
 #include "../ToastManager/ToastManager.h"
 
@@ -24,11 +25,14 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent)
 
 void SettingsDialog::buildUi()
 {
+    setFixedWidth(600); // 设置窗口宽度为600像素
     auto v    = new QVBoxLayout(this);
     auto lOut = new QHBoxLayout;
     lOut->addWidget(new QLabel("生成输出目录"));
     edtOutDir = new QLineEdit;
+    btnBrowseOutDir = new QPushButton("浏览...");
     lOut->addWidget(edtOutDir);
+    lOut->addWidget(btnBrowseOutDir);
     v->addLayout(lOut);
     v->addWidget(new QLabel("权重层级（min_code / weight）"));
     tblTiers = new QTableWidget;
@@ -132,6 +136,12 @@ void SettingsDialog::buildUi()
                 accept();
             });
     connect(btnCancel, &QPushButton::clicked, [this]() { reject(); });
+    connect(btnBrowseOutDir, &QPushButton::clicked, [this]() {
+        QString dir = QFileDialog::getExistingDirectory(this, "选择输出目录", edtOutDir->text());
+        if (!dir.isEmpty()) {
+            edtOutDir->setText(dir);
+        }
+    });
 }
 
 void SettingsDialog::loadCurrent()
