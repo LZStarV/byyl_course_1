@@ -10,6 +10,7 @@
   - macOS：`open dist/byyl.app` 或 `dist/byyl.app/Contents/MacOS/byyl`
   - Windows：`dist\\byyl.exe`
 - 测试：`ctest --test-dir dist -V`
+- 全量格式化命令：`find . -type f \( -name "*.h" -o -name "*.cpp" \) -not -path "./dist/*" -not -path "./build/*" -print0 | xargs -0 -n 50 clang-format -i -style=file`
 
 ## 功能
 - 实验一（词法）：正则→NFA（Thompson）→DFA（子集构造）→MinDFA（Hopcroft）；表格展示、DOT/PNG 导出与预览；合并扫描器代码生成与运行。

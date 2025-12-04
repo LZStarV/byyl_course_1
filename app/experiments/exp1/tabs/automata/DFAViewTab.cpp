@@ -6,6 +6,7 @@
 #include <QTableWidget>
 #include <QLineEdit>
 #include <QPushButton>
+#include "../../../../components/ExportGraphButton/ExportGraphButton.h"
 
 DFAViewTab::DFAViewTab(QWidget* parent) : QWidget(parent)
 {
@@ -17,7 +18,7 @@ DFAViewTab::DFAViewTab(QWidget* parent) : QWidget(parent)
     hSel->addWidget(lbl);
     hSel->addWidget(cmbTokensDFA);
     auto hTools  = new QHBoxLayout;
-    btnExportDFA = new QPushButton("导出(DFA)");
+    btnExportDFA = new ExportGraphButton("导出(DFA)");
     btnExportDFA->setObjectName("btnExportDFA");
     btnPreviewDFA = new QPushButton("预览(DFA)");
     btnPreviewDFA->setObjectName("btnPreviewDFA");

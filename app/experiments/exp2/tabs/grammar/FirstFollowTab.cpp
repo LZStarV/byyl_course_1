@@ -17,16 +17,5 @@ FirstFollowTab::FirstFollowTab(QWidget* parent) : QWidget(parent)
     hFF->addWidget(tblFirstSet);
     hFF->addWidget(tblFollowSet);
     l->addLayout(hFF);
-    auto hLR0    = new QHBoxLayout;
-    btnExportLR0 = new QPushButton("导出");
-    btnExportLR0->setObjectName("btnExportLR0");
-    btnPreviewLR0 = new QPushButton("预览LR(0)项集DFA");
-    btnPreviewLR0->setObjectName("btnPreviewLR0");
-    edtGraphDpiLR0 = new QLineEdit;
-    edtGraphDpiLR0->setObjectName("edtGraphDpiLR0");
-    edtGraphDpiLR0->setPlaceholderText("DPI(默认150)");
-    hLR0->addWidget(btnExportLR0);
-    hLR0->addWidget(btnPreviewLR0);
-    hLR0->addWidget(edtGraphDpiLR0);
-    l->addLayout(hLR0);
+    // LR(0) 控件已迁移至“LR分析”页签，此处不再包含相关控件
 }

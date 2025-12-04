@@ -4,6 +4,7 @@
 #include <QComboBox>
 #include <QMenu>
 #include <QAction>
+#include "../../components/ExportGraphButton/ExportGraphButton.h"
 #include <QTableWidget>
 #include <QLineEdit>
 #include <QDateTime>
@@ -22,11 +23,14 @@ void AutomataController::bind(QWidget* root)
 {
     root_           = root;
     dot_            = new DotService(mw_, mw_->notifyPtr());
-    auto btnExpNfa  = root->findChild<QPushButton*>("btnExportNFA");
+    auto btnExpNfa  = root->findChild<ExportGraphButton*>("btnExportNFA");
     auto btnPrevNfa = root->findChild<QPushButton*>("btnPreviewNFA");
-    auto btnExpDfa  = root->findChild<QPushButton*>("btnExportDFA");
+    auto btnExpDfa  = root->findChild<ExportGraphButton*>("btnExportDFA");
     auto btnPrevDfa = root->findChild<QPushButton*>("btnPreviewDFA");
-    auto btnExpMin  = root->findChild<QPushButton*>("btnExportMin");
+    auto btnExpMin  = root->findChild<ExportGraphButton*>("btnExportMin");
+    auto edtDpiNfa  = root->findChild<QLineEdit*>("edtGraphDpiNfa");
+    auto edtDpiDfa  = root->findChild<QLineEdit*>("edtGraphDpiDfa");
+    auto edtDpiMin  = root->findChild<QLineEdit*>("edtGraphDpiMin");
     auto btnPrevMin = root->findChild<QPushButton*>("btnPreviewMin");
     cmbTok_         = root->findChild<QComboBox*>("cmbTokens");
     cmbTokDfa_      = root->findChild<QComboBox*>("cmbTokensDFA");
@@ -36,34 +40,88 @@ void AutomataController::bind(QWidget* root)
     tblMin_         = root->findChild<QTableWidget*>("tblMinDFA");
     if (btnExpNfa)
     {
-        auto menu   = new QMenu(btnExpNfa);
-        auto actDot = menu->addAction("导出DOT...");
-        auto actImg = menu->addAction("导出图片...");
-        btnExpNfa->setMenu(menu);
-        QObject::connect(actDot, &QAction::triggered, this, &AutomataController::exportNfaDot);
-        QObject::connect(actImg, &QAction::triggered, this, &AutomataController::exportNfaImage);
+        btnExpNfa->setDotService(dot_);
+        btnExpNfa->setSuggestedBasename("nfa_");
+        btnExpNfa->setDpiProvider(
+            [edtDpiNfa]()
+            {
+                int dpi = 150;
+                if (edtDpiNfa && !edtDpiNfa->text().trimmed().isEmpty())
+                    dpi = edtDpiNfa->text().trimmed().toInt();
+                return dpi;
+            });
+        btnExpNfa->setDotSupplier(
+            [this]()
+            {
+                auto parsed = mw_->getParsed();
+                if (!parsed)
+                    return QString();
+                int idx = cmbTok_ ? cmbTok_->currentIndex() : -1;
+                if (idx <= 0 || idx - 1 >= parsed->tokens.size())
+                    return QString();
+                auto pt  = parsed->tokens[idx - 1];
+                auto nfa = mw_->getEngine()->buildNFA(pt.ast, parsed->alpha);
+                return DotExporter::toDot(nfa);
+            });
     }
     if (btnPrevNfa)
         QObject::connect(btnPrevNfa, &QPushButton::clicked, this, &AutomataController::previewNfa);
     if (btnExpDfa)
     {
-        auto menu   = new QMenu(btnExpDfa);
-        auto actDot = menu->addAction("导出DOT...");
-        auto actImg = menu->addAction("导出图片...");
-        btnExpDfa->setMenu(menu);
-        QObject::connect(actDot, &QAction::triggered, this, &AutomataController::exportDfaDot);
-        QObject::connect(actImg, &QAction::triggered, this, &AutomataController::exportDfaImage);
+        btnExpDfa->setDotService(dot_);
+        btnExpDfa->setSuggestedBasename("dfa_");
+        btnExpDfa->setDpiProvider(
+            [edtDpiDfa]()
+            {
+                int dpi = 150;
+                if (edtDpiDfa && !edtDpiDfa->text().trimmed().isEmpty())
+                    dpi = edtDpiDfa->text().trimmed().toInt();
+                return dpi;
+            });
+        btnExpDfa->setDotSupplier(
+            [this]()
+            {
+                auto parsed = mw_->getParsed();
+                if (!parsed)
+                    return QString();
+                int idx = cmbTokDfa_ ? cmbTokDfa_->currentIndex() : -1;
+                if (idx <= 0 || idx - 1 >= parsed->tokens.size())
+                    return QString();
+                auto pt  = parsed->tokens[idx - 1];
+                auto nfa = mw_->getEngine()->buildNFA(pt.ast, parsed->alpha);
+                auto dfa = mw_->getEngine()->buildDFA(nfa);
+                return DotExporter::toDot(dfa);
+            });
     }
     if (btnPrevDfa)
         QObject::connect(btnPrevDfa, &QPushButton::clicked, this, &AutomataController::previewDfa);
     if (btnExpMin)
     {
-        auto menu   = new QMenu(btnExpMin);
-        auto actDot = menu->addAction("导出DOT...");
-        auto actImg = menu->addAction("导出图片...");
-        btnExpMin->setMenu(menu);
-        QObject::connect(actDot, &QAction::triggered, this, &AutomataController::exportMinDot);
-        QObject::connect(actImg, &QAction::triggered, this, &AutomataController::exportMinImage);
+        btnExpMin->setDotService(dot_);
+        btnExpMin->setSuggestedBasename("mindfa_");
+        btnExpMin->setDpiProvider(
+            [edtDpiMin]()
+            {
+                int dpi = 150;
+                if (edtDpiMin && !edtDpiMin->text().trimmed().isEmpty())
+                    dpi = edtDpiMin->text().trimmed().toInt();
+                return dpi;
+            });
+        btnExpMin->setDotSupplier(
+            [this]()
+            {
+                auto parsed = mw_->getParsed();
+                if (!parsed)
+                    return QString();
+                int idx = cmbTokMin_ ? cmbTokMin_->currentIndex() : -1;
+                if (idx <= 0 || idx - 1 >= parsed->tokens.size())
+                    return QString();
+                auto pt   = parsed->tokens[idx - 1];
+                auto nfa  = mw_->getEngine()->buildNFA(pt.ast, parsed->alpha);
+                auto dfa  = mw_->getEngine()->buildDFA(nfa);
+                auto mdfa = mw_->getEngine()->buildMinDFA(dfa);
+                return DotExporter::toDot(mdfa);
+            });
     }
     if (btnPrevMin)
         QObject::connect(btnPrevMin, &QPushButton::clicked, this, &AutomataController::previewMin);

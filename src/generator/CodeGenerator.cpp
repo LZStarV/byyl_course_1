@@ -396,7 +396,9 @@ QString CodeGenerator::generateCombined(const QVector<MinDFA>& mdfas,
     out += "        {\n";
     out += "            int len = matchLen(i, src, pos);\n";
     out += "            int w   = codeWeight(codeList[i]);\n";
-    out += "            if (len > bestLen || (len == bestLen && (w > bestW || (w == bestW && (bestIdx == -1 || i < bestIdx)))))\n";
+    out +=
+        "            if (len > bestLen || (len == bestLen && (w > bestW || (w == bestW && (bestIdx "
+        "== -1 || i < bestIdx)))))\n";
     out += "            {\n";
     out += "                bestLen = len;\n";
     out += "                bestIdx = i;\n";

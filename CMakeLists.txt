@@ -18,6 +18,10 @@ set(CORE_SOURCES
     src/syntax/LL1.cpp
     src/syntax/LR0.h
     src/syntax/LR0.cpp
+    src/syntax/SLR.h
+    src/syntax/SLR.cpp
+    src/syntax/LR1.h
+    src/syntax/LR1.cpp
     src/syntax/AST.h
     src/syntax/SyntaxParser.cpp
     src/syntax/DotGenerator.cpp
@@ -58,6 +62,8 @@ set(APP_SOURCES
     app/components/SettingsDialog/SettingsDialog.cpp
     app/components/ImagePreviewDialog/ImagePreviewDialog.h
     app/components/ImagePreviewDialog/ImagePreviewDialog.cpp
+    app/components/ExportGraphButton/ExportGraphButton.h
+    app/components/ExportGraphButton/ExportGraphButton.cpp
     app/pages/home/HomePage.h
     app/pages/home/HomePage.cpp
     app/pages/exp1/Exp1Page.h
@@ -68,6 +74,17 @@ set(APP_SOURCES
     app/experiments/exp1/helpers/AutomataTableHelper.cpp
     app/experiments/exp2/helpers/SyntaxTableHelper.h
     app/experiments/exp2/helpers/SyntaxTableHelper.cpp
+    app/experiments/exp2/tabs/lr/LRTab.h
+    app/experiments/exp2/tabs/lr/LRTab.cpp
+    app/experiments/exp2/dialogs/SLRCheckDialog.h
+    app/experiments/exp2/dialogs/SLRCheckDialog.cpp
+    app/experiments/exp2/dialogs/LR1TableDialog.h
+    app/experiments/exp2/dialogs/LR1TableDialog.cpp
+    app/experiments/exp2/dialogs/LR1ActionTableDialog.h
+    app/experiments/exp2/dialogs/LR1ActionTableDialog.cpp
+    app/experiments/exp2/dialogs/LR0TableDialog.h
+    app/experiments/exp2/dialogs/LR0TableDialog.cpp
+    app/components/ExportGraphButton/ExportGraphButton.cpp
     app/experiments/exp2/tabs/grammar/GrammarEditorTab.h
     app/experiments/exp2/tabs/grammar/GrammarEditorTab.cpp
     app/experiments/exp2/tabs/grammar/FirstFollowTab.h
@@ -152,6 +169,11 @@ target_sources(GuiTest PRIVATE
     app/pages/home/HomePage.cpp
     app/pages/exp1/Exp1Page.cpp
     app/pages/exp2/Exp2Page.cpp
+    app/experiments/exp2/tabs/lr/LRTab.cpp
+    app/experiments/exp2/dialogs/SLRCheckDialog.cpp
+    app/experiments/exp2/dialogs/LR1TableDialog.cpp
+    app/experiments/exp2/dialogs/LR0TableDialog.cpp
+    app/experiments/exp2/dialogs/LR1ActionTableDialog.cpp
     app/experiments/exp1/helpers/AutomataTableHelper.cpp
     app/experiments/exp2/helpers/SyntaxTableHelper.cpp
     app/experiments/exp2/tabs/grammar/GrammarEditorTab.cpp
@@ -161,6 +183,7 @@ target_sources(GuiTest PRIVATE
     app/experiments/exp1/tabs/regex/RegexEditorTab.cpp
     app/experiments/exp1/tabs/automata/NFAViewTab.cpp
     app/experiments/exp1/tabs/automata/DFAViewTab.cpp
+    app/components/ExportGraphButton/ExportGraphButton.cpp
     app/experiments/exp1/tabs/automata/MinDFAViewTab.cpp
     app/experiments/exp1/tabs/code/CodeViewTab.cpp
     app/experiments/exp1/tabs/test/TestValidationTab.cpp
@@ -168,6 +191,8 @@ target_sources(GuiTest PRIVATE
     src/syntax/GrammarParser.cpp
     src/syntax/LL1.cpp
     src/syntax/LR0.cpp
+    src/syntax/LR1.cpp
+    src/syntax/SLR.cpp
     src/syntax/SyntaxParser.cpp
     src/syntax/DotGenerator.cpp
     src/generator/SyntaxCodeGenerator.cpp
@@ -205,6 +230,34 @@ target_sources(LL1Test PRIVATE
 target_link_libraries(LL1Test PRIVATE Qt6::Core Qt6::Test)
 add_test(NAME LL1算法测试 COMMAND LL1Test)
 
+add_executable(LR1Test tests/syntax/lr1_test.cpp)
+target_sources(LR1Test PRIVATE
+    src/syntax/LR1.cpp
+    src/syntax/GrammarParser.cpp
+    src/syntax/Grammar.cpp
+)
+target_link_libraries(LR1Test PRIVATE Qt6::Core Qt6::Test)
+add_test(NAME LR1算法测试 COMMAND LR1Test)
+
+add_executable(LR0Test tests/syntax/lr0_test.cpp)
+target_sources(LR0Test PRIVATE
+    src/syntax/LR0.cpp
+    src/syntax/GrammarParser.cpp
+    src/syntax/Grammar.cpp
+)
+target_link_libraries(LR0Test PRIVATE Qt6::Core Qt6::Test)
+add_test(NAME LR0算法测试 COMMAND LR0Test)
+
+add_executable(SLRTest tests/syntax/slr_test.cpp)
+target_sources(SLRTest PRIVATE
+    src/syntax/SLR.cpp
+    src/syntax/LR0.cpp
+    src/syntax/LL1.cpp
+    src/syntax/GrammarParser.cpp
+    src/syntax/Grammar.cpp
+)
+target_link_libraries(SLRTest PRIVATE Qt6::Core Qt6::Test)
+add_test(NAME SLR算法测试 COMMAND SLRTest)
 
 add_executable(CliRegexTest tests/cli/cli_regex_test.cpp)
 target_sources(CliRegexTest PRIVATE

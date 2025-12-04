@@ -5,6 +5,7 @@
 #include <QTabWidget>
 #include "../../experiments/exp2/tabs/grammar/GrammarEditorTab.h"
 #include "../../experiments/exp2/tabs/grammar/FirstFollowTab.h"
+#include "../../experiments/exp2/tabs/lr/LRTab.h"
 #include "../../experiments/exp2/tabs/syntax/SyntaxTreeTab.h"
 #include "../../experiments/exp2/tabs/syntax/SyntaxCodeViewTab.h"
 
@@ -21,6 +22,8 @@ Exp2Page::Exp2Page(QWidget* parent) : QWidget(parent)
     tabSyntax->addTab(wGrammar, "文法分析");
     auto wFF = new FirstFollowTab;
     tabSyntax->addTab(wFF, "First 与 Follow 集");
+    auto wLR = new LRTab;
+    tabSyntax->addTab(wLR, "LR分析");
     auto wTree = new SyntaxTreeTab;
     tabSyntax->addTab(wTree, "语法树");
     auto wCode = new SyntaxCodeViewTab;

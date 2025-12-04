@@ -6,6 +6,7 @@
 #include <QTableWidget>
 #include <QLineEdit>
 #include <QPushButton>
+#include "../../../../components/ExportGraphButton/ExportGraphButton.h"
 
 MinDFAViewTab::MinDFAViewTab(QWidget* parent) : QWidget(parent)
 {
@@ -17,7 +18,7 @@ MinDFAViewTab::MinDFAViewTab(QWidget* parent) : QWidget(parent)
     hSel->addWidget(lbl);
     hSel->addWidget(cmbTokensMin);
     auto hTools  = new QHBoxLayout;
-    btnExportMin = new QPushButton("导出(MinDFA)");
+    btnExportMin = new ExportGraphButton("导出(MinDFA)");
     btnExportMin->setObjectName("btnExportMin");
     btnPreviewMin = new QPushButton("预览(MinDFA)");
     btnPreviewMin->setObjectName("btnPreviewMin");
