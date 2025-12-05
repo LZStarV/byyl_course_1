@@ -1,4 +1,5 @@
 #include "SyntaxParser.h"
+#include "../config/Config.h"
 
 static SyntaxASTNode* makeNode(const QString& sym)
 {
@@ -9,16 +10,16 @@ static SyntaxASTNode* makeNode(const QString& sym)
 
 static bool isTerminal(const QSet<QString>& terms, const QString& s)
 {
-    return terms.contains(s) || s == "$";
+    return terms.contains(s) || s == Config::eofSymbol();
 }
 
 SyntaxResult parseTokens(const QVector<QString>& tokens, const Grammar& g, const LL1Info& info)
 {
     SyntaxResult     r;
     QVector<QString> input = tokens;
-    input.push_back("$");
+    input.push_back(Config::eofSymbol());
     QVector<QString> st;
-    st.push_back("$");
+    st.push_back(Config::eofSymbol());
     st.push_back(g.startSymbol);
     QVector<SyntaxASTNode*> nodes;
     auto                    root = makeNode(g.startSymbol);
@@ -31,7 +32,7 @@ SyntaxResult parseTokens(const QVector<QString>& tokens, const Grammar& g, const
         auto N = nodes.back();
         st.pop_back();
         nodes.pop_back();
-        QString a = ip < input.size() ? input[ip] : "$";
+        QString a = ip < input.size() ? input[ip] : Config::eofSymbol();
         if (isTerminal(g.terminals, X) || X == "$")
         {
             if (X == a)

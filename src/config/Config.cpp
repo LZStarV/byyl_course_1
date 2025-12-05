@@ -10,6 +10,31 @@
 bool                        Config::s_loaded = false;
 QVector<Config::WeightTier> Config::s_tiers;
 QString                     Config::s_outDir;
+QString                     Config::s_syntaxDir;
+QString                     Config::s_graphsDir;
+QString                     Config::s_macroLetter;
+QString                     Config::s_macroDigit;
+QVector<QChar>              Config::s_ws;
+bool                        Config::s_tokenMapUseHeuristics = true;
+QString                     Config::s_graphvizExe;
+int                         Config::s_graphvizDpi;
+int                         Config::s_graphvizTimeout;
+QString                     Config::s_epsilon;
+QString                     Config::s_eof;
+QString                     Config::s_augSuffix;
+QString                     Config::s_lr1Policy;
+QString                     Config::s_nontermPat;
+QVector<QString>            Config::s_multiOps;
+QVector<QString>            Config::s_singleOps;
+QString                     Config::s_tokenHeaderRegex;
+QString                     Config::s_tblMark;
+QString                     Config::s_tblStateId;
+QString                     Config::s_tblStateSet;
+QString                     Config::s_tblEpsilonCol;
+QString                     Config::s_dotRankdir;
+QString                     Config::s_dotNodeShape;
+QString                     Config::s_dotEpsLabel;
+QVector<QString>            Config::s_cfgSearchPaths;
 bool                        Config::s_hasOutDirOverride = false;
 QString                     Config::s_outDirOverride;
 bool                        Config::s_hasTiersOverride = false;
@@ -46,6 +71,31 @@ void Config::load()
     s_loaded            = true;
     s_tiers             = defaultTiers();
     s_outDir            = QString();
+    s_syntaxDir         = QString();
+    s_graphsDir         = QString();
+    s_macroLetter       = QString("letter");
+    s_macroDigit        = QString("digit");
+    s_ws.clear();
+    s_tokenMapUseHeuristics = true;
+    s_graphvizExe       = QString("dot");
+    s_graphvizDpi       = 150;
+    s_graphvizTimeout   = 20000;
+    s_epsilon           = QString("#");
+    s_eof               = QString("$");
+    s_augSuffix         = QString("'");
+    s_lr1Policy         = QString("prefer_shift");
+    s_nontermPat.clear();
+    s_multiOps.clear();
+    s_singleOps.clear();
+    s_tokenHeaderRegex  = QString("^_([A-Za-z][A-Za-z0-9_]*?)(\\d+)(S)?$");
+    s_tblMark           = QStringLiteral("标记");
+    s_tblStateId        = QStringLiteral("状态 ID");
+    s_tblStateSet       = QStringLiteral("状态集合");
+    s_tblEpsilonCol     = QStringLiteral("#");
+    s_dotRankdir        = QStringLiteral("LR");
+    s_dotNodeShape      = QStringLiteral("circle");
+    s_dotEpsLabel       = QStringLiteral("ε");
+    s_cfgSearchPaths.clear();
     s_hasOutDirOverride = false;
     s_hasTiersOverride  = false;
     s_hasSkipBrace      = false;
@@ -63,13 +113,20 @@ void Config::load()
 
     // read config file
     QString appDir   = QCoreApplication::applicationDirPath();
-    QString cfgPath1 = appDir + "/../../config/lexer.json";
-    QString cfgPath2 = appDir + "/config/lexer.json";
     QString usePath;
-    if (QFile::exists(cfgPath1))
-        usePath = cfgPath1;
-    else if (QFile::exists(cfgPath2))
-        usePath = cfgPath2;
+    QVector<QString> candidates;
+    for (const auto& p : s_cfgSearchPaths)
+        candidates.push_back(p);
+    candidates.push_back(appDir + "/../../config/lexer.json");
+    candidates.push_back(appDir + "/config/lexer.json");
+    for (const auto& c : candidates)
+    {
+        if (QFile::exists(c))
+        {
+            usePath = c;
+            break;
+        }
+    }
     if (!usePath.isEmpty())
     {
         QFile f(usePath);
@@ -85,6 +142,10 @@ void Config::load()
                 {
                     s_outDir = obj.value("generated_output_dir").toString();
                 }
+                if (obj.contains("syntax_output_dir"))
+                    s_syntaxDir = obj.value("syntax_output_dir").toString();
+                if (obj.contains("graphs_dir"))
+                    s_graphsDir = obj.value("graphs_dir").toString();
                 if (obj.contains("weight_tiers") && obj.value("weight_tiers").isArray())
                 {
                     QVector<Config::WeightTier> tiers;
@@ -101,11 +162,111 @@ void Config::load()
                     if (!tiers.isEmpty())
                         s_tiers = tiers;
                 }
+                if (obj.contains("macro_names") && obj.value("macro_names").isObject())
+                {
+                    auto mo = obj.value("macro_names").toObject();
+                    auto ml = mo.value("letter").toString();
+                    auto md = mo.value("digit").toString();
+                    if (!ml.trimmed().isEmpty()) s_macroLetter = ml.trimmed();
+                    if (!md.trimmed().isEmpty()) s_macroDigit  = md.trimmed();
+                }
+                if (obj.contains("whitespaces") && obj.value("whitespaces").isArray())
+                {
+                    s_ws.clear();
+                    auto arr = obj.value("whitespaces").toArray();
+                    for (auto v : arr)
+                    {
+                        QString s = v.toString();
+                        if (s == "\\t")
+                            s_ws.push_back('\t');
+                        else if (s == "\\n")
+                            s_ws.push_back('\n');
+                        else if (s == "\\r")
+                            s_ws.push_back('\r');
+                        else if (!s.isEmpty())
+                            s_ws.push_back(s[0]);
+                    }
+                }
+                if (obj.contains("token_map") && obj.value("token_map").isObject())
+                {
+                    auto to = obj.value("token_map").toObject();
+                    if (to.contains("use_heuristics"))
+                        s_tokenMapUseHeuristics = to.value("use_heuristics").toBool(true);
+                }
+                if (obj.contains("graphviz") && obj.value("graphviz").isObject())
+                {
+                    auto go = obj.value("graphviz").toObject();
+                    auto ex = go.value("executable").toString();
+                    if (!ex.trimmed().isEmpty()) s_graphvizExe = ex.trimmed();
+                    int dpi = go.value("default_dpi").toInt();
+                    if (dpi > 0) s_graphvizDpi = dpi;
+                    int to  = go.value("timeout_ms").toInt();
+                    if (to > 0) s_graphvizTimeout = to;
+                }
+                if (obj.contains("epsilon_symbol"))
+                    s_epsilon = obj.value("epsilon_symbol").toString("#");
+                if (obj.contains("eof_symbol"))
+                    s_eof = obj.value("eof_symbol").toString("$");
+                if (obj.contains("aug_suffix"))
+                    s_augSuffix = obj.value("aug_suffix").toString("'");
+                if (obj.contains("lr1_conflict_policy"))
+                    s_lr1Policy = obj.value("lr1_conflict_policy").toString("prefer_shift");
+                if (obj.contains("nonterminal_pattern"))
+                    s_nontermPat = obj.value("nonterminal_pattern").toString();
+                if (obj.contains("token_header_regex"))
+                    s_tokenHeaderRegex = obj.value("token_header_regex").toString();
+                if (obj.contains("i18n") && obj.value("i18n").isObject())
+                {
+                    auto io = obj.value("i18n").toObject();
+                    s_tblMark       = io.value("table_mark").toString(s_tblMark);
+                    s_tblStateId    = io.value("table_state_id").toString(s_tblStateId);
+                    s_tblStateSet   = io.value("table_state_set").toString(s_tblStateSet);
+                    s_tblEpsilonCol = io.value("epsilon_column_label").toString(s_tblEpsilonCol);
+                }
+                if (obj.contains("dot") && obj.value("dot").isObject())
+                {
+                    auto d = obj.value("dot").toObject();
+                    s_dotRankdir   = d.value("rankdir").toString(s_dotRankdir);
+                    s_dotNodeShape = d.value("node_shape").toString(s_dotNodeShape);
+                    s_dotEpsLabel  = d.value("epsilon_label").toString(s_dotEpsLabel);
+                }
+                if (obj.contains("config_search_paths") && obj.value("config_search_paths").isArray())
+                {
+                    s_cfgSearchPaths.clear();
+                    for (auto v : obj.value("config_search_paths").toArray())
+                        s_cfgSearchPaths.push_back(v.toString());
+                }
+                if (obj.contains("grammar_tokens") && obj.value("grammar_tokens").isObject())
+                {
+                    auto gt = obj.value("grammar_tokens").toObject();
+                    s_multiOps.clear();
+                    s_singleOps.clear();
+                    if (gt.contains("multi_ops") && gt.value("multi_ops").isArray())
+                    {
+                        for (auto v : gt.value("multi_ops").toArray())
+                            s_multiOps.push_back(v.toString());
+                    }
+                    if (gt.contains("single_ops") && gt.value("single_ops").isArray())
+                    {
+                        for (auto v : gt.value("single_ops").toArray())
+                            s_singleOps.push_back(v.toString());
+                    }
+                }
             }
         }
     }
     if (s_outDir.isEmpty())
         s_outDir = QCoreApplication::applicationDirPath() + "/../../generated/lex";
+    if (s_syntaxDir.isEmpty())
+        s_syntaxDir = s_outDir + "/syntax";
+    if (s_graphsDir.isEmpty())
+        s_graphsDir = s_outDir + "/graphs";
+    if (s_ws.isEmpty())
+        s_ws = QVector<QChar>({' ', '\t', '\n', '\r'});
+    if (s_multiOps.isEmpty())
+        s_multiOps = QVector<QString>({"<=", ">=", "<>", ":="});
+    if (s_singleOps.isEmpty())
+        s_singleOps = QVector<QString>({"(", ")", ";", "<", ">", "=", "+", "-", "*", "/", "%", "^"});
 }
 
 void Config::reload()
@@ -202,6 +363,164 @@ QString Config::generatedOutputDir()
     if (!d.exists())
         d.mkpath(".");
     return s_outDir;
+}
+
+QString Config::syntaxOutputDir()
+{
+    load();
+    return s_syntaxDir.isEmpty() ? (generatedOutputDir() + "/syntax") : s_syntaxDir;
+}
+
+QString Config::graphsDir()
+{
+    load();
+    return s_graphsDir.isEmpty() ? (generatedOutputDir() + "/graphs") : s_graphsDir;
+}
+
+QString Config::macroLetterName()
+{
+    load();
+    return s_macroLetter;
+}
+
+QString Config::macroDigitName()
+{
+    load();
+    return s_macroDigit;
+}
+
+QVector<QChar> Config::whitespaces()
+{
+    load();
+    return s_ws;
+}
+
+bool Config::isWhitespace(QChar ch)
+{
+    load();
+    for (auto c : s_ws)
+        if (ch == c) return true;
+    return false;
+}
+
+bool Config::tokenMapUseHeuristics()
+{
+    load();
+    return s_tokenMapUseHeuristics;
+}
+
+QString Config::graphvizExecutable()
+{
+    load();
+    return s_graphvizExe;
+}
+
+int Config::graphvizDefaultDpi()
+{
+    load();
+    return s_graphvizDpi;
+}
+
+int Config::graphvizTimeoutMs()
+{
+    load();
+    return s_graphvizTimeout;
+}
+
+QString Config::epsilonSymbol()
+{
+    load();
+    return s_epsilon;
+}
+
+QString Config::eofSymbol()
+{
+    load();
+    return s_eof;
+}
+
+QString Config::augSuffix()
+{
+    load();
+    return s_augSuffix;
+}
+
+QString Config::lr1ConflictPolicy()
+{
+    load();
+    return s_lr1Policy;
+}
+
+QString Config::nonterminalPattern()
+{
+    load();
+    return s_nontermPat;
+}
+
+QVector<QString> Config::grammarMultiOps()
+{
+    load();
+    return s_multiOps;
+}
+
+QVector<QString> Config::grammarSingleOps()
+{
+    load();
+    return s_singleOps;
+}
+
+QString Config::tokenHeaderRegex()
+{
+    load();
+    return s_tokenHeaderRegex;
+}
+
+QString Config::tableMarkLabel()
+{
+    load();
+    return s_tblMark;
+}
+
+QString Config::tableStateIdLabel()
+{
+    load();
+    return s_tblStateId;
+}
+
+QString Config::tableStateSetLabel()
+{
+    load();
+    return s_tblStateSet;
+}
+
+QString Config::epsilonColumnLabel()
+{
+    load();
+    return s_tblEpsilonCol;
+}
+
+QString Config::dotRankdir()
+{
+    load();
+    return s_dotRankdir;
+}
+
+QString Config::dotNodeShape()
+{
+    load();
+    return s_dotNodeShape;
+}
+
+QString Config::dotEpsilonLabel()
+{
+    load();
+    return s_dotEpsLabel;
+}
+
+QVector<QString> Config::configSearchPaths()
+{
+    load();
+    return s_cfgSearchPaths;
 }
 
 bool Config::skipBraceComment()

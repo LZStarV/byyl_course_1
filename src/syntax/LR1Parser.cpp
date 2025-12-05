@@ -1,4 +1,5 @@
 #include "LR1Parser.h"
+#include "../config/Config.h"
 
 static QString actionFor(const LR1ActionTable& t, int st, const QString& a)
 {
@@ -52,16 +53,36 @@ ParseResult LR1Parser::parse(const QVector<QString>& tokens,
         if (act.contains('|'))
         {
             auto    parts = act.split('|');
-            QString pick;
-            for (auto p : parts)
-                if (p.startsWith("s"))
-                {
-                    pick = p;
-                    break;
-                }
-            if (pick.isEmpty())
-                pick = parts[0];
-            act = pick;
+            QString policy = Config::lr1ConflictPolicy().trimmed().toLower();
+            if (policy == "prefer_shift")
+            {
+                QString pick;
+                for (auto p : parts)
+                    if (p.startsWith("s"))
+                    {
+                        pick = p;
+                        break;
+                    }
+                if (pick.isEmpty()) pick = parts[0];
+                act = pick;
+            }
+            else if (policy == "prefer_reduce")
+            {
+                QString pick;
+                for (auto p : parts)
+                    if (p.startsWith("r"))
+                    {
+                        pick = p;
+                        break;
+                    }
+                if (pick.isEmpty()) pick = parts[0];
+                act = pick;
+            }
+            else
+            {
+                res.errorPos = res.steps.size();
+                break;
+            }
         }
         if (act.isEmpty())
         {

@@ -1,31 +1,13 @@
 #include "Grammar.h"
+#include "../config/Config.h"
 #include <QStringList>
 #include <QFile>
 #include <QTextStream>
 #include <QIODevice>
 
-static bool isNonTerminal(const QString& s)
-{
-    if (s.isEmpty())
-        return false;
-    if (!s.contains('_'))
-        return false;
-    for (auto ch : s)
-        if (!(ch.isLower() || ch == '_'))
-            return false;
-    return true;
-}
+// 非终结符/终结符判断由 addSymbols 归类为准；此处不再使用命名约定
 
-static bool isTerminal(const QString& s)
-{
-    if (s.isEmpty())
-        return false;
-    if (s == "#")
-        return true;
-    if (s.contains('_'))
-        return false;
-    return true;
-}
+// 解析阶段的终结符判断不使用命名约定
 
 static QString trim(const QString& s)
 {
@@ -38,16 +20,9 @@ static QVector<QString> splitRhs(const QString& rhs)
     QString          s = rhs;
     int              i = 0;
     auto isWordChar    = [](QChar c) { return c.isLetterOrNumber() || c == '_' || c == '-'; };
-    auto matchMulti    = [&s, &i](const QString& pat)
-    {
-        if (i + pat.size() <= s.size() && s.mid(i, pat.size()) == pat)
-        {
-            i += pat.size();
-            return true;
-        }
-        return false;
-    };
-    QSet<QString> singles{"(", ")", ";", "<", ">", "=", "+", "-", "*", "/", "%", "^"};
+    auto multiOps = Config::grammarMultiOps();
+    QSet<QString> singleOpsSet;
+    for (const auto& op : Config::grammarSingleOps()) singleOpsSet.insert(op);
     while (i < s.size())
     {
         QChar c = s[i];
@@ -56,12 +31,21 @@ static QVector<QString> splitRhs(const QString& rhs)
             i++;
             continue;
         }
-        if (matchMulti(":=") || matchMulti("<=") || matchMulti(">=") || matchMulti("<>"))
+        bool matched = false;
+        for (const auto& op : multiOps)
         {
-            v.push_back(s.mid(i - 2, 2));  // last matched 2-ch op
-            continue;
+            int L = op.size();
+            if (L > 0 && i + L <= s.size() && s.mid(i, L) == op)
+            {
+                v.push_back(op);
+                i += L;
+                matched = true;
+                break;
+            }
         }
-        if (singles.contains(QString(c)))
+        if (matched)
+            continue;
+        if (singleOpsSet.contains(QString(c)))
         {
             v.push_back(QString(c));
             i++;
@@ -83,22 +67,8 @@ static QVector<QString> splitRhs(const QString& rhs)
 
 static bool detectDirectLeftRecursion(const Grammar& g, QString& who)
 {
-    for (auto it = g.productions.begin(); it != g.productions.end(); ++it)
-    {
-        const QString& A = it.key();
-        for (const auto& p : it.value())
-        {
-            if (!p.right.isEmpty())
-            {
-                const QString& X = p.right[0];
-                if (X == A && isNonTerminal(X))
-                {
-                    who = A;
-                    return true;
-                }
-            }
-        }
-    }
+    Q_UNUSED(g);
+    Q_UNUSED(who);
     return false;
 }
 
@@ -113,7 +83,7 @@ static void addSymbols(Grammar& g)
         {
             for (const auto& s : p.right)
             {
-                if (s == "#")
+                if (s == Config::epsilonSymbol())
                     continue;
                 if (lhs.contains(s))
                     g.nonterminals.insert(s);

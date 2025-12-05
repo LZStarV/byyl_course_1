@@ -106,7 +106,7 @@ void SyntaxController::bind(QWidget* exp2Page)
         exportBtnLR0->setDpiProvider(
             [this, edtDpiLR0]()
             {
-                int dpi = 150;
+                int dpi = Config::graphvizDefaultDpi();
                 if (edtDpiLR0 && !edtDpiLR0->text().trimmed().isEmpty())
                     dpi = edtDpiLR0->text().trimmed().toInt();
                 return dpi;
@@ -129,7 +129,7 @@ void SyntaxController::bind(QWidget* exp2Page)
         exportBtnLR1->setDpiProvider(
             [this, edtDpiLR1]()
             {
-                int dpi = 150;
+                int dpi = Config::graphvizDefaultDpi();
                 if (edtDpiLR1 && !edtDpiLR1->text().trimmed().isEmpty())
                     dpi = edtDpiLR1->text().trimmed().toInt();
                 return dpi;
@@ -218,7 +218,7 @@ void SyntaxController::parseGrammar()
         QVector<QString>(grammar_.nonterminals.begin(), grammar_.nonterminals.end());
     QVector<QString> ts  = QVector<QString>(grammar_.terminals.begin(), grammar_.terminals.end());
     QString          src = generateSyntaxParserSource(ll1_.table, nts, ts, grammar_.startSymbol);
-    QString          outDir = Config::generatedOutputDir() + "/syntax";
+    QString          outDir = Config::syntaxOutputDir();
     QDir             gd(outDir);
     if (!gd.exists())
         gd.mkpath(".");
@@ -258,7 +258,7 @@ void SyntaxController::runSyntaxAnalysis()
     }
     auto    dot = syntaxAstToDot(res.root);
     QString pngPath;
-    int     dpi = 150;
+    int     dpi = Config::graphvizDefaultDpi();
     if (!SyntaxController::renderDotFromContentLocal(dot, pngPath, dpi))
     {
         notify_->error("语法树渲染失败");
@@ -284,7 +284,7 @@ void SyntaxController::exportDot()
         return;
     }
     QString dot  = syntaxAstToDot(res.root);
-    QString base = Config::generatedOutputDir() + "/syntax/graphs";
+    QString base = Config::graphsDir() + "/syntax";
     QDir    d(base);
     if (!d.exists())
         d.mkpath(".");
@@ -315,7 +315,7 @@ void SyntaxController::previewTree()
         return;
     }
     QString pngPath;
-    int     dpi = 150;
+    int     dpi = Config::graphvizDefaultDpi();
     if (!SyntaxController::renderDotFromContentLocal(syntaxAstToDot(res.root), pngPath, dpi))
     {
         notify_->error("渲染失败");
@@ -336,7 +336,7 @@ void SyntaxController::previewLR0()
     auto    gr  = LR0Builder::build(grammar_);
     QString dot = LR0Builder::toDot(gr);
     QString png;
-    int     dpi = 150;
+    int     dpi = Config::graphvizDefaultDpi();
     if (!SyntaxController::renderDotFromContentLocal(dot, png, dpi))
     {
         notify_->error("渲染失败");
@@ -421,7 +421,7 @@ void SyntaxController::previewLR1()
     }
     auto    gr  = LR1Builder::build(grammar_);
     QString dot = LR1Builder::toDot(gr);
-    int     dpi = 150;
+    int     dpi = Config::graphvizDefaultDpi();
     if (auto e = page_->findChild<QLineEdit*>("edtGraphDpiLR1");
         e && !e->text().trimmed().isEmpty())
         dpi = e->text().trimmed().toInt();

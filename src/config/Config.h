@@ -27,6 +27,37 @@ class Config
     static QVector<WeightTier> weightTiers();
     /** \brief 词法生成输出目录路径 */
     static QString generatedOutputDir();
+    static QString syntaxOutputDir();
+    static QString graphsDir();
+    static QString macroLetterName();
+    static QString macroDigitName();
+    static bool    isWhitespace(QChar ch);
+    static QVector<QChar> whitespaces();
+    static bool    tokenMapUseHeuristics();
+    static QString graphvizExecutable();
+    static int     graphvizDefaultDpi();
+    static int     graphvizTimeoutMs();
+    // syntax config
+    static QString epsilonSymbol();
+    static QString eofSymbol();
+    static QString augSuffix();
+    static QString lr1ConflictPolicy();
+    static QString nonterminalPattern();
+    static QVector<QString> grammarMultiOps();
+    static QVector<QString> grammarSingleOps();
+    // lexer token header regex
+    static QString tokenHeaderRegex();
+    // i18n for tables
+    static QString tableMarkLabel();
+    static QString tableStateIdLabel();
+    static QString tableStateSetLabel();
+    static QString epsilonColumnLabel();
+    // dot style
+    static QString dotRankdir();
+    static QString dotNodeShape();
+    static QString dotEpsilonLabel();
+    // config search paths
+    static QVector<QString> configSearchPaths();
     /** \brief 是否跳过花括号注释块 */
     static bool skipBraceComment();
     /** \brief 是否跳过行注释（//）*/
@@ -60,6 +91,31 @@ class Config
     static bool                s_loaded;
     static QVector<WeightTier> s_tiers;
     static QString             s_outDir;
+    static QString             s_syntaxDir;
+    static QString             s_graphsDir;
+    static QString             s_macroLetter;
+    static QString             s_macroDigit;
+    static QVector<QChar>      s_ws;
+    static bool                s_tokenMapUseHeuristics;
+    static QString             s_graphvizExe;
+    static int                 s_graphvizDpi;
+    static int                 s_graphvizTimeout;
+    static QString             s_epsilon;
+    static QString             s_eof;
+    static QString             s_augSuffix;
+    static QString             s_lr1Policy;
+    static QString             s_nontermPat;
+    static QVector<QString>    s_multiOps;
+    static QVector<QString>    s_singleOps;
+    static QString             s_tokenHeaderRegex;
+    static QString             s_tblMark;
+    static QString             s_tblStateId;
+    static QString             s_tblStateSet;
+    static QString             s_tblEpsilonCol;
+    static QString             s_dotRankdir;
+    static QString             s_dotNodeShape;
+    static QString             s_dotEpsLabel;
+    static QVector<QString>    s_cfgSearchPaths;
     static bool                s_hasOutDirOverride;
     static QString             s_outDirOverride;
     static bool                s_hasTiersOverride;

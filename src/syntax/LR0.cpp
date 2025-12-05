@@ -1,4 +1,5 @@
 #include "LR0.h"
+#include "../config/Config.h"
 
 static bool containsItem(const QVector<LR0Item>& set, const LR0Item& it)
 {
@@ -76,7 +77,7 @@ static bool equalSet(const QVector<LR0Item>& a, const QVector<LR0Item>& b)
 LR0Graph LR0Builder::build(const Grammar& g)
 {
     Grammar aug   = g;
-    QString Sdash = g.startSymbol + "'";
+    QString Sdash = g.startSymbol + Config::augSuffix();
     if (!aug.productions.contains(Sdash))
     {
         Production p;

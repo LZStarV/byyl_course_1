@@ -10,9 +10,9 @@ class LR1ProcessTab : public QWidget
     Q_OBJECT
    public:
     explicit LR1ProcessTab(QWidget* parent = nullptr);
-    QPushButton* btnLoadDefault;
-    QComboBox*   cmbPickSource;
-    QPushButton* btnRunLR1;
+    QPushButton*    btnLoadDefault;
+    QComboBox*      cmbPickSource;
+    QPushButton*    btnRunLR1;
     QPlainTextEdit* txtSourceView;
     QPlainTextEdit* txtTokensView;
     QPlainTextEdit* txtGrammarView;

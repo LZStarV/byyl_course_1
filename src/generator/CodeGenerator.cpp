@@ -1,4 +1,5 @@
 #include "CodeGenerator.h"
+#include "../config/Config.h"
 #include <QStringBuilder>
 static QString genJudge(const MinDFA& m)
 {
@@ -62,14 +63,14 @@ QString CodeGenerator::generate(const MinDFA& mdfa, const QMap<QString, int>& to
             int t = it->trans.value(a, -1);
             if (t != -1)
             {
-                if (a.compare("letter", Qt::CaseInsensitive) == 0)
+                if (a.compare(Config::macroLetterName(), Qt::CaseInsensitive) == 0)
                 {
                     code += "            if (isalpha((unsigned char)ch)";
                     code += mdfa.alpha.allowUnderscoreInLetter ? " || ch=='_'" : "";
                     code += mdfa.alpha.allowDollarInLetter ? " || ch=='$'" : "";
                     code += ") return " + QString::number(t) + ";\n";
                 }
-                else if (a.compare("digit", Qt::CaseInsensitive) == 0)
+                else if (a.compare(Config::macroDigitName(), Qt::CaseInsensitive) == 0)
                 {
                     code += "            if (isdigit((unsigned char)ch)) return " +
                             QString::number(t) + ";\n";

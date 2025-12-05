@@ -67,7 +67,10 @@ void LR1Controller::bind(QWidget* exp2Page)
     if (auto b = page_->findChild<QPushButton*>("btnLoadDefaultLR1"))
         connect(b, &QPushButton::clicked, this, &LR1Controller::loadDefault);
     if (auto cmb = page_->findChild<QComboBox*>("cmbPickSourceLR1"))
-        connect(cmb, QOverload<int>::of(&QComboBox::activated), this, &LR1Controller::onPickSourceActivated);
+        connect(cmb,
+                QOverload<int>::of(&QComboBox::activated),
+                this,
+                &LR1Controller::onPickSourceActivated);
     if (auto b = page_->findChild<QPushButton*>("btnRunLR1Process"))
         connect(b, &QPushButton::clicked, this, &LR1Controller::runLR1Process);
     if (auto b = page_->findChild<QPushButton*>("btnPreviewLR1Tree"))
@@ -79,32 +82,39 @@ void LR1Controller::onPickSourceActivated(int index)
 {
     // 索引从0开始，0表示"源程序"，1表示"Token序列"，2表示"当前文法"
     QString filePath = QFileDialog::getOpenFileName(
-        mw_,
-        QStringLiteral("选择文件"),
-        "",
-        QStringLiteral("所有文件 (*)"));
-    
-    if (filePath.isEmpty()) return;
-    
+        mw_, QStringLiteral("选择文件"), "", QStringLiteral("所有文件 (*)"));
+
+    if (filePath.isEmpty())
+        return;
+
     QFile file(filePath);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
         notify_->error(QStringLiteral("无法打开文件: ") + filePath);
         return;
     }
-    
+
     QTextStream in(&file);
-    QString content = in.readAll();
+    QString     content = in.readAll();
     file.close();
-    
-    if (auto txtSourceView = page_->findChild<QPlainTextEdit*>("txtSourceViewLR1")) {
-        if (index == 0) { // 源程序
+
+    if (auto txtSourceView = page_->findChild<QPlainTextEdit*>("txtSourceViewLR1"))
+    {
+        if (index == 0)
+        {  // 源程序
             txtSourceView->setPlainText(content);
-        } else if (index == 1) { // Token序列
-            if (auto txtTokensView = page_->findChild<QPlainTextEdit*>("txtTokensViewLR1")) {
+        }
+        else if (index == 1)
+        {  // Token序列
+            if (auto txtTokensView = page_->findChild<QPlainTextEdit*>("txtTokensViewLR1"))
+            {
                 txtTokensView->setPlainText(content);
             }
-        } else if (index == 2) { // 当前文法
-            if (auto txtGrammarView = page_->findChild<QPlainTextEdit*>("txtGrammarViewLR1")) {
+        }
+        else if (index == 2)
+        {  // 当前文法
+            if (auto txtGrammarView = page_->findChild<QPlainTextEdit*>("txtGrammarViewLR1"))
+            {
                 txtGrammarView->setPlainText(content);
             }
         }
@@ -113,7 +123,7 @@ void LR1Controller::onPickSourceActivated(int index)
 
 void LR1Controller::loadDefault()
 {
-    QString dir     = Config::generatedOutputDir() + "/syntax";
+    QString dir     = Config::syntaxOutputDir();
     QString srcPath = dir + "/last_source.txt";
     QString tokPath = dir + "/last_tokens.txt";
     QFile   fs(srcPath), ft(tokPath);
@@ -156,7 +166,7 @@ void LR1Controller::pickSource()
     f.close();
     if (auto edt = page_->findChild<QPlainTextEdit*>("txtSourceViewLR1"))
         edt->setPlainText(content);
-    QString tokPath = Config::generatedOutputDir() + "/syntax/last_tokens.txt";
+    QString tokPath = Config::syntaxOutputDir() + "/last_tokens.txt";
     QFile   ft(tokPath);
     if (ft.open(QIODevice::ReadOnly | QIODevice::Text))
     {
@@ -247,16 +257,7 @@ void LR1Controller::runLR1Process()
     }
     if (unknown > 0)
         notify_->warning(QString("存在未映射的Token编码数量: %1").arg(unknown));
-    // 若文法不包含分隔符；则按需过滤分隔符（例如Tiny语法的分号）
-    if (!g.terminals.contains(";") && tokens.contains(";"))
-    {
-        QVector<QString> filtered;
-        for (auto& x : tokens)
-            if (x != ";")
-                filtered.push_back(x);
-        tokens.swap(filtered);
-        notify_->warning(QStringLiteral("已过滤未在文法中定义的分隔符 ';'"));
-    }
+    // 分隔符是否保留由文法自定义，不进行额外过滤
     auto r = LR1Parser::parse(tokens, g, tbl);
     if (auto tblw = page_->findChild<QTableWidget*>("tblLR1Process"))
     {

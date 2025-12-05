@@ -48,7 +48,7 @@ bool DotService::renderToFile(const QString& dotContent,
     args << ("-T" + fmt) << "-o" << outPath;
     if (dpi > 0)
         args << ("-Gdpi=" + QString::number(dpi));
-    proc.start("dot", args);
+    proc.start(Config::graphvizExecutable(), args);
     if (!proc.waitForStarted())
     {
         if (notify_)
@@ -57,7 +57,7 @@ bool DotService::renderToFile(const QString& dotContent,
     }
     proc.write(dotContent.toUtf8());
     proc.closeWriteChannel();
-    if (!proc.waitForFinished(20000))
+    if (!proc.waitForFinished(Config::graphvizTimeoutMs()))
     {
         proc.kill();
         if (notify_)
@@ -85,7 +85,7 @@ bool DotService::renderToTempPng(const QString& dotContent, QString& outPngPath,
     args << "-Tpng" << "-o" << outPngPath;
     if (dpi > 0)
         args << ("-Gdpi=" + QString::number(dpi));
-    proc.start("dot", args);
+    proc.start(Config::graphvizExecutable(), args);
     if (!proc.waitForStarted())
     {
         if (notify_)
@@ -94,7 +94,7 @@ bool DotService::renderToTempPng(const QString& dotContent, QString& outPngPath,
     }
     proc.write(dotContent.toUtf8());
     proc.closeWriteChannel();
-    if (!proc.waitForFinished(20000))
+    if (!proc.waitForFinished(Config::graphvizTimeoutMs()))
     {
         proc.kill();
         if (notify_)

@@ -1,6 +1,7 @@
 #include "Engine.h"
 #include "config/Config.h"
 #include "syntax/GrammarParser.h"
+static int matchLen(const MinDFA& mdfa, const QString& src, int pos);
 RegexFile Engine::lexFile(const QString& text)
 {
     return RegexLexer::lex(text);
@@ -25,11 +26,11 @@ static Tables tableFromNFA(const NFA& nfa)
 {
     Tables           t;
     QVector<QString> cols;
-    cols.push_back("标记");
-    cols.push_back("状态 ID");
+    cols.push_back(Config::tableMarkLabel());
+    cols.push_back(Config::tableStateIdLabel());
     auto syms = nfa.alpha.ordered();
     for (auto s : syms) cols.push_back(s);
-    cols.push_back("#");
+    cols.push_back(Config::epsilonColumnLabel());
     t.columns = cols;
     for (auto it = nfa.states.begin(); it != nfa.states.end(); ++it)
     {
@@ -88,8 +89,8 @@ static Tables tableFromDFA(const DFA& dfa)
 {
     Tables           t;
     QVector<QString> cols;
-    cols.push_back("标记");
-    cols.push_back("状态集合");
+    cols.push_back(Config::tableMarkLabel());
+    cols.push_back(Config::tableStateSetLabel());
     auto syms = dfa.alpha.ordered();
     for (auto s : syms) cols.push_back(s);
     t.columns = cols;
@@ -115,8 +116,8 @@ static Tables tableFromMin(const MinDFA& dfa)
 {
     Tables           t;
     QVector<QString> cols;
-    cols.push_back("标记");
-    cols.push_back("状态 ID");
+    cols.push_back(Config::tableMarkLabel());
+    cols.push_back(Config::tableStateIdLabel());
     auto syms = dfa.alpha.ordered();
     for (auto s : syms) cols.push_back(s);
     t.columns = cols;
@@ -168,83 +169,130 @@ QString Engine::run(const MinDFA& mdfa, const QString& source, int tokenCode)
     int     pos = 0;
     while (pos < source.size())
     {
-        QChar ch = source[pos++];
-        if (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r')
-            continue;
-        if (ch == '{')
+        QChar ch = source[pos];
+        if (Config::isWhitespace(ch))
         {
+            pos++;
+            continue;
+        }
+        if (Config::skipBraceComment() && ch == '{')
+        {
+            pos++;
             while (pos < source.size() && source[pos++] != '}')
             {
             }
             continue;
         }
-        int  state = mdfa.start;
-        bool acc   = false;
-        while (true)
+        if (Config::skipLineComment() && ch == '/' && pos + 1 < source.size() && source[pos + 1] == '/')
         {
-            bool moved = false;
-            for (auto a : mdfa.alpha.ordered())
+            pos += 2;
+            while (pos < source.size() && source[pos++] != '\n')
             {
-                int t = mdfa.states[state].trans.value(a, -1);
-                if (t == -1)
+            }
+            continue;
+        }
+        if (Config::skipHashComment() && ch == '#')
+        {
+            pos++;
+            while (pos < source.size() && source[pos++] != '\n')
+            {
+            }
+            continue;
+        }
+        if (Config::skipBlockComment() && ch == '/' && pos + 1 < source.size() && source[pos + 1] == '*')
+        {
+            pos += 2;
+            while (pos + 1 < source.size())
+            {
+                if (source[pos] == '*' && source[pos + 1] == '/')
+                {
+                    pos += 2;
+                    break;
+                }
+                pos++;
+            }
+            continue;
+        }
+        if (Config::skipSingleQuoteString() && ch == '\'')
+        {
+            pos++;
+            while (pos < source.size())
+            {
+                QChar c = source[pos++];
+                if (c == '\\')
+                {
+                    if (pos < source.size())
+                        pos++;
                     continue;
-                if (a.compare("letter", Qt::CaseInsensitive) == 0)
-                {
-                    if (ch.isLetter())
-                    {
-                        state = t;
-                        moved = true;
-                        if (pos < source.size())
-                            ch = source[pos++];
-                        else
-                        {
-                            ch = QChar();
-                        }
-                        break;
-                    }
                 }
-                else if (a.compare("digit", Qt::CaseInsensitive) == 0)
+                if (c == '\'')
+                    break;
+            }
+            continue;
+        }
+        if (Config::skipDoubleQuoteString() && ch == '"')
+        {
+            pos++;
+            while (pos < source.size())
+            {
+                QChar c = source[pos++];
+                if (c == '\\')
                 {
-                    if (ch.isDigit())
-                    {
-                        state = t;
-                        moved = true;
-                        if (pos < source.size())
-                            ch = source[pos++];
-                        else
-                        {
-                            ch = QChar();
-                        }
-                        break;
-                    }
+                    if (pos < source.size())
+                        pos++;
+                    continue;
                 }
-                else
+                if (c == '"')
+                    break;
+            }
+            continue;
+        }
+        if (Config::skipTemplateString() && ch == '`')
+        {
+            pos++;
+            while (pos < source.size())
+            {
+                QChar c = source[pos++];
+                if (c == '\\')
                 {
-                    if (a.size() == 1 && ch == a[0])
+                    if (pos < source.size())
+                        pos++;
+                    continue;
+                }
+                if (c == '`')
+                    break;
+                if (c == '$' && pos < source.size() && source[pos] == '{')
+                {
+                    pos++;
+                    int depth = 1;
+                    while (pos < source.size() && depth > 0)
                     {
-                        state = t;
-                        moved = true;
-                        if (pos < source.size())
-                            ch = source[pos++];
-                        else
+                        QChar c2 = source[pos++];
+                        if (c2 == '\\')
                         {
-                            ch = QChar();
+                            if (pos < source.size())
+                                pos++;
+                            continue;
                         }
-                        break;
+                        if (c2 == '{')
+                            depth++;
+                        else if (c2 == '}')
+                            depth--;
                     }
                 }
             }
-            if (!moved || ch.isNull())
-                break;
-            acc = mdfa.states[state].accept;
+            continue;
         }
-        if (acc)
+        int len = matchLen(mdfa, source, pos);
+        if (len > 0)
         {
             out += QString::number(tokenCode) + " ";
+            pos += len;
         }
         else
         {
             out += "ERR ";
+            pos++;
         }
     }
     return out.trimmed();
@@ -311,34 +359,15 @@ QVector<MinDFA> Engine::buildAllMinDFA(const ParsedFile& pf, QVector<int>& codes
         {
             QVector<ASTNode*> alts;
             collectAlternatives(pt.ast, alts);
-            int  base   = pt.rule.code;
-            int  idx    = 0;
-            bool tinyKw = pt.rule.name.startsWith("_keywords", Qt::CaseInsensitive) &&
-                          (pt.rule.expr.contains("repeat", Qt::CaseInsensitive) ||
-                           pt.rule.expr.contains("until", Qt::CaseInsensitive));
-            if (tinyKw)
+            int base = pt.rule.code;
+            int idx  = 0;
+            for (auto alt : alts)
             {
-                QStringList kws({"if", "then", "else", "end", "repeat", "until", "read", "write"});
-                for (auto kw : kws)
-                {
-                    auto ast  = makeKeywordCI(kw);
-                    auto nfa  = buildNFA(ast, pf.alpha);
-                    auto dfa  = buildDFA(nfa);
-                    auto mdfa = buildMinDFA(dfa);
-                    result.push_back(mdfa);
-                    codes.push_back(base + (idx++));
-                }
-            }
-            else
-            {
-                for (auto alt : alts)
-                {
-                    auto nfa  = buildNFA(alt, pf.alpha);
-                    auto dfa  = buildDFA(nfa);
-                    auto mdfa = buildMinDFA(dfa);
-                    result.push_back(mdfa);
-                    codes.push_back(base + (idx++));
-                }
+                auto nfa  = buildNFA(alt, pf.alpha);
+                auto dfa  = buildDFA(nfa);
+                auto mdfa = buildMinDFA(dfa);
+                result.push_back(mdfa);
+                codes.push_back(base + (idx++));
             }
         }
         else
@@ -367,7 +396,7 @@ static int matchLen(const MinDFA& mdfa, const QString& src, int pos)
             int t = mdfa.states[state].trans.value(a, -1);
             if (t == -1)
                 continue;
-            if (a.compare("letter", Qt::CaseInsensitive) == 0)
+            if (a.compare(Config::macroLetterName(), Qt::CaseInsensitive) == 0)
             {
                 bool ok = ch.isLetter();
                 if (!ok && mdfa.alpha.allowUnderscoreInLetter && ch == '_')
@@ -381,7 +410,7 @@ static int matchLen(const MinDFA& mdfa, const QString& src, int pos)
                     break;
                 }
             }
-            else if (a.compare("digit", Qt::CaseInsensitive) == 0)
+            else if (a.compare(Config::macroDigitName(), Qt::CaseInsensitive) == 0)
             {
                 if (ch.isDigit())
                 {
@@ -418,7 +447,7 @@ QString Engine::runMultiple(const QVector<MinDFA>& mdfas,
     while (pos < source.size())
     {
         QChar ch = source[pos];
-        if (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r')
+        if (Config::isWhitespace(ch))
         {
             pos++;
             continue;

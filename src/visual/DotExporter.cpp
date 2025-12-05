@@ -1,4 +1,5 @@
 #include "DotExporter.h"
+#include "../config/Config.h"
 #include <QFile>
 #include <QTextStream>
 
@@ -16,8 +17,11 @@ static QString esc(const QString& s)
 
 static QString header(const QString& name)
 {
+    QString rank = Config::dotRankdir();
+    QString shape = Config::dotNodeShape();
     return QStringLiteral("digraph ") + name +
-           QStringLiteral(" {\nrankdir=LR;\nnode [shape=circle];\n");
+           QStringLiteral(" {\nrankdir=") + rank + QStringLiteral(";\nnode [shape=") + shape +
+           QStringLiteral("];\n");
 }
 static QString trailer()
 {
@@ -46,7 +50,7 @@ QString DotExporter::toDot(const NFA& nfa)
         int from = it->id;
         for (const auto& e : it->edges)
         {
-            QString lbl = e.epsilon ? QStringLiteral("ε") : esc(e.symbol);
+            QString lbl = e.epsilon ? Config::dotEpsilonLabel() : esc(e.symbol);
             out += QString::number(from) + QStringLiteral(" -> ") + QString::number(e.to) +
                    QStringLiteral(" [label=\"") + lbl + QStringLiteral("\"];\n");
         }

@@ -233,6 +233,7 @@ add_executable(GrammarParserTest tests/syntax/grammar_parser_test.cpp)
 target_sources(GrammarParserTest PRIVATE
     src/syntax/GrammarParser.cpp
     src/syntax/Grammar.cpp
+    src/config/Config.cpp
 )
 target_link_libraries(GrammarParserTest PRIVATE Qt6::Core Qt6::Test)
 add_test(NAME 文法解析测试 COMMAND GrammarParserTest)
@@ -242,6 +243,7 @@ target_sources(LL1Test PRIVATE
     src/syntax/LL1.cpp
     src/syntax/GrammarParser.cpp
     src/syntax/Grammar.cpp
+    src/config/Config.cpp
 )
 target_link_libraries(LL1Test PRIVATE Qt6::Core Qt6::Test)
 add_test(NAME LL1算法测试 COMMAND LL1Test)
@@ -253,6 +255,7 @@ target_sources(LR1Test PRIVATE
     src/syntax/TokenMapBuilder.cpp
     src/syntax/GrammarParser.cpp
     src/syntax/Grammar.cpp
+    src/config/Config.cpp
 )
 target_link_libraries(LR1Test PRIVATE Qt6::Core Qt6::Test)
 add_test(NAME LR1算法测试 COMMAND LR1Test)
@@ -283,6 +286,7 @@ target_sources(LR0Test PRIVATE
     src/syntax/LR0.cpp
     src/syntax/GrammarParser.cpp
     src/syntax/Grammar.cpp
+    src/config/Config.cpp
 )
 target_link_libraries(LR0Test PRIVATE Qt6::Core Qt6::Test)
 add_test(NAME LR0算法测试 COMMAND LR0Test)
@@ -294,6 +298,7 @@ target_sources(SLRTest PRIVATE
     src/syntax/LL1.cpp
     src/syntax/GrammarParser.cpp
     src/syntax/Grammar.cpp
+    src/config/Config.cpp
 )
 target_link_libraries(SLRTest PRIVATE Qt6::Core Qt6::Test)
 add_test(NAME SLR算法测试 COMMAND SLRTest)

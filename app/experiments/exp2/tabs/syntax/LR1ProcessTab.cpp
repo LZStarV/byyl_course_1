@@ -17,17 +17,17 @@ LR1ProcessTab::LR1ProcessTab(QWidget* parent) : QWidget(parent)
     cmbPickSource->setObjectName("cmbPickSourceLR1");
     btnRunLR1 = new QPushButton("运行LR(1)分析（每句）");
     btnRunLR1->setObjectName("btnRunLR1Process");
-    
+
     // 设置按钮最小宽度并使其可扩展
     btnLoadDefault->setMinimumWidth(150);
     btnRunLR1->setMinimumWidth(150);
     btnLoadDefault->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     btnRunLR1->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    
+
     hBtns->addWidget(cmbPickSource);
     hBtns->addWidget(btnLoadDefault);
     hBtns->addWidget(btnRunLR1);
-    hBtns->setSpacing(10); // 设置按钮间间距
+    hBtns->setSpacing(10);  // 设置按钮间间距
     v->addLayout(hBtns);
     auto h = new QHBoxLayout;
     // 左：源程序

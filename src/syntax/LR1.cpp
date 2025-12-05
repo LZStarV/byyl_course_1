@@ -1,9 +1,10 @@
 #include "LR1.h"
 #include "LL1.h"
+#include "../config/Config.h"
 
 static bool isTerminal(const QSet<QString>& terms, const QString& s)
 {
-    return terms.contains(s) || s == "$";
+    return terms.contains(s) || s == Config::eofSymbol();
 }
 
 static QSet<QString> firstSeqLL1(const Grammar&          g,
@@ -21,7 +22,7 @@ static QSet<QString> firstSeqLL1(const Grammar&          g,
     for (int i = 0; i < seq.size(); ++i)
     {
         const QString& X = seq[i];
-        if (isTerminal(g.terminals, X) && X != "#")
+        if (isTerminal(g.terminals, X) && X != Config::epsilonSymbol())
         {
             res.insert(X);
             allEps = false;
@@ -30,9 +31,9 @@ static QSet<QString> firstSeqLL1(const Grammar&          g,
         // 非终结符：FIRST(X) 去除 #
         QSet<QString> f = info.first.value(X);
         for (const auto& a : f)
-            if (a != "#")
+            if (a != Config::epsilonSymbol())
                 res.insert(a);
-        if (!f.contains("#"))
+        if (!f.contains(Config::epsilonSymbol()))
         {
             allEps = false;
             break;
@@ -96,7 +97,7 @@ static QVector<LR1Item> goToLL1(const Grammar&          g,
                                 const QVector<LR1Item>& I,
                                 const QString&          X)
 {
-    if (X.isEmpty() || X == "#")
+    if (X.isEmpty() || X == Config::epsilonSymbol())
         return {};
     QVector<LR1Item> moved;
     for (const auto& it : I)
@@ -166,8 +167,8 @@ LR1Graph LR1Builder::build(const Grammar& g)
                 if (it.dot < it.right.size())
                 {
                     QString X = it.right[it.dot];
-                    if (!X.isEmpty() && X != "#")
-                        nextSymbols.insert(X);
+                if (!X.isEmpty() && X != Config::epsilonSymbol())
+                    nextSymbols.insert(X);
                 }
             }
             for (auto ns = nextSymbols.begin(); ns != nextSymbols.end(); ++ns)
@@ -267,9 +268,9 @@ LR1ActionTable LR1Builder::computeActionTable(const Grammar& g, const LR1Graph& 
             }
             else
             {
-                if (it.left.endsWith("'") && it.lookahead == "$")
+                if (it.left.endsWith(Config::augSuffix()) && it.lookahead == Config::eofSymbol())
                 {
-                    putAction(t.action, i, "$", "acc");
+                    putAction(t.action, i, Config::eofSymbol(), "acc");
                 }
                 QString a = it.lookahead;
                 if (!a.isEmpty() && a != "#")

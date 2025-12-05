@@ -1,4 +1,5 @@
 #include "LL1.h"
+#include "../config/Config.h"
 
 static QSet<QString> firstSeq(const Grammar&                      g,
                               const QVector<QString>&             seq,
@@ -16,16 +17,16 @@ static QSet<QString> firstSeq(const Grammar&                      g,
         }
         auto fs = first.value(s);
         for (const auto& t : fs)
-            if (t != "#")
+            if (t != Config::epsilonSymbol())
                 r.insert(t);
-        if (!fs.contains("#"))
+        if (!fs.contains(Config::epsilonSymbol()))
         {
             allEps = false;
             break;
         }
     }
     if (allEps)
-        r.insert("#");
+        r.insert(Config::epsilonSymbol());
     return r;
 }
 
@@ -54,7 +55,7 @@ LL1Info LL1::compute(const Grammar& g)
     }
     for (const auto& A : g.nonterminals) info.follow.insert(A, QSet<QString>());
     if (!g.startSymbol.isEmpty())
-        info.follow[g.startSymbol].insert("$");
+        info.follow[g.startSymbol].insert(Config::eofSymbol());
     changed = true;
     while (changed)
     {
@@ -95,13 +96,13 @@ LL1Info LL1::compute(const Grammar& g)
             auto        fs = firstSeq(g, p.right, info.first);
             for (const auto& a : fs)
             {
-                if (a == "#")
+                if (a == Config::epsilonSymbol())
                     continue;
                 if (info.table[A].contains(a))
                     info.conflicts.push_back(A + "/" + a);
                 info.table[A][a] = k;
             }
-            if (fs.contains("#"))
+            if (fs.contains(Config::epsilonSymbol()))
             {
                 for (const auto& b : info.follow[A])
                 {

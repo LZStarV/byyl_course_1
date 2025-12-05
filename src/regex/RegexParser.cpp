@@ -1,4 +1,5 @@
 #include "RegexParser.h"
+#include "../config/Config.h"
 #include <QStack>
 #include <QSet>
 static ASTNode* parseExpr(const QString& s, int& i, const QMap<QString, Rule>& macros);
@@ -194,15 +195,15 @@ static void collectAlphabet(ASTNode* n, Alphabet& a, const QMap<QString, Rule>& 
             for (auto ch : n->value) a.add(QString(ch));
             break;
         case ASTNode::Ref:
-            if (n->value.compare("letter", Qt::CaseInsensitive) == 0)
+            if (n->value.compare(Config::macroLetterName(), Qt::CaseInsensitive) == 0)
             {
                 a.hasLetter = true;
-                a.add("letter");
+                a.add(Config::macroLetterName());
             }
-            else if (n->value.compare("digit", Qt::CaseInsensitive) == 0)
+            else if (n->value.compare(Config::macroDigitName(), Qt::CaseInsensitive) == 0)
             {
                 a.hasDigit = true;
-                a.add("digit");
+                a.add(Config::macroDigitName());
             }
             break;
         default:
@@ -231,9 +232,9 @@ ParsedFile RegexParser::parse(const RegexFile& file)
             out.alpha.hasDigit = true;
     }
     // 根据宏定义推断 letter 允许的附加字符
-    if (out.macros.contains("letter"))
+    if (out.macros.contains(Config::macroLetterName()))
     {
-        auto expr = out.macros.value("letter").expr;
+        auto expr = out.macros.value(Config::macroLetterName()).expr;
         if (expr.contains('_'))
             out.alpha.allowUnderscoreInLetter = true;
         if (expr.contains('$'))

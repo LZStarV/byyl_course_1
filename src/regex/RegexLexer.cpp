@@ -1,11 +1,12 @@
 #include "RegexLexer.h"
+#include "../config/Config.h"
 #include <QStringList>
 #include <QRegularExpression>
 static bool parseTokenHeader(const QString& name, int& code, bool& isGroup)
 {
     if (!name.startsWith('_'))
         return false;
-    QRegularExpression re("^_([A-Za-z][A-Za-z0-9_]*?)(\\d+)(S)?$");
+    QRegularExpression re(Config::tokenHeaderRegex());
     auto               m = re.match(name);
     if (!m.hasMatch())
         return false;

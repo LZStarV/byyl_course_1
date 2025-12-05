@@ -1,4 +1,5 @@
 #include "TokenMapBuilder.h"
+#include "../config/Config.h"
 #include <QFile>
 #include <QTextStream>
 #include <QJsonDocument>
@@ -73,15 +74,15 @@ QMap<QString, QString> TokenMapBuilder::build(const QString& regexText, const Pa
         const auto& name = pt.rule.name;
         int         base = pt.rule.code;
         const auto& expr = pt.rule.expr;
-        if (name.contains("identifier", Qt::CaseInsensitive))
+        if (Config::tokenMapUseHeuristics() && name.contains("identifier", Qt::CaseInsensitive))
         {
             m[QString::number(base)] = "identifier";
         }
-        else if (name.contains("number", Qt::CaseInsensitive))
+        else if (Config::tokenMapUseHeuristics() && name.contains("number", Qt::CaseInsensitive))
         {
             m[QString::number(base)] = "number";
         }
-        else if (pt.rule.isGroup || name.contains('S'))
+        else if (Config::tokenMapUseHeuristics() && (pt.rule.isGroup || name.contains('S')))
         {
             QVector<ASTNode*> alts;
             collectAlternatives(pt.ast, alts);
