@@ -70,8 +70,13 @@ void AutomataController::bind(QWidget* root)
                 if (!parsed)
                     return QString();
                 int idx = cmbTok_ ? cmbTok_->currentIndex() : -1;
-                if (idx <= 0 || idx - 1 >= parsed->tokens.size())
+                if (idx < 0)
                     return QString();
+                if (idx == 0)
+                {
+                    auto nfaAll = mw_->getEngine()->buildMergedNFA(*parsed);
+                    return DotExporter::toDot(nfaAll, parsed->macros);
+                }
                 auto pt  = parsed->tokens[idx - 1];
                 auto nfa = mw_->getEngine()->buildNFA(pt.ast, parsed->alpha);
                 return DotExporter::toDot(nfa, parsed->macros);
@@ -98,8 +103,13 @@ void AutomataController::bind(QWidget* root)
                 if (!parsed)
                     return QString();
                 int idx = cmbTokDfa_ ? cmbTokDfa_->currentIndex() : -1;
-                if (idx <= 0 || idx - 1 >= parsed->tokens.size())
+                if (idx < 0)
                     return QString();
+                if (idx == 0)
+                {
+                    auto dfaAll = mw_->getEngine()->buildMergedDFA(*parsed);
+                    return DotExporter::toDot(dfaAll, parsed->macros);
+                }
                 auto pt  = parsed->tokens[idx - 1];
                 auto nfa = mw_->getEngine()->buildNFA(pt.ast, parsed->alpha);
                 auto dfa = mw_->getEngine()->buildDFA(nfa);
@@ -127,8 +137,13 @@ void AutomataController::bind(QWidget* root)
                 if (!parsed)
                     return QString();
                 int idx = cmbTokMin_ ? cmbTokMin_->currentIndex() : -1;
-                if (idx <= 0 || idx - 1 >= parsed->tokens.size())
+                if (idx < 0)
                     return QString();
+                if (idx == 0)
+                {
+                    auto mdfaAll = mw_->getEngine()->buildMergedMinDFA(*parsed);
+                    return DotExporter::toDot(mdfaAll, parsed->macros);
+                }
                 auto pt   = parsed->tokens[idx - 1];
                 auto nfa  = mw_->getEngine()->buildNFA(pt.ast, parsed->alpha);
                 auto dfa  = mw_->getEngine()->buildDFA(nfa);
@@ -239,57 +254,9 @@ void AutomataController::fillAllNFA()
     auto parsed = mw_->getParsed();
     if (!parsed)
         return;
-    auto            eng = mw_->getEngine();
-    QVector<Tables> parts;
-    for (const auto& tok : parsed->tokens)
-    {
-        auto nfa = eng->buildNFA(tok.ast, parsed->alpha);
-        parts.push_back(eng->nfaTable(nfa));
-    }
-    auto   syms = unionSyms(parts, true);
-    Tables t;
-    t.columns.clear();
-    t.columns.push_back("标记");
-    t.columns.push_back("状态 ID");
-    for (auto c : syms)
-    {
-        if (c != "#")
-            t.columns.push_back(c);
-    }
-    t.columns.push_back("#");
-    for (int k = 0; k < parts.size(); ++k)
-    {
-        Tables           pt = parts[k];
-        QVector<QString> sep;
-        sep << "Token" << parsed->tokens[k].rule.name;
-        for (int i = 2; i < t.columns.size(); ++i) sep << QString();
-        t.rows.push_back(sep);
-        for (const auto& row : pt.rows)
-        {
-            QVector<QString> newRow;
-            newRow << row[0] << row[1];
-            for (int ci = 2; ci < t.columns.size(); ++ci)
-            {
-                QString col = t.columns[ci];
-                int     idx = -1;
-                for (int j = 2; j < pt.columns.size(); ++j)
-                {
-                    if (pt.columns[j] == col)
-                    {
-                        idx = j;
-                        break;
-                    }
-                }
-                newRow << (idx == -1 ? QString() : row[idx]);
-            }
-            t.rows.push_back(newRow);
-        }
-    }
-    {
-        auto msets = AutomataTableHelper::buildMacroSets(parsed->macros);
-        auto mexps = AutomataTableHelper::buildMacroExprs(parsed->macros);
-        AutomataTableHelper::aggregateByMacros(t, msets, mexps);
-    }
+    auto eng    = mw_->getEngine();
+    auto merged = eng->buildMergedNFA(*parsed);
+    auto t      = eng->nfaTableWithMacros(merged, parsed->macros);
     fillTable(tblNfa_, t);
 }
 
@@ -298,56 +265,9 @@ void AutomataController::fillAllDFA()
     auto parsed = mw_->getParsed();
     if (!parsed)
         return;
-    auto            eng = mw_->getEngine();
-    QVector<Tables> parts;
-    for (const auto& tok : parsed->tokens)
-    {
-        auto nfa = eng->buildNFA(tok.ast, parsed->alpha);
-        auto dfa = eng->buildDFA(nfa);
-        parts.push_back(eng->dfaTable(dfa));
-    }
-    auto   syms = unionSyms(parts, false);
-    Tables t;
-    t.columns.clear();
-    t.columns.push_back("标记");
-    t.columns.push_back("状态集合");
-    for (auto c : syms)
-    {
-        t.columns.push_back(c);
-    }
-    for (int k = 0; k < parts.size(); ++k)
-    {
-        Tables           pt = parts[k];
-        QVector<QString> sep;
-        sep << "Token" << parsed->tokens[k].rule.name;
-        for (int i = 2; i < t.columns.size(); ++i) sep << QString();
-        t.rows.push_back(sep);
-        for (const auto& row : pt.rows)
-        {
-            QVector<QString> newRow;
-            newRow << row[0] << row[1];
-            for (int ci = 2; ci < t.columns.size(); ++ci)
-            {
-                QString col = t.columns[ci];
-                int     idx = -1;
-                for (int j = 2; j < pt.columns.size(); ++j)
-                {
-                    if (pt.columns[j] == col)
-                    {
-                        idx = j;
-                        break;
-                    }
-                }
-                newRow << (idx == -1 ? QString() : row[idx]);
-            }
-            t.rows.push_back(newRow);
-        }
-    }
-    {
-        auto msets = AutomataTableHelper::buildMacroSets(parsed->macros);
-        auto mexps = AutomataTableHelper::buildMacroExprs(parsed->macros);
-        AutomataTableHelper::aggregateByMacros(t, msets, mexps);
-    }
+    auto eng    = mw_->getEngine();
+    auto merged = eng->buildMergedDFA(*parsed);
+    auto t      = eng->dfaTableWithMacros(merged, parsed->macros);
     fillTable(tblDfa_, t);
 }
 
@@ -356,57 +276,9 @@ void AutomataController::fillAllMin()
     auto parsed = mw_->getParsed();
     if (!parsed)
         return;
-    auto            eng = mw_->getEngine();
-    QVector<Tables> parts;
-    for (const auto& tok : parsed->tokens)
-    {
-        auto nfa  = eng->buildNFA(tok.ast, parsed->alpha);
-        auto dfa  = eng->buildDFA(nfa);
-        auto mdfa = eng->buildMinDFA(dfa);
-        parts.push_back(eng->minTable(mdfa));
-    }
-    auto   syms = unionSyms(parts, false);
-    Tables t;
-    t.columns.clear();
-    t.columns.push_back("标记");
-    t.columns.push_back("状态 ID");
-    for (auto c : syms)
-    {
-        t.columns.push_back(c);
-    }
-    for (int k = 0; k < parts.size(); ++k)
-    {
-        Tables           pt = parts[k];
-        QVector<QString> sep;
-        sep << "Token" << parsed->tokens[k].rule.name;
-        for (int i = 2; i < t.columns.size(); ++i) sep << QString();
-        t.rows.push_back(sep);
-        for (const auto& row : pt.rows)
-        {
-            QVector<QString> newRow;
-            newRow << row[0] << row[1];
-            for (int ci = 2; ci < t.columns.size(); ++ci)
-            {
-                QString col = t.columns[ci];
-                int     idx = -1;
-                for (int j = 2; j < pt.columns.size(); ++j)
-                {
-                    if (pt.columns[j] == col)
-                    {
-                        idx = j;
-                        break;
-                    }
-                }
-                newRow << (idx == -1 ? QString() : row[idx]);
-            }
-            t.rows.push_back(newRow);
-        }
-    }
-    {
-        auto msets = AutomataTableHelper::buildMacroSets(parsed->macros);
-        auto mexps = AutomataTableHelper::buildMacroExprs(parsed->macros);
-        AutomataTableHelper::aggregateByMacros(t, msets, mexps);
-    }
+    auto eng    = mw_->getEngine();
+    auto merged = eng->buildMergedMinDFA(*parsed);
+    auto t      = eng->minTableWithMacros(merged, parsed->macros);
     fillTable(tblMin_, t);
 }
 
@@ -485,12 +357,25 @@ void AutomataController::previewNfa()
         return;
     }
     int idx = cmbTok_ ? cmbTok_->currentIndex() : -1;
-    if (idx <= 0 || idx - 1 >= parsed->tokens.size())
+    if (idx == 0)
     {
-        mw_->statusBar()->showMessage("请选择具体Token后预览NFA");
-        ToastManager::instance().showWarning("请选择具体Token后预览NFA");
+        auto    nfaAll  = mw_->getEngine()->buildMergedNFA(*parsed);
+        auto    dpiEdit = root_->findChild<QLineEdit*>("edtGraphDpiNfa");
+        int     dpi     = (dpiEdit && !dpiEdit->text().trimmed().isEmpty())
+                              ? dpiEdit->text().trimmed().toInt()
+                              : 150;
+        QString pngPath;
+        if (!dot_->renderToTempPng(DotExporter::toDot(nfaAll, parsed->macros), pngPath, dpi))
+        {
+            mw_->statusBar()->showMessage("Graphviz渲染失败，请确认已安装dot");
+            return;
+        }
+        dot_->previewPng(pngPath, "NFA 预览");
+        QFile::remove(pngPath);
         return;
     }
+    if (idx <= 0 || idx - 1 >= parsed->tokens.size())
+        return;
     auto pt      = parsed->tokens[idx - 1];
     auto nfa     = mw_->getEngine()->buildNFA(pt.ast, parsed->alpha);
     auto dpiEdit = root_->findChild<QLineEdit*>("edtGraphDpiNfa");
@@ -583,12 +468,25 @@ void AutomataController::previewDfa()
         return;
     }
     int idx = cmbTokDfa_ ? cmbTokDfa_->currentIndex() : -1;
-    if (idx <= 0 || idx - 1 >= parsed->tokens.size())
+    if (idx == 0)
     {
-        mw_->statusBar()->showMessage("请选择具体Token后预览DFA");
-        ToastManager::instance().showWarning("请选择具体Token后预览DFA");
+        auto    dfaAll  = mw_->getEngine()->buildMergedDFA(*parsed);
+        auto    dpiEdit = root_->findChild<QLineEdit*>("edtGraphDpiDfa");
+        int     dpi     = (dpiEdit && !dpiEdit->text().trimmed().isEmpty())
+                              ? dpiEdit->text().trimmed().toInt()
+                              : 150;
+        QString pngPath;
+        if (!dot_->renderToTempPng(DotExporter::toDot(dfaAll, parsed->macros), pngPath, dpi))
+        {
+            mw_->statusBar()->showMessage("Graphviz渲染失败，请确认已安装dot");
+            return;
+        }
+        dot_->previewPng(pngPath, "DFA 预览");
+        QFile::remove(pngPath);
         return;
     }
+    if (idx <= 0 || idx - 1 >= parsed->tokens.size())
+        return;
     auto pt      = parsed->tokens[idx - 1];
     auto nfa     = mw_->getEngine()->buildNFA(pt.ast, parsed->alpha);
     auto dfa     = mw_->getEngine()->buildDFA(nfa);
@@ -684,12 +582,25 @@ void AutomataController::previewMin()
         return;
     }
     int idx = cmbTokMin_ ? cmbTokMin_->currentIndex() : -1;
-    if (idx <= 0 || idx - 1 >= parsed->tokens.size())
+    if (idx == 0)
     {
-        mw_->statusBar()->showMessage("请选择具体Token后预览MinDFA");
-        ToastManager::instance().showWarning("请选择具体Token后预览MinDFA");
+        auto    mdfaAll = mw_->getEngine()->buildMergedMinDFA(*parsed);
+        auto    dpiEdit = root_->findChild<QLineEdit*>("edtGraphDpiMin");
+        int     dpi     = (dpiEdit && !dpiEdit->text().trimmed().isEmpty())
+                              ? dpiEdit->text().trimmed().toInt()
+                              : 150;
+        QString pngPath;
+        if (!dot_->renderToTempPng(DotExporter::toDot(mdfaAll, parsed->macros), pngPath, dpi))
+        {
+            mw_->statusBar()->showMessage("Graphviz渲染失败，请确认已安装dot");
+            return;
+        }
+        dot_->previewPng(pngPath, "MinDFA 预览");
+        QFile::remove(pngPath);
         return;
     }
+    if (idx <= 0 || idx - 1 >= parsed->tokens.size())
+        return;
     auto pt      = parsed->tokens[idx - 1];
     auto nfa     = mw_->getEngine()->buildNFA(pt.ast, parsed->alpha);
     auto dfa     = mw_->getEngine()->buildDFA(nfa);

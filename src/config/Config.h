@@ -54,9 +54,9 @@ class Config
     static QString          epsilonSymbol();
     static QString          eofSymbol();
     static QString          augSuffix();
-    static QString lr1ConflictPolicy();
+    static QString          lr1ConflictPolicy();
     static QVector<QString> lr1PreferShiftTokens();
-    static void setLr1PreferShiftTokens(const QVector<QString>& toks);
+    static void             setLr1PreferShiftTokens(const QVector<QString>& toks);
     static QString          nonterminalPattern();
     static QVector<QString> grammarMultiOps();
     static QVector<QString> grammarSingleOps();

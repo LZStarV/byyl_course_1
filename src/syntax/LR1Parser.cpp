@@ -64,9 +64,9 @@ ParseResult LR1Parser::parse(const QVector<QString>& tokens,
         QString act = actionFor(t, st, a);
         if (act.contains('|'))
         {
-            auto    parts  = act.split('|');
-            QString policy = Config::lr1ConflictPolicy().trimmed().toLower();
-            auto    prefer = Config::lr1PreferShiftTokens();
+            auto    parts   = act.split('|');
+            QString policy  = Config::lr1ConflictPolicy().trimmed().toLower();
+            auto    prefer  = Config::lr1PreferShiftTokens();
             QString nextTok = a;
             if (!prefer.isEmpty())
             {
@@ -81,7 +81,11 @@ ParseResult LR1Parser::parse(const QVector<QString>& tokens,
                                 pick = p;
                                 break;
                             }
-                        if (!pick.isEmpty()) { act = pick; break; }
+                        if (!pick.isEmpty())
+                        {
+                            act = pick;
+                            break;
+                        }
                     }
                 }
             }
@@ -265,9 +269,9 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
         QString act = actionFor(t, st, a);
         if (act.contains('|'))
         {
-            auto    parts  = act.split('|');
-            QString policy = Config::lr1ConflictPolicy().trimmed().toLower();
-            auto    prefer = Config::lr1PreferShiftTokens();
+            auto    parts   = act.split('|');
+            QString policy  = Config::lr1ConflictPolicy().trimmed().toLower();
+            auto    prefer  = Config::lr1PreferShiftTokens();
             QString nextTok = a;
             if (!prefer.isEmpty())
             {
@@ -282,7 +286,11 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
                                 pick = p;
                                 break;
                             }
-                        if (!pick.isEmpty()) { act = pick; break; }
+                        if (!pick.isEmpty())
+                        {
+                            act = pick;
+                            break;
+                        }
                     }
                 }
             }

@@ -26,6 +26,8 @@ struct Alphabet
     }
     QVector<QString> ordered() const
     {
-        return QVector<QString>(symbols.begin(), symbols.end());
+        QList<QString> v = QList<QString>(symbols.begin(), symbols.end());
+        std::sort(v.begin(), v.end());
+        return QVector<QString>(v.begin(), v.end());
     }
 };

@@ -31,7 +31,7 @@ MinDFA Hopcroft::minimize(const DFA& dfa)
     if (!N.isEmpty())
         P.append(N);
     bool changed = true;
-    // 迭代细分分区，直到不再发生变化
+    // 迭代细分分区，直到不再发生变化（使用前驱集合进行划分）
     while (changed)
     {
         changed = false;
@@ -40,23 +40,23 @@ MinDFA Hopcroft::minimize(const DFA& dfa)
             auto X = P[i];
             for (auto a : m.alpha.ordered())
             {
-                QSet<int> In;
-                for (int s : X)
+                // Pre(X, a) = { s | δ(s, a) ∈ X }
+                QSet<int> Pre;
+                for (auto it2 = dfa.states.begin(); it2 != dfa.states.end(); ++it2)
                 {
-                    int t = dfa.states[s].trans.value(a, -1);
-                    if (t != -1)
-                        In.insert(t);
+                    int t = it2->trans.value(a, -1);
+                    if (t != -1 && X.contains(t))
+                        Pre.insert(it2->id);
                 }
-                if (In.isEmpty())
+                if (Pre.isEmpty())
                     continue;
                 QList<QSet<int>> newP;
-                // 对当前分区 P 中的每个块 Y，按 In 划分为 Y1/Y2
                 for (auto Y : P)
                 {
                     QSet<int> Y1, Y2;
                     for (int s : Y)
                     {
-                        if (In.contains(s))
+                        if (Pre.contains(s))
                             Y1.insert(s);
                         else
                             Y2.insert(s);
@@ -68,7 +68,9 @@ MinDFA Hopcroft::minimize(const DFA& dfa)
                         changed = true;
                     }
                     else
+                    {
                         newP.append(Y);
+                    }
                 }
                 if (changed)
                 {

@@ -33,6 +33,65 @@ MinDFA Engine::buildMinDFA(const DFA& dfa)
 {
     return Hopcroft::minimize(dfa);
 }
+static void appendNFAWithOffset(NFA& target, const NFA& src, int& nextId, int& mappedStart)
+{
+    QMap<int, int> idMap;
+    for (auto it = src.states.begin(); it != src.states.end(); ++it)
+    {
+        int      newId = nextId++;
+        NFAState st;
+        st.id     = newId;
+        st.accept = it->accept;
+        target.states.insert(newId, st);
+        idMap.insert(it->id, newId);
+    }
+    for (auto it = src.states.begin(); it != src.states.end(); ++it)
+    {
+        int   newId = idMap.value(it->id);
+        auto& st    = target.states[newId];
+        for (const auto& e : it->edges)
+        {
+            NFAEdge ne;
+            ne.to      = idMap.value(e.to);
+            ne.symbol  = e.symbol;
+            ne.epsilon = e.epsilon;
+            st.edges.push_back(ne);
+        }
+    }
+    mappedStart = idMap.value(src.start);
+}
+NFA Engine::buildMergedNFA(const ParsedFile& pf)
+{
+    NFA merged;
+    merged.alpha = pf.alpha;
+    NFAState s0;
+    s0.id     = 0;
+    s0.accept = false;
+    merged.states.insert(0, s0);
+    merged.start = 0;
+    int nextId   = 1;
+    for (const auto& pt : pf.tokens)
+    {
+        auto nfa         = buildNFA(pt.ast, pf.alpha);
+        int  mappedStart = -1;
+        appendNFAWithOffset(merged, nfa, nextId, mappedStart);
+        NFAEdge e;
+        e.to      = mappedStart;
+        e.epsilon = true;
+        merged.states[merged.start].edges.push_back(e);
+    }
+    return merged;
+}
+DFA Engine::buildMergedDFA(const ParsedFile& pf)
+{
+    auto nfa = buildMergedNFA(pf);
+    return buildDFA(nfa);
+}
+MinDFA Engine::buildMergedMinDFA(const ParsedFile& pf)
+{
+    auto dfa = buildMergedDFA(pf);
+    return buildMinDFA(dfa);
+}
 static Tables tableFromNFA(const NFA& nfa)
 {
     Tables           t;

@@ -400,7 +400,8 @@ void SettingsDialog::loadCurrent()
         for (int i = 0; i < ps.size(); ++i)
         {
             s += ps[i];
-            if (i + 1 < ps.size()) s += ",";
+            if (i + 1 < ps.size())
+                s += ",";
         }
         edtLr1PreferShift->setText(s);
     }
@@ -559,7 +560,8 @@ bool SettingsDialog::collectAndApply()
         Config::setLr1ConflictPolicy(edtLr1Policy->text().trimmed());
     {
         QVector<QString> toks;
-        for (auto x : edtLr1PreferShift->text().split(',', Qt::SkipEmptyParts)) toks.push_back(x.trimmed());
+        for (auto x : edtLr1PreferShift->text().split(',', Qt::SkipEmptyParts))
+            toks.push_back(x.trimmed());
         Config::setLr1PreferShiftTokens(toks);
     }
     {

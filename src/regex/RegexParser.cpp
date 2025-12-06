@@ -242,6 +242,113 @@ ParsedFile RegexParser::parse(const RegexFile& file)
             return n;
         };
         ast = expand(ast);
+        // 简化：当遇到 Star(Union(...)) 且并集中仅包含固定字符/字符序列时，
+        // 将其规约为 Star(CharSet(all chars))，以避免在 DFA 中产生大量中间状态
+        std::function<bool(ASTNode*)> isSymbolSeq = [&](ASTNode* n) -> bool
+        {
+            if (!n)
+                return false;
+            if (n->type == ASTNode::Symbol)
+                return true;
+            if (n->type == ASTNode::CharSet)
+                return true;
+            if (n->type == ASTNode::Concat)
+            {
+                // 仅接受由 Symbol 链构成的连接
+                std::function<bool(ASTNode*)> allSymbols = [&](ASTNode* m) -> bool
+                {
+                    if (!m)
+                        return false;
+                    if (m->type == ASTNode::Symbol)
+                        return true;
+                    if (m->type == ASTNode::Concat)
+                        return allSymbols(m->children[0]) && allSymbols(m->children[1]);
+                    return false;
+                };
+                return allSymbols(n);
+            }
+            return false;
+        };
+        std::function<void(ASTNode*, QSet<QChar>&)> collectUnionChars =
+            [&](ASTNode* u, QSet<QChar>& out)
+        {
+            if (!u)
+                return;
+            if (u->type == ASTNode::Union)
+            {
+                collectUnionChars(u->children[0], out);
+                collectUnionChars(u->children[1], out);
+                return;
+            }
+            if (u->type == ASTNode::CharSet)
+            {
+                for (auto ch : u->value) out.insert(ch);
+                return;
+            }
+            if (u->type == ASTNode::Symbol)
+            {
+                if (!u->value.isEmpty())
+                    out.insert(u->value[0]);
+                return;
+            }
+            if (u->type == ASTNode::Concat)
+            {
+                // 遍历连接链，收集其中的 Symbol 字符
+                std::function<void(ASTNode*)> walk = [&](ASTNode* m)
+                {
+                    if (!m)
+                        return;
+                    if (m->type == ASTNode::Symbol)
+                    {
+                        if (!m->value.isEmpty())
+                            out.insert(m->value[0]);
+                        return;
+                    }
+                    if (m->type == ASTNode::Concat)
+                    {
+                        walk(m->children[0]);
+                        walk(m->children[1]);
+                    }
+                };
+                walk(u);
+            }
+        };
+        std::function<ASTNode*(ASTNode*)> simplify = [&](ASTNode* n) -> ASTNode*
+        {
+            if (!n)
+                return nullptr;
+            for (int k = 0; k < n->children.size(); ++k) n->children[k] = simplify(n->children[k]);
+            if (n->type == ASTNode::Star && n->children.size() == 1)
+            {
+                ASTNode* c = n->children[0];
+                // 仅当子树是并集且每个分支都是固定字符/字符集/纯符号连接时进行规约
+                std::function<bool(ASTNode*)> checkUnion = [&](ASTNode* u) -> bool
+                {
+                    if (!u)
+                        return false;
+                    if (u->type == ASTNode::Union)
+                        return checkUnion(u->children[0]) && checkUnion(u->children[1]);
+                    return isSymbolSeq(u);
+                };
+                if (checkUnion(c))
+                {
+                    QSet<QChar> chars;
+                    collectUnionChars(c, chars);
+                    if (!chars.isEmpty())
+                    {
+                        QString      cs;
+                        QList<QChar> v = QList<QChar>(chars.begin(), chars.end());
+                        std::sort(v.begin(), v.end());
+                        for (auto ch : v) cs.append(ch);
+                        auto csNode = make(ASTNode::CharSet, cs);
+                        auto star   = unary(ASTNode::Star, csNode);
+                        return star;
+                    }
+                }
+            }
+            return n;
+        };
+        ast = simplify(ast);
         ParsedToken pt;
         pt.rule = r;
         pt.ast  = ast;

@@ -157,6 +157,9 @@ class MainWindow : public QMainWindow
     Engine*                         engine;
     ParsedFile*                     parsedPtr;
     MinDFA*                         lastMinPtr;
+    struct NFA*                     mergedNfaCache = nullptr;
+    struct DFA*                     mergedDfaCache = nullptr;
+    MinDFA*                         mergedMinCache = nullptr;
     Grammar                         currentGrammar;
     LL1Info                         currentLL1;
     bool                            hasGrammar = false;

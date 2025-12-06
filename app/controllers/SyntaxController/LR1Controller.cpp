@@ -259,9 +259,9 @@ void LR1Controller::runLR1Process()
         notify_->error("无法获取正则表达式文本用于映射");
         return;
     }
-    auto rf = engine_->lexFile(regexText);
-    auto pf = engine_->parseFile(rf);
-    tokMap  = TokenMapBuilder::build(regexText, pf);
+    auto rf               = engine_->lexFile(regexText);
+    auto pf               = engine_->parseFile(rf);
+    tokMap                = TokenMapBuilder::build(regexText, pf);
     int           unknown = 0;
     QSet<QString> idNames;
     for (auto s : Config::identifierTokenNames()) idNames.insert(s.trimmed().toLower());
@@ -306,9 +306,9 @@ void LR1Controller::runLR1Process()
         QString detail;
         if (!r.steps.isEmpty())
         {
-            const auto& ps   = r.steps.back();
-            QString     next = ps.rest.isEmpty() ? QStringLiteral("$") : ps.rest[0];
-            int         st   = ps.stack.isEmpty() ? -1 : ps.stack.back().first;
+            const auto& ps        = r.steps.back();
+            QString     next      = ps.rest.isEmpty() ? QStringLiteral("$") : ps.rest[0];
+            int         st        = ps.stack.isEmpty() ? -1 : ps.stack.back().first;
             QStringList availActs = tbl.action.value(st).keys();
             QStringList availGoto = tbl.gotoTable.value(st).keys();
             detail = QString("(state=%1, next=%2, action=%3, avail_action=%4, avail_goto=%5)")
@@ -320,9 +320,11 @@ void LR1Controller::runLR1Process()
         }
         // 写入错误日志文件
         QString dir = Config::syntaxOutputDir();
-        if (dir.trimmed().isEmpty()) dir = Config::generatedOutputDir() + "/syntax";
+        if (dir.trimmed().isEmpty())
+            dir = Config::generatedOutputDir() + "/syntax";
         QDir d(dir);
-        if (!d.exists()) d.mkpath(".");
+        if (!d.exists())
+            d.mkpath(".");
         QFile lf(dir + "/lr1_last_error.log");
         if (lf.open(QIODevice::WriteOnly | QIODevice::Text))
         {

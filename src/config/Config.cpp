@@ -203,6 +203,12 @@ void Config::load()
                         else if (!s.isEmpty())
                             s_ws.push_back(s[0]);
                     }
+                    bool hasSpace = false;
+                    for (auto c : s_ws)
+                        if (c == ' ')
+                            hasSpace = true;
+                    if (!hasSpace)
+                        s_ws.push_back(' ');
                 }
                 if (obj.contains("token_map") && obj.value("token_map").isObject())
                 {
@@ -231,13 +237,15 @@ void Config::load()
                     s_augSuffix = obj.value("aug_suffix").toString("'");
                 if (obj.contains("lr1_conflict_policy"))
                     s_lr1Policy = obj.value("lr1_conflict_policy").toString("prefer_reduce");
-                if (obj.contains("lr1_prefer_shift_tokens") && obj.value("lr1_prefer_shift_tokens").isArray())
+                if (obj.contains("lr1_prefer_shift_tokens") &&
+                    obj.value("lr1_prefer_shift_tokens").isArray())
                 {
                     s_lr1PreferShift.clear();
                     for (auto v : obj.value("lr1_prefer_shift_tokens").toArray())
                     {
                         auto s = v.toString().trimmed();
-                        if (!s.isEmpty()) s_lr1PreferShift.push_back(s);
+                        if (!s.isEmpty())
+                            s_lr1PreferShift.push_back(s);
                     }
                 }
                 if (obj.contains("emit_identifier_lexeme"))
@@ -536,7 +544,8 @@ void Config::setLr1PreferShiftTokens(const QVector<QString>& toks)
     for (auto x : toks)
     {
         auto s = x.trimmed();
-        if (!s.isEmpty()) s_lr1PreferShift.push_back(s);
+        if (!s.isEmpty())
+            s_lr1PreferShift.push_back(s);
     }
 }
 
@@ -992,8 +1001,11 @@ bool Config::saveJson(const QString& path)
     }
     // whitespaces
     {
+        QSet<QChar> set;
+        for (auto c : s_ws) set.insert(c);
+        set.insert(' ');
         QJsonArray arr;
-        for (auto c : s_ws)
+        for (auto c : set)
         {
             if (c == '\t')
                 arr.append("\\t");
@@ -1112,7 +1124,10 @@ void Config::setGraphsDir(const QString& dir)
 void Config::setWhitespaces(const QVector<QChar>& ws)
 {
     load();
-    s_ws = ws;
+    QSet<QChar> set;
+    for (auto c : ws) set.insert(c);
+    set.insert(' ');
+    s_ws = QVector<QChar>(set.begin(), set.end());
 }
 void Config::setTokenMapUseHeuristics(bool v)
 {

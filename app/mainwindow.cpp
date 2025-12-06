@@ -110,6 +110,21 @@ MainWindow::~MainWindow()
         delete lastMinPtr;
         lastMinPtr = nullptr;
     }
+    if (mergedMinCache)
+    {
+        delete mergedMinCache;
+        mergedMinCache = nullptr;
+    }
+    if (mergedDfaCache)
+    {
+        delete mergedDfaCache;
+        mergedDfaCache = nullptr;
+    }
+    if (mergedNfaCache)
+    {
+        delete mergedNfaCache;
+        mergedNfaCache = nullptr;
+    }
     if (parsedPtr)
     {
         delete parsedPtr;
@@ -363,7 +378,22 @@ void MainWindow::onConvertClicked(bool)
         ToastManager::instance().showWarning("未找到Token定义");
         return;
     }
-    parsedPtr        = new ParsedFile(parsed);
+    parsedPtr = new ParsedFile(parsed);
+    if (mergedMinCache)
+    {
+        delete mergedMinCache;
+        mergedMinCache = nullptr;
+    }
+    if (mergedDfaCache)
+    {
+        delete mergedDfaCache;
+        mergedDfaCache = nullptr;
+    }
+    if (mergedNfaCache)
+    {
+        delete mergedNfaCache;
+        mergedNfaCache = nullptr;
+    }
     currentRegexHash = computeRegexHash(text);
     currentCodePath.clear();
     currentBinPath.clear();
@@ -959,165 +989,79 @@ static QVector<QString> unionSyms(const QVector<Tables>& tables, bool includeEps
 
 void MainWindow::fillAllNFA()
 {
-    QVector<Tables> parts;
-    for (const auto& tok : parsedPtr->tokens)
+    if (!parsedPtr || parsedPtr->tokens.isEmpty())
     {
-        auto nfa = engine->buildNFA(tok.ast, parsedPtr->alpha);
-        parts.push_back(engine->nfaTableWithMacros(nfa, parsedPtr->macros));
-    }
-    auto   syms = unionSyms(parts, true);
-    Tables t;
-    t.columns.clear();
-    t.columns.push_back("标记");
-    t.columns.push_back("状态 ID");
-    for (auto c : syms)
-    {
-        if (c != "#")
-            t.columns.push_back(c);
-    }
-    t.columns.push_back("#");
-    for (int k = 0; k < parts.size(); ++k)
-    {
-        Tables           pt = parts[k];
-        QVector<QString> sep;
-        sep << "Token" << parsedPtr->tokens[k].rule.name;
-        for (int i = 2; i < t.columns.size(); ++i) sep << QString();
-        t.rows.push_back(sep);
-        for (const auto& row : pt.rows)
+        if (tblNFA)
         {
-            QVector<QString> newRow;
-            newRow << row[0] << row[1];
-            for (int ci = 2; ci < t.columns.size(); ++ci)
-            {
-                QString col = t.columns[ci];
-                int     idx = -1;
-                for (int j = 2; j < pt.columns.size(); ++j)
-                {
-                    if (pt.columns[j] == col)
-                    {
-                        idx = j;
-                        break;
-                    }
-                }
-                newRow << (idx == -1 ? QString() : row[idx]);
-            }
-            t.rows.push_back(newRow);
+            tblNFA->clear();
+            tblNFA->setRowCount(0);
+            tblNFA->setColumnCount(0);
         }
+        return;
     }
+    if (!mergedNfaCache)
     {
-        auto msets = AutomataTableHelper::buildMacroSets(parsedPtr->macros);
-        auto mexps = AutomataTableHelper::buildMacroExprs(parsedPtr->macros);
-        AutomataTableHelper::aggregateByMacros(t, msets, mexps);
+        auto merged    = engine->buildMergedNFA(*parsedPtr);
+        mergedNfaCache = new NFA(merged);
     }
+    auto t = engine->nfaTableWithMacros(*mergedNfaCache, parsedPtr->macros);
     fillTable(tblNFA, t);
 }
 
 void MainWindow::fillAllDFA()
 {
-    QVector<Tables> parts;
-    for (const auto& tok : parsedPtr->tokens)
+    if (!parsedPtr || parsedPtr->tokens.isEmpty())
     {
-        auto nfa = engine->buildNFA(tok.ast, parsedPtr->alpha);
-        auto dfa = engine->buildDFA(nfa);
-        parts.push_back(engine->dfaTableWithMacros(dfa, parsedPtr->macros));
-    }
-    auto   syms = unionSyms(parts, false);
-    Tables t;
-    t.columns.clear();
-    t.columns.push_back("标记");
-    t.columns.push_back("状态集合");
-    for (auto c : syms)
-    {
-        t.columns.push_back(c);
-    }
-    for (int k = 0; k < parts.size(); ++k)
-    {
-        Tables           pt = parts[k];
-        QVector<QString> sep;
-        sep << "Token" << parsedPtr->tokens[k].rule.name;
-        for (int i = 2; i < t.columns.size(); ++i) sep << QString();
-        t.rows.push_back(sep);
-        for (const auto& row : pt.rows)
+        if (tblDFA)
         {
-            QVector<QString> newRow;
-            newRow << row[0] << row[1];
-            for (int ci = 2; ci < t.columns.size(); ++ci)
-            {
-                QString col = t.columns[ci];
-                int     idx = -1;
-                for (int j = 2; j < pt.columns.size(); ++j)
-                {
-                    if (pt.columns[j] == col)
-                    {
-                        idx = j;
-                        break;
-                    }
-                }
-                newRow << (idx == -1 ? QString() : row[idx]);
-            }
-            t.rows.push_back(newRow);
+            tblDFA->clear();
+            tblDFA->setRowCount(0);
+            tblDFA->setColumnCount(0);
         }
+        return;
     }
+    if (!mergedDfaCache)
     {
-        auto msets = AutomataTableHelper::buildMacroSets(parsedPtr->macros);
-        auto mexps = AutomataTableHelper::buildMacroExprs(parsedPtr->macros);
-        AutomataTableHelper::aggregateByMacros(t, msets, mexps);
+        if (!mergedNfaCache)
+        {
+            auto mergedN   = engine->buildMergedNFA(*parsedPtr);
+            mergedNfaCache = new NFA(mergedN);
+        }
+        auto mergedD   = engine->buildDFA(*mergedNfaCache);
+        mergedDfaCache = new DFA(mergedD);
     }
+    auto t = engine->dfaTableWithMacros(*mergedDfaCache, parsedPtr->macros);
     fillTable(tblDFA, t);
 }
 
 void MainWindow::fillAllMin()
 {
-    QVector<Tables> parts;
-    for (const auto& tok : parsedPtr->tokens)
+    if (!parsedPtr || parsedPtr->tokens.isEmpty())
     {
-        auto nfa  = engine->buildNFA(tok.ast, parsedPtr->alpha);
-        auto dfa  = engine->buildDFA(nfa);
-        auto mdfa = engine->buildMinDFA(dfa);
-        parts.push_back(engine->minTableWithMacros(mdfa, parsedPtr->macros));
-    }
-    auto   syms = unionSyms(parts, false);
-    Tables t;
-    t.columns.clear();
-    t.columns.push_back("标记");
-    t.columns.push_back("状态 ID");
-    for (auto c : syms)
-    {
-        t.columns.push_back(c);
-    }
-    for (int k = 0; k < parts.size(); ++k)
-    {
-        Tables           pt = parts[k];
-        QVector<QString> sep;
-        sep << "Token" << parsedPtr->tokens[k].rule.name;
-        for (int i = 2; i < t.columns.size(); ++i) sep << QString();
-        t.rows.push_back(sep);
-        for (const auto& row : pt.rows)
+        if (tblMinDFA)
         {
-            QVector<QString> newRow;
-            newRow << row[0] << row[1];
-            for (int ci = 2; ci < t.columns.size(); ++ci)
-            {
-                QString col = t.columns[ci];
-                int     idx = -1;
-                for (int j = 2; j < pt.columns.size(); ++j)
-                {
-                    if (pt.columns[j] == col)
-                    {
-                        idx = j;
-                        break;
-                    }
-                }
-                newRow << (idx == -1 ? QString() : row[idx]);
-            }
-            t.rows.push_back(newRow);
+            tblMinDFA->clear();
+            tblMinDFA->setRowCount(0);
+            tblMinDFA->setColumnCount(0);
         }
+        return;
     }
+    if (!mergedMinCache)
     {
-        auto msets = AutomataTableHelper::buildMacroSets(parsedPtr->macros);
-        auto mexps = AutomataTableHelper::buildMacroExprs(parsedPtr->macros);
-        AutomataTableHelper::aggregateByMacros(t, msets, mexps);
+        if (!mergedDfaCache)
+        {
+            if (!mergedNfaCache)
+            {
+                auto mergedN   = engine->buildMergedNFA(*parsedPtr);
+                mergedNfaCache = new NFA(mergedN);
+            }
+            auto mergedD   = engine->buildDFA(*mergedNfaCache);
+            mergedDfaCache = new DFA(mergedD);
+        }
+        auto mergedM   = engine->buildMinDFA(*mergedDfaCache);
+        mergedMinCache = new MinDFA(mergedM);
     }
+    auto t = engine->minTableWithMacros(*mergedMinCache, parsedPtr->macros);
     fillTable(tblMinDFA, t);
 }
 QString MainWindow::computeRegexHash(const QString& text)
@@ -1328,17 +1272,38 @@ void MainWindow::onTabChanged(int idx)
     if (cmbN && tblNFA)
     {
         cmbN->setCurrentIndex(0);
-        fillAllNFA();
+        if (parsedPtr && !parsedPtr->tokens.isEmpty())
+            fillAllNFA();
+        else
+        {
+            tblNFA->clear();
+            tblNFA->setRowCount(0);
+            tblNFA->setColumnCount(0);
+        }
     }
     if (cmbD && tblDFA)
     {
         cmbD->setCurrentIndex(0);
-        fillAllDFA();
+        if (parsedPtr && !parsedPtr->tokens.isEmpty())
+            fillAllDFA();
+        else
+        {
+            tblDFA->clear();
+            tblDFA->setRowCount(0);
+            tblDFA->setColumnCount(0);
+        }
     }
     if (cmbM && tblMinDFA)
     {
         cmbM->setCurrentIndex(0);
-        fillAllMin();
+        if (parsedPtr && !parsedPtr->tokens.isEmpty())
+            fillAllMin();
+        else
+        {
+            tblMinDFA->clear();
+            tblMinDFA->setRowCount(0);
+            tblMinDFA->setColumnCount(0);
+        }
     }
 }
 
@@ -1346,16 +1311,30 @@ void MainWindow::onExportNFAClicked(bool)
 {
     if (!parsedPtr)
         return;
-    int idx = cmbTokens ? cmbTokens->currentIndex() : -1;
-    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
+    int     idx = cmbTokens ? cmbTokens->currentIndex() : -1;
+    QString ts  = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    if (idx == 0)
     {
-        statusBar()->showMessage("请选择具体Token后再导出NFA");
-        ToastManager::instance().showWarning("请选择具体Token");
+        if (!mergedNfaCache)
+            mergedNfaCache = new NFA(engine->buildMergedNFA(*parsedPtr));
+        QString suggest = "nfa_all_" + ts + ".dot";
+        QString dotPath = pickDotSavePath(suggest);
+        if (dotPath.isEmpty())
+            return;
+        if (!DotExporter::exportToDot(*mergedNfaCache, dotPath))
+        {
+            statusBar()->showMessage("DOT文件写入失败");
+            ToastManager::instance().showError("DOT文件写入失败");
+            return;
+        }
+        statusBar()->showMessage("NFA DOT已导出: " + dotPath);
+        ToastManager::instance().showInfo("NFA DOT已导出");
         return;
     }
+    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
+        return;
     auto    pt      = parsedPtr->tokens[idx - 1];
     auto    nfa     = engine->buildNFA(pt.ast, parsedPtr->alpha);
-    QString ts      = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
     QString suggest = "nfa_" + pt.rule.name + "_" + ts + ".dot";
     QString dotPath = pickDotSavePath(suggest);
     if (dotPath.isEmpty())
@@ -1374,12 +1353,29 @@ void MainWindow::onExportNFADot()
 {
     if (!parsedPtr)
         return;
-    int idx = cmbTokens ? cmbTokens->currentIndex() : -1;
+    int     idx = cmbTokens ? cmbTokens->currentIndex() : -1;
+    QString ts  = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    if (idx == 0)
+    {
+        if (!mergedNfaCache)
+            mergedNfaCache = new NFA(engine->buildMergedNFA(*parsedPtr));
+        QString suggest = "nfa_all_" + ts + ".dot";
+        QString outPath = pickDotSavePath(suggest);
+        if (outPath.isEmpty())
+            return;
+        if (!DotExporter::exportToDot(*mergedNfaCache, outPath))
+        {
+            statusBar()->showMessage("DOT文件写入失败");
+            ToastManager::instance().showError("DOT文件写入失败");
+            return;
+        }
+        statusBar()->showMessage("NFA DOT已导出: " + outPath);
+        return;
+    }
     if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
         return;
     auto    pt      = parsedPtr->tokens[idx - 1];
     auto    nfa     = engine->buildNFA(pt.ast, parsedPtr->alpha);
-    QString ts      = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
     QString suggest = "nfa_" + pt.rule.name + "_" + ts + ".dot";
     QString outPath = pickDotSavePath(suggest);
     if (outPath.isEmpty())
@@ -1397,15 +1393,32 @@ void MainWindow::onExportNFAImage()
 {
     if (!parsedPtr)
         return;
-    int idx = cmbTokens ? cmbTokens->currentIndex() : -1;
+    int     idx = cmbTokens ? cmbTokens->currentIndex() : -1;
+    int     dpi = (edtGraphDpiNfa && !edtGraphDpiNfa->text().trimmed().isEmpty())
+                      ? edtGraphDpiNfa->text().trimmed().toInt()
+                      : 150;
+    QString ts  = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    if (idx == 0)
+    {
+        if (!mergedNfaCache)
+            mergedNfaCache = new NFA(engine->buildMergedNFA(*parsedPtr));
+        QString suggest = "nfa_all_" + ts + ".png";
+        QString outPath = pickImageSavePath(suggest, "png");
+        if (outPath.isEmpty())
+            return;
+        if (!renderDotToFile(DotExporter::toDot(*mergedNfaCache), outPath, "png", dpi))
+        {
+            statusBar()->showMessage("图片导出失败");
+            ToastManager::instance().showError("图片导出失败");
+            return;
+        }
+        statusBar()->showMessage("NFA 图片已导出: " + outPath);
+        return;
+    }
     if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
         return;
     auto    pt      = parsedPtr->tokens[idx - 1];
     auto    nfa     = engine->buildNFA(pt.ast, parsedPtr->alpha);
-    int     dpi     = (edtGraphDpiNfa && !edtGraphDpiNfa->text().trimmed().isEmpty())
-                          ? edtGraphDpiNfa->text().trimmed().toInt()
-                          : 150;
-    QString ts      = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
     QString suggest = "nfa_" + pt.rule.name + "_" + ts + ".png";
     QString outPath = pickImageSavePath(suggest, "png");
     if (outPath.isEmpty())
@@ -1423,19 +1436,29 @@ void MainWindow::onPreviewNFAClicked(bool)
 {
     if (!parsedPtr)
         return;
-    int idx = cmbTokens ? cmbTokens->currentIndex() : -1;
-    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
-    {
-        statusBar()->showMessage("请选择具体Token后预览NFA");
-        ToastManager::instance().showWarning("请选择具体Token");
-        return;
-    }
-    auto    pt  = parsedPtr->tokens[idx - 1];
-    auto    nfa = engine->buildNFA(pt.ast, parsedPtr->alpha);
+    int     idx = cmbTokens ? cmbTokens->currentIndex() : -1;
     int     dpi = (edtGraphDpiNfa && !edtGraphDpiNfa->text().trimmed().isEmpty())
                       ? edtGraphDpiNfa->text().trimmed().toInt()
                       : 150;
     QString pngPath;
+    if (idx == 0)
+    {
+        if (!mergedNfaCache)
+            mergedNfaCache = new NFA(engine->buildMergedNFA(*parsedPtr));
+        if (!renderDotFromContent(DotExporter::toDot(*mergedNfaCache), pngPath, dpi))
+        {
+            statusBar()->showMessage("Graphviz渲染失败，请确认已安装dot");
+            ToastManager::instance().showError("Graphviz渲染失败");
+            return;
+        }
+        showImagePreview(pngPath, "NFA 预览");
+        QFile::remove(pngPath);
+        return;
+    }
+    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
+        return;
+    auto pt  = parsedPtr->tokens[idx - 1];
+    auto nfa = engine->buildNFA(pt.ast, parsedPtr->alpha);
     if (!renderDotFromContent(DotExporter::toDot(nfa), pngPath, dpi))
     {
         statusBar()->showMessage("Graphviz渲染失败，请确认已安装dot");
@@ -1450,17 +1473,35 @@ void MainWindow::onExportDFAClicked(bool)
 {
     if (!parsedPtr)
         return;
-    int idx = cmbTokensDFA ? cmbTokensDFA->currentIndex() : -1;
-    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
+    int     idx = cmbTokensDFA ? cmbTokensDFA->currentIndex() : -1;
+    QString ts  = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    if (idx == 0)
     {
-        statusBar()->showMessage("请选择具体Token后再导出DFA");
-        ToastManager::instance().showWarning("请选择具体Token");
+        if (!mergedDfaCache)
+        {
+            if (!mergedNfaCache)
+                mergedNfaCache = new NFA(engine->buildMergedNFA(*parsedPtr));
+            mergedDfaCache = new DFA(engine->buildDFA(*mergedNfaCache));
+        }
+        QString suggest = "dfa_all_" + ts + ".dot";
+        QString dotPath = pickDotSavePath(suggest);
+        if (dotPath.isEmpty())
+            return;
+        if (!DotExporter::exportToDot(*mergedDfaCache, dotPath))
+        {
+            statusBar()->showMessage("DOT文件写入失败");
+            ToastManager::instance().showError("DOT文件写入失败");
+            return;
+        }
+        statusBar()->showMessage("DFA DOT已导出: " + dotPath);
+        ToastManager::instance().showInfo("DFA DOT已导出");
         return;
     }
+    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
+        return;
     auto    pt      = parsedPtr->tokens[idx - 1];
     auto    nfa     = engine->buildNFA(pt.ast, parsedPtr->alpha);
     auto    dfa     = engine->buildDFA(nfa);
-    QString ts      = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
     QString suggest = "dfa_" + pt.rule.name + "_" + ts + ".dot";
     QString dotPath = pickDotSavePath(suggest);
     if (dotPath.isEmpty())
@@ -1479,13 +1520,34 @@ void MainWindow::onExportDFADot()
 {
     if (!parsedPtr)
         return;
-    int idx = cmbTokensDFA ? cmbTokensDFA->currentIndex() : -1;
+    int     idx = cmbTokensDFA ? cmbTokensDFA->currentIndex() : -1;
+    QString ts  = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    if (idx == 0)
+    {
+        if (!mergedDfaCache)
+        {
+            if (!mergedNfaCache)
+                mergedNfaCache = new NFA(engine->buildMergedNFA(*parsedPtr));
+            mergedDfaCache = new DFA(engine->buildDFA(*mergedNfaCache));
+        }
+        QString suggest = "dfa_all_" + ts + ".dot";
+        QString outPath = pickDotSavePath(suggest);
+        if (outPath.isEmpty())
+            return;
+        if (!DotExporter::exportToDot(*mergedDfaCache, outPath))
+        {
+            statusBar()->showMessage("DOT文件写入失败");
+            ToastManager::instance().showError("DOT文件写入失败");
+            return;
+        }
+        statusBar()->showMessage("DFA DOT已导出: " + outPath);
+        return;
+    }
     if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
         return;
     auto    pt      = parsedPtr->tokens[idx - 1];
     auto    nfa     = engine->buildNFA(pt.ast, parsedPtr->alpha);
     auto    dfa     = engine->buildDFA(nfa);
-    QString ts      = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
     QString suggest = "dfa_" + pt.rule.name + "_" + ts + ".dot";
     QString outPath = pickDotSavePath(suggest);
     if (outPath.isEmpty())
@@ -1503,16 +1565,37 @@ void MainWindow::onExportDFAImage()
 {
     if (!parsedPtr)
         return;
-    int idx = cmbTokensDFA ? cmbTokensDFA->currentIndex() : -1;
+    int     idx = cmbTokensDFA ? cmbTokensDFA->currentIndex() : -1;
+    int     dpi = (edtGraphDpiDfa && !edtGraphDpiDfa->text().trimmed().isEmpty())
+                      ? edtGraphDpiDfa->text().trimmed().toInt()
+                      : 150;
+    QString ts  = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    if (idx == 0)
+    {
+        if (!mergedDfaCache)
+        {
+            if (!mergedNfaCache)
+                mergedNfaCache = new NFA(engine->buildMergedNFA(*parsedPtr));
+            mergedDfaCache = new DFA(engine->buildDFA(*mergedNfaCache));
+        }
+        QString suggest = "dfa_all_" + ts + ".png";
+        QString outPath = pickImageSavePath(suggest, "png");
+        if (outPath.isEmpty())
+            return;
+        if (!renderDotToFile(DotExporter::toDot(*mergedDfaCache), outPath, "png", dpi))
+        {
+            statusBar()->showMessage("图片导出失败");
+            ToastManager::instance().showError("图片导出失败");
+            return;
+        }
+        statusBar()->showMessage("DFA 图片已导出: " + outPath);
+        return;
+    }
     if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
         return;
     auto    pt      = parsedPtr->tokens[idx - 1];
     auto    nfa     = engine->buildNFA(pt.ast, parsedPtr->alpha);
     auto    dfa     = engine->buildDFA(nfa);
-    int     dpi     = (edtGraphDpiDfa && !edtGraphDpiDfa->text().trimmed().isEmpty())
-                          ? edtGraphDpiDfa->text().trimmed().toInt()
-                          : 150;
-    QString ts      = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
     QString suggest = "dfa_" + pt.rule.name + "_" + ts + ".png";
     QString outPath = pickImageSavePath(suggest, "png");
     if (outPath.isEmpty())
@@ -1530,20 +1613,34 @@ void MainWindow::onPreviewDFAClicked(bool)
 {
     if (!parsedPtr)
         return;
-    int idx = cmbTokensDFA ? cmbTokensDFA->currentIndex() : -1;
-    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
-    {
-        statusBar()->showMessage("请选择具体Token后预览DFA");
-        ToastManager::instance().showWarning("请选择具体Token");
-        return;
-    }
-    auto    pt  = parsedPtr->tokens[idx - 1];
-    auto    nfa = engine->buildNFA(pt.ast, parsedPtr->alpha);
-    auto    dfa = engine->buildDFA(nfa);
+    int     idx = cmbTokensDFA ? cmbTokensDFA->currentIndex() : -1;
     int     dpi = (edtGraphDpiDfa && !edtGraphDpiDfa->text().trimmed().isEmpty())
                       ? edtGraphDpiDfa->text().trimmed().toInt()
                       : 150;
     QString pngPath;
+    if (idx == 0)
+    {
+        if (!mergedDfaCache)
+        {
+            if (!mergedNfaCache)
+                mergedNfaCache = new NFA(engine->buildMergedNFA(*parsedPtr));
+            mergedDfaCache = new DFA(engine->buildDFA(*mergedNfaCache));
+        }
+        if (!renderDotFromContent(DotExporter::toDot(*mergedDfaCache), pngPath, dpi))
+        {
+            statusBar()->showMessage("Graphviz渲染失败，请确认已安装dot");
+            ToastManager::instance().showError("Graphviz渲染失败");
+            return;
+        }
+        showImagePreview(pngPath, "DFA 预览");
+        QFile::remove(pngPath);
+        return;
+    }
+    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
+        return;
+    auto pt  = parsedPtr->tokens[idx - 1];
+    auto nfa = engine->buildNFA(pt.ast, parsedPtr->alpha);
+    auto dfa = engine->buildDFA(nfa);
     if (!renderDotFromContent(DotExporter::toDot(dfa), pngPath, dpi))
     {
         statusBar()->showMessage("Graphviz渲染失败，请确认已安装dot");
@@ -1558,18 +1655,40 @@ void MainWindow::onExportMinClicked(bool)
 {
     if (!parsedPtr)
         return;
-    int idx = cmbTokensMin ? cmbTokensMin->currentIndex() : -1;
-    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
+    int     idx = cmbTokensMin ? cmbTokensMin->currentIndex() : -1;
+    QString ts  = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    if (idx == 0)
     {
-        statusBar()->showMessage("请选择具体Token后再导出MinDFA");
-        ToastManager::instance().showWarning("请选择具体Token");
+        if (!mergedMinCache)
+        {
+            if (!mergedDfaCache)
+            {
+                if (!mergedNfaCache)
+                    mergedNfaCache = new NFA(engine->buildMergedNFA(*parsedPtr));
+                mergedDfaCache = new DFA(engine->buildDFA(*mergedNfaCache));
+            }
+            mergedMinCache = new MinDFA(engine->buildMinDFA(*mergedDfaCache));
+        }
+        QString suggest = "mindfa_all_" + ts + ".dot";
+        QString dotPath = pickDotSavePath(suggest);
+        if (dotPath.isEmpty())
+            return;
+        if (!DotExporter::exportToDot(*mergedMinCache, dotPath))
+        {
+            statusBar()->showMessage("DOT文件写入失败");
+            ToastManager::instance().showError("DOT文件写入失败");
+            return;
+        }
+        statusBar()->showMessage("MinDFA DOT已导出: " + dotPath);
+        ToastManager::instance().showInfo("MinDFA DOT已导出");
         return;
     }
+    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
+        return;
     auto    pt      = parsedPtr->tokens[idx - 1];
     auto    nfa     = engine->buildNFA(pt.ast, parsedPtr->alpha);
     auto    dfa     = engine->buildDFA(nfa);
     auto    mdfa    = engine->buildMinDFA(dfa);
-    QString ts      = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
     QString suggest = "mindfa_" + pt.rule.name + "_" + ts + ".dot";
     QString dotPath = pickDotSavePath(suggest);
     if (dotPath.isEmpty())
@@ -1588,14 +1707,39 @@ void MainWindow::onExportMinDot()
 {
     if (!parsedPtr)
         return;
-    int idx = cmbTokensMin ? cmbTokensMin->currentIndex() : -1;
+    int     idx = cmbTokensMin ? cmbTokensMin->currentIndex() : -1;
+    QString ts  = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    if (idx == 0)
+    {
+        if (!mergedMinCache)
+        {
+            if (!mergedDfaCache)
+            {
+                if (!mergedNfaCache)
+                    mergedNfaCache = new NFA(engine->buildMergedNFA(*parsedPtr));
+                mergedDfaCache = new DFA(engine->buildDFA(*mergedNfaCache));
+            }
+            mergedMinCache = new MinDFA(engine->buildMinDFA(*mergedDfaCache));
+        }
+        QString suggest = "mindfa_all_" + ts + ".dot";
+        QString outPath = pickDotSavePath(suggest);
+        if (outPath.isEmpty())
+            return;
+        if (!DotExporter::exportToDot(*mergedMinCache, outPath))
+        {
+            statusBar()->showMessage("DOT文件写入失败");
+            ToastManager::instance().showError("DOT文件写入失败");
+            return;
+        }
+        statusBar()->showMessage("MinDFA DOT已导出: " + outPath);
+        return;
+    }
     if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
         return;
     auto    pt      = parsedPtr->tokens[idx - 1];
     auto    nfa     = engine->buildNFA(pt.ast, parsedPtr->alpha);
     auto    dfa     = engine->buildDFA(nfa);
     auto    mdfa    = engine->buildMinDFA(dfa);
-    QString ts      = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
     QString suggest = "mindfa_" + pt.rule.name + "_" + ts + ".dot";
     QString outPath = pickDotSavePath(suggest);
     if (outPath.isEmpty())
@@ -1613,17 +1757,42 @@ void MainWindow::onExportMinImage()
 {
     if (!parsedPtr)
         return;
-    int idx = cmbTokensMin ? cmbTokensMin->currentIndex() : -1;
+    int     idx = cmbTokensMin ? cmbTokensMin->currentIndex() : -1;
+    int     dpi = (edtGraphDpiMin && !edtGraphDpiMin->text().trimmed().isEmpty())
+                      ? edtGraphDpiMin->text().trimmed().toInt()
+                      : 150;
+    QString ts  = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    if (idx == 0)
+    {
+        if (!mergedMinCache)
+        {
+            if (!mergedDfaCache)
+            {
+                if (!mergedNfaCache)
+                    mergedNfaCache = new NFA(engine->buildMergedNFA(*parsedPtr));
+                mergedDfaCache = new DFA(engine->buildDFA(*mergedNfaCache));
+            }
+            mergedMinCache = new MinDFA(engine->buildMinDFA(*mergedDfaCache));
+        }
+        QString suggest = "mindfa_all_" + ts + ".png";
+        QString outPath = pickImageSavePath(suggest, "png");
+        if (outPath.isEmpty())
+            return;
+        if (!renderDotToFile(DotExporter::toDot(*mergedMinCache), outPath, "png", dpi))
+        {
+            statusBar()->showMessage("图片导出失败");
+            ToastManager::instance().showError("图片导出失败");
+            return;
+        }
+        statusBar()->showMessage("MinDFA 图片已导出: " + outPath);
+        return;
+    }
     if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
         return;
     auto    pt      = parsedPtr->tokens[idx - 1];
     auto    nfa     = engine->buildNFA(pt.ast, parsedPtr->alpha);
     auto    dfa     = engine->buildDFA(nfa);
     auto    mdfa    = engine->buildMinDFA(dfa);
-    int     dpi     = (edtGraphDpiMin && !edtGraphDpiMin->text().trimmed().isEmpty())
-                          ? edtGraphDpiMin->text().trimmed().toInt()
-                          : 150;
-    QString ts      = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
     QString suggest = "mindfa_" + pt.rule.name + "_" + ts + ".png";
     QString outPath = pickImageSavePath(suggest, "png");
     if (outPath.isEmpty())
@@ -1641,21 +1810,39 @@ void MainWindow::onPreviewMinClicked(bool)
 {
     if (!parsedPtr)
         return;
-    int idx = cmbTokensMin ? cmbTokensMin->currentIndex() : -1;
-    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
+    int     idx = cmbTokensMin ? cmbTokensMin->currentIndex() : -1;
+    int     dpi = (edtGraphDpiMin && !edtGraphDpiMin->text().trimmed().isEmpty())
+                      ? edtGraphDpiMin->text().trimmed().toInt()
+                      : 150;
+    QString pngPath;
+    if (idx == 0)
     {
-        statusBar()->showMessage("请选择具体Token后预览MinDFA");
-        ToastManager::instance().showWarning("请选择具体Token");
+        if (!mergedMinCache)
+        {
+            if (!mergedDfaCache)
+            {
+                if (!mergedNfaCache)
+                    mergedNfaCache = new NFA(engine->buildMergedNFA(*parsedPtr));
+                mergedDfaCache = new DFA(engine->buildDFA(*mergedNfaCache));
+            }
+            mergedMinCache = new MinDFA(engine->buildMinDFA(*mergedDfaCache));
+        }
+        if (!renderDotFromContent(DotExporter::toDot(*mergedMinCache), pngPath, dpi))
+        {
+            statusBar()->showMessage("Graphviz渲染失败，请确认已安装dot");
+            ToastManager::instance().showError("Graphviz渲染失败");
+            return;
+        }
+        showImagePreview(pngPath, "MinDFA 预览");
+        QFile::remove(pngPath);
         return;
     }
-    auto    pt   = parsedPtr->tokens[idx - 1];
-    auto    nfa  = engine->buildNFA(pt.ast, parsedPtr->alpha);
-    auto    dfa  = engine->buildDFA(nfa);
-    auto    mdfa = engine->buildMinDFA(dfa);
-    int     dpi  = (edtGraphDpiMin && !edtGraphDpiMin->text().trimmed().isEmpty())
-                       ? edtGraphDpiMin->text().trimmed().toInt()
-                       : 150;
-    QString pngPath;
+    if (idx <= 0 || idx - 1 >= parsedPtr->tokens.size())
+        return;
+    auto pt   = parsedPtr->tokens[idx - 1];
+    auto nfa  = engine->buildNFA(pt.ast, parsedPtr->alpha);
+    auto dfa  = engine->buildDFA(nfa);
+    auto mdfa = engine->buildMinDFA(dfa);
     if (!renderDotFromContent(DotExporter::toDot(mdfa), pngPath, dpi))
     {
         statusBar()->showMessage("Graphviz渲染失败，请确认已安装dot");

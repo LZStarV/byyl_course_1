@@ -70,6 +70,9 @@ class Engine
      * @return {MinDFA} 最小化自动机
      */
     MinDFA buildMinDFA(const DFA& dfa);
+    NFA    buildMergedNFA(const ParsedFile& pf);
+    DFA    buildMergedDFA(const ParsedFile& pf);
+    MinDFA buildMergedMinDFA(const ParsedFile& pf);
     /**
      * @param {NFA} nfa - 非确定自动机
      * @return {Tables} 包含列、标记、状态与行的表格数据
@@ -119,17 +122,17 @@ class Engine
      * @param {QSet<int>} identifierCodes - 标识符编码集合（用于词素处理）
      * @return {QString} 编码序列（以空格分隔）
      */
-    QString                               runMultiple(const QVector<MinDFA>& mdfas,
-                                                      const QVector<int>&    codes,
-                                                      const QString&         source,
-                                                      const QSet<int>&       identifierCodes);
+    QString runMultiple(const QVector<MinDFA>& mdfas,
+                        const QVector<int>&    codes,
+                        const QString&         source,
+                        const QSet<int>&       identifierCodes);
     /**
      * @param {QString} text - 文法文本（BNF）
      * @param {QString&} error - 输出：错误信息
      * @return {Grammar} 解析结果
      */
-    Grammar parseGrammarText(const QString& text, QString& error);
-    LL1Info computeLL1(const Grammar& g);
-    QMap<QString, QVector<QString>> firstFollowAsRows(const LL1Info& info);
+    Grammar                               parseGrammarText(const QString& text, QString& error);
+    LL1Info                               computeLL1(const Grammar& g);
+    QMap<QString, QVector<QString>>       firstFollowAsRows(const LL1Info& info);
     QMap<QString, QMap<QString, QString>> parsingTableAsRows(const Grammar& g, const LL1Info& info);
 };
