@@ -18,32 +18,37 @@
 
 LR1TreeTab::LR1TreeTab(QWidget* parent) : QWidget(parent)
 {
-    auto v     = new QVBoxLayout(this);
-    auto h     = new QHBoxLayout;
-    btnPreview = new QPushButton("预览语法树(LR1)");
-    btnPreview->setObjectName("btnPreviewLR1Tree");
-    exportBtn = new ExportGraphButton("导出语法树");
-    exportBtn->setObjectName("exportBtnLR1Tree");
-    auto lblDpi = new QLabel("分辨率DPI");
-    edtGraphDpi = new QLineEdit;
-    edtGraphDpi->setObjectName("edtGraphDpiLR1");
-    edtGraphDpi->setPlaceholderText("DPI(默认150)");
-    h->addWidget(btnPreview);
-    h->addWidget(exportBtn);
-    h->addWidget(lblDpi);
-    h->addWidget(edtGraphDpi);
-    v->addLayout(h);
-    auto hMain = new QHBoxLayout;
-    tblProcess = new QTableWidget;
-    tblProcess->setObjectName("tblLR1Process");
-    tblProcess->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    tblProcess->setSelectionBehavior(QAbstractItemView::SelectRows);
-    hMain->addWidget(tblProcess);
+    auto hMain = new QHBoxLayout(this);
+    // 左侧：语法树
+    auto left    = new QVBoxLayout;
+    auto lblTree = new QLabel(QStringLiteral("语法树"));
+    left->addWidget(lblTree);
     auto tree = new QTreeWidget;
     tree->setObjectName("treeSemanticLR1");
     tree->setHeaderHidden(true);
-    hMain->addWidget(tree);
+    left->addWidget(tree);
+    // 右侧：顶部按钮 + 两个过程表并排
+    auto right            = new QVBoxLayout;
+    auto btnBar           = new QHBoxLayout;
+    btnShowGrammarProcess = new QPushButton(QStringLiteral("查看语法分析过程"));
+    btnShowGrammarProcess->setObjectName("btnShowGrammarProcess");
+    btnBar->addWidget(btnShowGrammarProcess);
+    right->addLayout(btnBar);
+    auto rightTables = new QHBoxLayout;
+    auto col2        = new QVBoxLayout;
+    auto lblProc2    = new QLabel(QStringLiteral("语义分析过程"));
+    col2->addWidget(lblProc2);
+    tblSemantic = new QTableWidget;
+    tblSemantic->setObjectName("tblSemanticProcess");
+    tblSemantic->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    tblSemantic->setSelectionBehavior(QAbstractItemView::SelectRows);
+    col2->addWidget(tblSemantic);
+    rightTables->addLayout(col2);
+    rightTables->setStretch(0, 1);
+    right->addLayout(rightTables);
+    // 组装主布局
+    hMain->addLayout(left);
+    hMain->addLayout(right);
     hMain->setStretch(0, 1);
-    hMain->setStretch(1, 1);
-    v->addLayout(hMain);
+    hMain->setStretch(1, 3);
 }

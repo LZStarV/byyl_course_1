@@ -141,6 +141,8 @@ ParseResult LR1Parser::parse(const QVector<QString>& tokens,
             n->symbol        = a;
             res.root         = n;
             nodeStk.push_back(n);
+            // 语义过程记录：移进叶子
+            pushStep(res.semanticSteps, step, stack, input, QString("shift %1").arg(a), QString());
             pushStep(res.steps, step++, stack, input, act, QString());
             input.pop_front();
             continue;
@@ -178,6 +180,16 @@ ParseResult LR1Parser::parse(const QVector<QString>& tokens,
             p->children      = kids;
             nodeStk.push_back(p);
             res.root = p;
+            // 语义过程记录：构建语法树节点
+            QString kidsStr;
+            for (int i = 0; i < kids.size(); ++i)
+                kidsStr += (i ? "," : "") + (kids[i] ? kids[i]->symbol : QString());
+            pushStep(res.semanticSteps,
+                     step,
+                     stack,
+                     input,
+                     QString("reduce %1 -> %2, children=[%3]").arg(L).arg(R).arg(kidsStr),
+                     QString());
             pushStep(res.steps, step++, stack, input, act, QString("%1 -> %2").arg(L).arg(R));
             continue;
         }
@@ -537,6 +549,15 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
                 }
             }
             semStk.push_back(makeSemNode(tag));
+            // 语义过程记录：移进叶子（可能替换为词素）
+            pushStep(res.semanticSteps,
+                     step,
+                     stack,
+                     input,
+                     QString("shift %1%2")
+                         .arg(a)
+                         .arg(tag != a ? QString(" (lexeme=%1)").arg(tag) : QString()),
+                     QString());
             pushStep(res.steps, step++, stack, input, act, QString());
             input.pop_front();
             ip++;
@@ -618,6 +639,20 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
             auto sem = buildSemantic(L, semKids, roles, roleMeaning, rootPolicy, childOrder);
             semStk.push_back(sem);
             res.astRoot = sem;
+            // 语义过程记录：构建语义节点，根与孩子
+            QString kidsStr;
+            for (int i = 0; i < semKids.size(); ++i)
+                kidsStr += (i ? "," : "") + (semKids[i] ? semKids[i]->tag : QString());
+            pushStep(res.semanticSteps,
+                     step,
+                     stack,
+                     input,
+                     QString("reduce %1 -> %2, root=%3, children=[%4]")
+                         .arg(L)
+                         .arg(R)
+                         .arg(sem ? sem->tag : L)
+                         .arg(kidsStr),
+                     QString());
             pushStep(res.steps, step++, stack, input, act, QString("%1 -> %2").arg(L).arg(R));
             continue;
         }

@@ -82,11 +82,11 @@ void SyntaxController::bind(QWidget* exp2Page)
     auto btnPrev          = exp2Page->findChild<QPushButton*>("btnPreviewSyntaxTree");
     auto btnRun           = exp2Page->findChild<QPushButton*>("btnRunSyntaxAnalysis");
     auto btnPrevLR0       = exp2Page->findChild<QPushButton*>("btnPreviewLR0");
-    auto exportBtnLR0     = exp2Page->findChild<ExportGraphButton*>("exportBtnLR0");
+    auto exportBtnLR0     = exp2Page->findChild<QPushButton*>("exportBtnLR0");
     auto edtDpiLR0        = exp2Page->findChild<QLineEdit*>("edtGraphDpiLR0");
     auto btnViewLR0Table  = exp2Page->findChild<QPushButton*>("btnViewLR0Table");
     auto btnCheckSLR1     = exp2Page->findChild<QPushButton*>("btnCheckSLR1");
-    auto exportBtnLR1     = exp2Page->findChild<ExportGraphButton*>("exportBtnLR1");
+    auto exportBtnLR1     = exp2Page->findChild<QPushButton*>("exportBtnLR1");
     auto btnPreviewLR1    = exp2Page->findChild<QPushButton*>("btnPreviewLR1");
     auto edtDpiLR1        = exp2Page->findChild<QLineEdit*>("edtGraphDpiLR1");
     auto btnViewLR1Table  = exp2Page->findChild<QPushButton*>("btnViewLR1Table");
@@ -104,48 +104,14 @@ void SyntaxController::bind(QWidget* exp2Page)
         connect(btnRun, &QPushButton::clicked, this, &SyntaxController::runSyntaxAnalysis);
     if (btnPrevLR0)
         connect(btnPrevLR0, &QPushButton::clicked, this, &SyntaxController::previewLR0);
-    if (exportBtnLR0 && dotSvc_)
-    {
-        exportBtnLR0->setDotService(dotSvc_);
-        exportBtnLR0->setSuggestedBasename("lr0_");
-        exportBtnLR0->setDotSupplier(
-            [this]()
-            {
-                auto gr = LR0Builder::build(grammar_);
-                return LR0Builder::toDot(gr);
-            });
-        exportBtnLR0->setDpiProvider(
-            [this, edtDpiLR0]()
-            {
-                int dpi = Config::graphvizDefaultDpi();
-                if (edtDpiLR0 && !edtDpiLR0->text().trimmed().isEmpty())
-                    dpi = edtDpiLR0->text().trimmed().toInt();
-                return dpi;
-            });
-    }
+    if (exportBtnLR0)
+        connect(exportBtnLR0, &QPushButton::clicked, this, &SyntaxController::exportLR0Dot);
     if (btnViewLR0Table)
         connect(btnViewLR0Table, &QPushButton::clicked, this, &SyntaxController::openLR0Table);
     if (btnCheckSLR1)
         connect(btnCheckSLR1, &QPushButton::clicked, this, &SyntaxController::checkSLR1);
-    if (exportBtnLR1 && dotSvc_)
-    {
-        exportBtnLR1->setDotService(dotSvc_);
-        exportBtnLR1->setSuggestedBasename("lr1_");
-        exportBtnLR1->setDotSupplier(
-            [this]()
-            {
-                auto gr = LR1Builder::build(grammar_);
-                return LR1Builder::toDot(gr);
-            });
-        exportBtnLR1->setDpiProvider(
-            [this, edtDpiLR1]()
-            {
-                int dpi = Config::graphvizDefaultDpi();
-                if (edtDpiLR1 && !edtDpiLR1->text().trimmed().isEmpty())
-                    dpi = edtDpiLR1->text().trimmed().toInt();
-                return dpi;
-            });
-    }
+    if (exportBtnLR1)
+        connect(exportBtnLR1, &QPushButton::clicked, this, &SyntaxController::exportLR1Dot);
     if (btnPreviewLR1)
         connect(btnPreviewLR1, &QPushButton::clicked, this, &SyntaxController::previewLR1);
     if (btnViewLR1Table)

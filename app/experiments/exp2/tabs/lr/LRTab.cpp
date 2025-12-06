@@ -10,7 +10,6 @@
  * 1.0.0 2023-12-07 林展星 初始版本
  */
 #include "LRTab.h"
-#include "../../../../components/ExportGraphButton/ExportGraphButton.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -21,8 +20,9 @@ LRTab::LRTab(QWidget* parent) : QWidget(parent)
 {
     auto v       = new QVBoxLayout(this);
     auto lr0Box  = new QHBoxLayout;
-    btnExportLR0 = new ExportGraphButton("导出LR(0)");
+    btnExportLR0 = new QPushButton("导出LR(0)DOT");
     btnExportLR0->setObjectName("exportBtnLR0");
+    btnExportLR0->setFixedWidth(120);
     lr0Box->addWidget(btnExportLR0);
     btnViewLR0Table = new QPushButton("查看LR(0)表格");
     btnViewLR0Table->setObjectName("btnViewLR0Table");
@@ -35,8 +35,9 @@ LRTab::LRTab(QWidget* parent) : QWidget(parent)
     slrBox->addWidget(btnCheckSLR1);
     v->addLayout(slrBox);
     auto lr1Box  = new QHBoxLayout;
-    btnExportLR1 = new ExportGraphButton("导出LR(1)");
+    btnExportLR1 = new QPushButton("导出LR(1)DOT");
     btnExportLR1->setObjectName("exportBtnLR1");
+    btnExportLR1->setFixedWidth(120);
     btnViewLR1Table = new QPushButton("查看LR(1)表格");
     btnViewLR1Table->setObjectName("btnViewLR1Table");
     btnViewLR1Action = new QPushButton("查看LR(1)分析表");

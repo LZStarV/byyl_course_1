@@ -51,11 +51,13 @@ class LR1Controller : public QObject
     void                    onPickSourceActivated(int index);
     void                    loadSemanticActions();
     void                    runLR1Process();
-    void                    previewTree();
-    void                    setupExportButton();
+    void                    openGrammarProcessDialog();
     static QVector<QString> splitTokens(const QString& s);
     static void             fillProcessTable(QTableWidget*             tbl,
                                              const QVector<QString>&   cols,
                                              const QVector<ParseStep>& steps);
     static void             fillSemanticTree(QTreeWidget* tree, const SemanticASTNode* root);
+    // 缓存最近一次解析结果与表
+    ParseResult    lastResult_;
+    LR1ActionTable lastActionTable_;
 };

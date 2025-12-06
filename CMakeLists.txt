@@ -90,6 +90,8 @@ set(APP_SOURCES
     app/experiments/exp2/dialogs/LR1ActionTableDialog.cpp
     app/experiments/exp2/dialogs/LR0TableDialog.h
     app/experiments/exp2/dialogs/LR0TableDialog.cpp
+    app/experiments/exp2/dialogs/GrammarProcessDialog.h
+    app/experiments/exp2/dialogs/GrammarProcessDialog.cpp
     app/components/ExportGraphButton/ExportGraphButton.cpp
     app/experiments/exp2/tabs/grammar/GrammarEditorTab.h
     app/experiments/exp2/tabs/grammar/GrammarEditorTab.cpp
@@ -224,6 +226,7 @@ target_sources(GuiTest PRIVATE
     app/experiments/exp2/dialogs/LR1TableDialog.cpp
     app/experiments/exp2/dialogs/LR0TableDialog.cpp
     app/experiments/exp2/dialogs/LR1ActionTableDialog.cpp
+    app/experiments/exp2/dialogs/GrammarProcessDialog.cpp
     app/experiments/exp1/helpers/AutomataTableHelper.cpp
     app/experiments/exp2/helpers/SyntaxTableHelper.cpp
     app/experiments/exp2/tabs/grammar/GrammarEditorTab.cpp

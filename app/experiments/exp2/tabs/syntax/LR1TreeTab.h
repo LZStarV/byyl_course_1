@@ -22,8 +22,7 @@ class LR1TreeTab : public QWidget
     Q_OBJECT
    public:
     explicit LR1TreeTab(QWidget* parent = nullptr);
-    QPushButton*       btnPreview;
-    ExportGraphButton* exportBtn;
-    QTableWidget*      tblProcess;
-    QLineEdit*         edtGraphDpi;
+    QTableWidget* tblProcess;
+    QTableWidget* tblSemantic;
+    QPushButton*  btnShowGrammarProcess;
 };

@@ -24,12 +24,16 @@ SLRCheckDialog::SLRCheckDialog(const SLRCheckResult& r, QWidget* parent) : QDial
     auto txt = new QPlainTextEdit;
     txt->setReadOnly(true);
     QString out;
-    auto typeCN = [](const QString& t) {
-        if (t == "shift/reduce") return QStringLiteral("移进/规约冲突");
-        if (t == "reduce/reduce") return QStringLiteral("规约/规约冲突");
+    auto    typeCN = [](const QString& t)
+    {
+        if (t == "shift/reduce")
+            return QStringLiteral("移进/规约冲突");
+        if (t == "reduce/reduce")
+            return QStringLiteral("规约/规约冲突");
         return QStringLiteral("冲突");
     };
-    auto actionCN = [](const QString& a) {
+    auto actionCN = [](const QString& a)
+    {
         if (a.startsWith("s"))
         {
             bool ok = false;

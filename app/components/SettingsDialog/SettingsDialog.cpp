@@ -155,7 +155,7 @@ void SettingsDialog::buildUi()
         lTok5->addWidget(chkTokGroupSuffixOptional);
         v->addLayout(lTok5);
         v->addWidget(new QLabel("标识符设置"));
-        chkEmitIdLexeme = new QCheckBox("在 identifier 后追加词素");
+        chkEmitIdLexeme = new QCheckBox("在指定标识符规则名后追加词素");
         v->addWidget(chkEmitIdLexeme);
         auto lId = new QHBoxLayout;
         lId->addWidget(new QLabel("标识符规则名（逗号分隔）"));

@@ -39,6 +39,7 @@ struct ParseResult
     ParseTreeNode*     root     = nullptr;
     int                errorPos = -1;
     SemanticASTNode*   astRoot  = nullptr;
+    QVector<ParseStep> semanticSteps;
 };
 
 class LR1Parser

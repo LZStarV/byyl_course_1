@@ -21,6 +21,8 @@
 #include <QJsonObject>
 #include <QTreeWidget>
 #include "../../../src/syntax/TokenMapBuilder.h"
+#include "../../../src/syntax/LR1Parser.h"
+#include "../../experiments/exp2/dialogs/GrammarProcessDialog.h"
 
 LR1Controller::LR1Controller(MainWindow* mw, Engine* engine, NotificationService* notify) :
     mw_(mw), engine_(engine), notify_(notify)
@@ -64,7 +66,7 @@ void LR1Controller::fillProcessTable(QTableWidget*             tbl,
         if (ps.action.startsWith("s"))
             desc = QString("shift 到 s%1，读入 '%2'")
                        .arg(ps.stack.isEmpty() ? -1 : ps.stack.back().first)
-                       .arg(ps.rest.isEmpty() ? QStringLiteral("$") : ps.rest[0]);
+                       .arg(ps.rest.isEmpty() ? Config::eofSymbol() : ps.rest[0]);
         else if (ps.action.startsWith("r"))
             desc = QString("reduce %1").arg(ps.production);
         else if (ps.action == "acc")
@@ -74,6 +76,76 @@ void LR1Controller::fillProcessTable(QTableWidget*             tbl,
         tbl->setItem(r, 1, new QTableWidgetItem(desc));
     }
     tbl->setEditTriggers(QAbstractItemView::NoEditTriggers);
+}
+
+static QVector<ParseStep> buildSemanticActionAuditSteps(
+    const Grammar& g, const QMap<QString, QVector<QVector<int>>>& actions)
+{
+    QVector<ParseStep> out;
+    int                stepIdx = 1;
+    QList<QString>     nts     = QList<QString>(g.productions.keys());
+    std::sort(nts.begin(), nts.end());
+    for (const auto& A : nts)
+    {
+        const auto& alts = g.productions.value(A);
+        const auto& actv = actions.value(A);
+        {
+            ParseStep ps;
+            ps.step   = stepIdx++;
+            ps.action = QStringLiteral("audit");
+            ps.production =
+                QString("%1: 文法候选=%2, 动作候选=%3").arg(A).arg(alts.size()).arg(actv.size());
+            out.push_back(ps);
+        }
+        int m = qMax(alts.size(), actv.size());
+        for (int i = 0; i < m; ++i)
+        {
+            QString          rhsStr;
+            QVector<QString> rhs;
+            if (i < alts.size())
+            {
+                const auto& p = alts[i];
+                rhs           = p.right;
+                rhsStr        = rhs.isEmpty() ? Config::epsilonSymbol() : rhs.join(" ");
+            }
+            QVector<int> vs;
+            if (i < actv.size())
+                vs = actv[i];
+
+            bool isEps = rhs.isEmpty();
+            bool ok    = isEps ? (vs.size() == 0 || vs.size() == 1) : (vs.size() == rhs.size());
+            int  c0 = 0, c1 = 0, c2 = 0;
+            for (int v : vs)
+            {
+                if (v == 0)
+                    c0++;
+                else if (v == 1)
+                    c1++;
+                else if (v == 2)
+                    c2++;
+            }
+            ParseStep ps;
+            ps.step       = stepIdx++;
+            ps.action     = ok ? QStringLiteral("ok") : QStringLiteral("warn");
+            ps.production = QString("候选%1: rhs=%2, 动作位=%3, 角色位统计(0:%4,1:%5,2:%6)%7")
+                                .arg(i)
+                                .arg(rhsStr)
+                                .arg(
+                                    [&vs]()
+                                    {
+                                        QString s;
+                                        for (int k = 0; k < vs.size(); ++k)
+                                            s += (k ? " " : "") + QString::number(vs[k]);
+                                        return s;
+                                    }())
+                                .arg(c0)
+                                .arg(c1)
+                                .arg(c2)
+                                .arg(ok ? QString() : QStringLiteral(" [位数不匹配]"));
+            out.push_back(ps);
+        }
+    }
+    return out;
 }
 
 static void addTreeNode(QTreeWidgetItem* parent, const SemanticASTNode* n)
@@ -118,9 +190,9 @@ void LR1Controller::bind(QWidget* exp2Page)
         connect(b, &QPushButton::clicked, this, &LR1Controller::runLR1Process);
     if (auto b = page_->findChild<QPushButton*>("btnLoadSemanticActions"))
         connect(b, &QPushButton::clicked, this, &LR1Controller::loadSemanticActions);
-    if (auto b = page_->findChild<QPushButton*>("btnPreviewLR1Tree"))
-        connect(b, &QPushButton::clicked, this, &LR1Controller::previewTree);
-    setupExportButton();
+    if (auto b = page_->findChild<QPushButton*>("btnShowGrammarProcess"))
+        connect(b, &QPushButton::clicked, this, &LR1Controller::openGrammarProcessDialog);
+    // 移除预览与导出绑定
 }
 
 void LR1Controller::onPickSourceActivated(int index)
@@ -212,14 +284,21 @@ void LR1Controller::runLR1Process()
 {
     if (!mw_)
         return;
-    auto txtGrammar = page_->findChild<QTextEdit*>("txtInputGrammar");
-    if (!txtGrammar)
+    // 优先使用 LR1 页签中的文法视图，其次回退到“文法分析”页输入框
+    auto    txtGrammarLR1 = page_->findChild<QPlainTextEdit*>("txtGrammarViewLR1");
+    QString gramText      = txtGrammarLR1 ? txtGrammarLR1->toPlainText() : QString();
+    if (gramText.trimmed().isEmpty())
+    {
+        if (auto txtGrammar = page_->findChild<QTextEdit*>("txtInputGrammar"))
+            gramText = txtGrammar->toPlainText();
+    }
+    if (gramText.trimmed().isEmpty())
     {
         notify_->warning("未找到文法输入");
         return;
     }
     QString err;
-    auto    g = engine_->parseGrammarText(txtGrammar->toPlainText(), err);
+    auto    g = engine_->parseGrammarText(gramText, err);
     if (!err.isEmpty() || g.productions.isEmpty())
     {
         notify_->error("文法错误:" + err);
@@ -296,29 +375,31 @@ void LR1Controller::runLR1Process()
     auto childOrder  = Config::semanticChildOrderPolicy();
     auto r           = LR1Parser::parseWithSemantics(
         tokens, g, tbl, semanticActions_, roleMeaning, rootPolicy, childOrder, lexemes);
-    if (auto tblw = page_->findChild<QTableWidget*>("tblLR1Process"))
+    if (auto tblSem = page_->findChild<QTableWidget*>("tblSemanticProcess"))
     {
         QVector<QString> cols;
-        fillProcessTable(tblw, cols, r.steps);
+        fillProcessTable(tblSem, cols, r.semanticSteps);
     }
     if (r.errorPos >= 0)
     {
         QString detail;
+        int     stTop = -1;
+        QString next;
         if (!r.steps.isEmpty())
         {
             const auto& ps        = r.steps.back();
-            QString     next      = ps.rest.isEmpty() ? QStringLiteral("$") : ps.rest[0];
-            int         st        = ps.stack.isEmpty() ? -1 : ps.stack.back().first;
-            QStringList availActs = tbl.action.value(st).keys();
-            QStringList availGoto = tbl.gotoTable.value(st).keys();
+            next                  = ps.rest.isEmpty() ? QStringLiteral("$") : ps.rest[0];
+            stTop                 = ps.stack.isEmpty() ? -1 : ps.stack.back().first;
+            QStringList availActs = tbl.action.value(stTop).keys();
+            QStringList availGoto = tbl.gotoTable.value(stTop).keys();
             detail = QString("(state=%1, next=%2, action=%3, avail_action=%4, avail_goto=%5)")
-                         .arg(st)
+                         .arg(stTop)
                          .arg(next)
                          .arg(ps.action)
                          .arg(availActs.join(','))
                          .arg(availGoto.join(','));
         }
-        // 写入错误日志文件
+        // 写入错误日志文件（增强信息）
         QString dir = Config::syntaxOutputDir();
         if (dir.trimmed().isEmpty())
             dir = Config::generatedOutputDir() + "/syntax";
@@ -330,12 +411,41 @@ void LR1Controller::runLR1Process()
         {
             QTextStream out(&lf);
             out << "Token map (from current regex):\n";
-            // 简要打印当前映射键集合
             out << "tokens(mapped): ";
             for (const auto& t : tokens) out << t << ' ';
             out << "\nlexemes: ";
             for (const auto& lx : lexemes) out << lx << ' ';
             out << "\nerror: " << detail << "\n";
+            // 当前状态的 ACTION/GOTO 明细
+            out << "ACTION[state=" << stTop << "]: ";
+            auto rowA = tbl.action.value(stTop);
+            for (auto it = rowA.begin(); it != rowA.end(); ++it)
+                out << it.key() << "=" << it.value() << ' ';
+            out << "\nGOTO[state=" << stTop << "]: ";
+            auto rowG = tbl.gotoTable.value(stTop);
+            for (auto it = rowG.begin(); it != rowG.end(); ++it)
+                out << it.key() << "=" << it.value() << ' ';
+            // 最近若干步的解析轨迹
+            out << "\ntrace(last 15 steps):\n";
+            int start = qMax(0, r.steps.size() - 15);
+            for (int i = start; i < r.steps.size(); ++i)
+            {
+                const auto& ps = r.steps[i];
+                QString     stk;
+                for (const auto& pr : ps.stack)
+                    stk += QString("(%1,%2) ").arg(pr.first).arg(pr.second);
+                QString rest;
+                for (const auto& re : ps.rest) rest += re + ' ';
+                out << QString("step=%1 action=%2 prod=%3\n  stack=%4\n  rest=%5\n")
+                           .arg(ps.step)
+                           .arg(ps.action)
+                           .arg(ps.production)
+                           .arg(stk)
+                           .arg(rest);
+            }
+            // 语义配置摘要
+            out << "semantic: rootPolicy=" << Config::semanticRootSelectionPolicy()
+                << ", childOrder=" << Config::semanticChildOrderPolicy() << "\n";
             lf.close();
         }
         notify_->error("语法分析失败 " + detail);
@@ -347,59 +457,22 @@ void LR1Controller::runLR1Process()
         lastDot_ = parseTreeToDotWithTokens(r.root, tokens);
     if (auto tree = page_->findChild<QTreeWidget*>("treeSemanticLR1"))
         fillSemanticTree(tree, r.astRoot);
+    // 缓存解析结果与表用于“语法分析过程”对话框
+    lastResult_      = r;
+    lastActionTable_ = tbl;
     notify_->info(QString("LR(1)分析完成，共 %1 步").arg(r.steps.size()));
 }
 
-void LR1Controller::previewTree()
+void LR1Controller::openGrammarProcessDialog()
 {
-    if (lastDot_.trimmed().isEmpty())
-    {
-        notify_->warning("请先运行LR(1)分析生成语法树");
-        return;
-    }
-    QString png;
-    int     dpi = 150;
-    if (auto le = page_->findChild<QLineEdit*>("edtGraphDpiLR1"))
-    {
-        bool ok = false;
-        int  v  = le->text().trimmed().toInt(&ok);
-        if (ok && v >= 72 && v <= 600)
-            dpi = v;
-    }
-    if (dotSvc_ && dotSvc_->renderToTempPng(lastDot_, png, dpi))
-    {
-        dotSvc_->previewPng(png, "LR(1) 语法树 预览");
-        QFile::remove(png);
-    }
-    if (auto tree = page_->findChild<QTreeWidget*>("treeSemanticLR1"))
-    {
-        // 同步文本树视图
-        // 使用最新的语义 AST：需在 runLR1Process 之后通过 parseWithSemantics 的结果传入
-        // 这里从 DOT 无法恢复 AST，仅在 runLR1Process 内部填充
-    }
+    // 放宽控制：即使步骤为空，也允许打开对话框（显示空表）
+    GrammarProcessDialog dlg(lastResult_, lastActionTable_, mw_);
+    dlg.exec();
 }
 
-void LR1Controller::setupExportButton()
-{
-    auto btn = page_->findChild<ExportGraphButton*>("exportBtnLR1Tree");
-    if (!btn)
-        return;
-    btn->setDotService(dotSvc_);
-    btn->setSuggestedBasename("lr1_");
-    btn->setDpiProvider(
-        [this]
-        {
-            if (auto le = page_->findChild<QLineEdit*>("edtGraphDpiLR1"))
-            {
-                bool ok = false;
-                int  v  = le->text().trimmed().toInt(&ok);
-                if (ok && v >= 72 && v <= 600)
-                    return v;
-            }
-            return 150;
-        });
-    btn->setDotSupplier([this] { return this->lastDot_; });
-}
+// 预览逻辑移除
+
+// 导出按钮逻辑已移除
 void LR1Controller::loadSemanticActions()
 {
     auto path = QFileDialog::getOpenFileName(mw_,
@@ -440,10 +513,11 @@ void LR1Controller::loadSemanticActions()
         QVector<QVector<int>> seqs;
         for (int k = 0; k < rhss.size(); ++k)
         {
-            auto rhs    = rhss[k].trimmed();
-            auto actstr = actc[k].trimmed();
-            auto syms   = rhs == "#" ? QVector<QString>() : rhs.split(' ', Qt::SkipEmptyParts);
-            auto bits   = actstr.split(' ', Qt::SkipEmptyParts);
+            auto         rhs    = rhss[k].trimmed();
+            auto         actstr = actc[k].trimmed();
+            auto         syms   = rhs == Config::epsilonSymbol() ? QVector<QString>()
+                                                                 : rhs.split(' ', Qt::SkipEmptyParts);
+            auto         bits   = actstr.split(' ', Qt::SkipEmptyParts);
             QVector<int> vs;
             for (auto b : bits) vs.push_back(b.toInt());
             if (syms.isEmpty())
