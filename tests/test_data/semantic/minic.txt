@@ -1,0 +1,70 @@
+program -> definition-list
+1
+definition-list -> definition-list definition | definition
+1 1 | 1
+definition -> variable-definition | function-definition
+1 | 1
+variable-definition -> type-indicator identifier ; | type-indicator identifier [ number ] ;
+1 2 0 | 1 2 0 2 0 0
+type-indicator -> int | float | real | void
+1 | 1 | 1 | 1
+function-definition -> type-indicator identifier ( parameters ) compound-stmt
+2 1 0 2 0 2
+parameters -> parameter-list | void
+1 | 1
+parameter-list -> parameter-list , parameter | parameter
+1 0 1 | 1
+parameter -> type-indicator identifier | type-indicator identifier [ ]
+1 2 | 1 2 0 0
+compound-stmt -> { local-definitions statement-list }
+0 1 1 0
+local-definitions-H -> variable-definition local-definitions-H | #
+1 1 | 1
+local-definitions -> local-definitions-H
+1
+statement-list -> statement-list-H
+1
+statement-list-H -> statement statement-list-H | #
+1 1 | 1
+statement -> expression-stmt | compound-stmt | condition-stmt | while-stmt | for-stmt | return-stmt
+1 | 1 | 1 | 1 | 1 | 1
+expression-stmt -> expression ; | ; 
+1 0 | 0
+condition-stmt -> if ( expression ) statement | if ( expression ) statement else statement
+1 0 2 0 2 | 1 0 2 0 2 0 2
+while-stmt -> while ( expression ) statement
+1 0 2 0 2
+for-stmt -> for ( for-init ; expression ; for-update ) statement
+1 0 2 0 2 0 2 0 2
+for-init -> expression | variable-definition | #
+1 | 1 | 1
+for-update -> expression-list | #
+1 | 1
+expression-list -> expression-list , expression | expression
+1 0 1 | 1
+return-stmt -> return ; | return expression ;
+1 0 | 1 2 0
+expression -> variable = expression | simple-expression
+2 1 2 | 1
+variable -> identifier | identifier [ expression ]
+1 | 1 0 2 0
+simple-expression -> additive-expression relop additive-expression | additive-expression
+2 1 2 | 1
+relop -> <= | < | > | >= | == | !=
+1 | 1 | 1 | 1 | 1 | 1
+additive-expression -> additive-expression addop term | term
+2 1 2 | 1
+addop -> + | -
+1 | 1
+term -> term mulop factor | factor
+2 1 2 | 1
+mulop -> * | / | % | ^
+1 | 1 | 1 | 1
+factor -> ( expression ) | variable | call | number | ++ variable | -- variable
+0 1 0 | 1 | 1 | 1 | 1 2 | 1 2
+call -> identifier ( arguments )
+1 0 2 0
+arguments -> argument-list | #
+1 | 1
+argument-list -> argument-list , expression | expression
+1 0 1 | 1

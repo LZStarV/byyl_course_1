@@ -1,6 +1,0 @@
-letter = [A-Za-z_]
-digit = [0-9]
-_identifier100 = letter(letter|digit)*
-_number101 = digit+
-_keywords200S = int | double | float | char | bool | class | struct | template | typename | if | else | for | while | do | switch | case | break | continue | return | namespace | using | new | delete | public | private | protected | virtual | override | const | constexpr | static | inline | friend | this | operator | try | catch | throw | auto | sizeof
-_operators220S = \+ | - | \* | / | % | == | != | < | <= | > | >= | = | \+\+ | -- | && | \|\| | ! | & | \| | \^ | << | >> | :: | \. | : | -> | \( | \) | \[ | \] | \{ | \} | , | ; | # | \" | \'

@@ -219,8 +219,11 @@ ParsedFile RegexParser::parse(const RegexFile& file)
     out.macros = file.rules;
     for (auto r : file.tokens)
     {
+        auto expr = r.expr;
+        // 规范化：将特殊项 [|] 视为字面量 '[' 与 ']' 两个分支，避免被解析为仅包含 '|'
+        expr.replace("[|]", "\\[|\\]");
         int  i   = 0;
-        auto ast = parseExpr(r.expr, i, out.macros);
+        auto ast = parseExpr(expr, i, out.macros);
         // 展开引用，确保后续构建仅包含字符与结构运算
         // 简单递归展开：Ref -> 解析宏表达式并替换
         std::function<ASTNode*(ASTNode*)> expand = [&](ASTNode* n) -> ASTNode*
