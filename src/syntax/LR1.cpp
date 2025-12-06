@@ -256,9 +256,34 @@ static void putAction(QMap<int, QMap<QString, QString>>& action,
         action[st][a] = val;
 }
 
+static QMap<QString, int> computeReductionIndex(const Grammar&                g,
+                                                QVector<QPair<int, QString>>& outList)
+{
+    QMap<QString, int> idx;
+    int                k   = 0;
+    QList<QString>     nts = QList<QString>(g.productions.keys());
+    std::sort(nts.begin(), nts.end());
+    for (const auto& A : nts)
+    {
+        // 跳过增广非终结符
+        if (A.endsWith(Config::augSuffix()))
+            continue;
+        const auto& alts = g.productions.value(A);
+        for (const auto& p : alts)
+        {
+            QString key = A + "->" + p.right.join(" ");
+            idx[key]    = k;
+            outList.push_back({k, A + " -> " + p.right.join(" ")});
+            ++k;
+        }
+    }
+    return idx;
+}
+
 LR1ActionTable LR1Builder::computeActionTable(const Grammar& g, const LR1Graph& gr)
 {
     LR1ActionTable t;
+    auto           redIndex = computeReductionIndex(g, t.reductions);
     for (int i = 0; i < gr.states.size(); ++i)
     {
         const auto& I = gr.states[i];
@@ -286,7 +311,11 @@ LR1ActionTable LR1Builder::computeActionTable(const Grammar& g, const LR1Graph& 
                 QString a = it.lookahead;
                 if (!a.isEmpty() && a != "#")
                 {
-                    QString r = QString("r %1 -> %2").arg(it.left).arg(it.right.join(" "));
+                    QString key = it.left + "->" + it.right.join(" ");
+                    int     rk  = redIndex.value(key, -1);
+                    QString r   = rk >= 0
+                                      ? QString("r%1").arg(rk)
+                                      : QString("r %1 -> %2").arg(it.left).arg(it.right.join(" "));
                     putAction(t.action, i, a, r);
                 }
             }

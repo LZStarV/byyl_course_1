@@ -19,8 +19,8 @@ static bool isTerminal(const QSet<QString>& terms, const QString& s)
 
 SLRCheckResult SLR::check(const Grammar& g, const LL1Info& ll1)
 {
-    auto                              gr = LR0Builder::build(g);
-    QMap<int, QMap<QString, QString>> action;
+    auto                                    gr = LR0Builder::build(g);
+    QMap<int, QMap<QString, QSet<QString>>> actionsSet;
     for (int st = 0; st < gr.states.size(); ++st)
     {
         const auto& items = gr.states[st];
@@ -34,45 +34,47 @@ SLRCheckResult SLR::check(const Grammar& g, const LL1Info& ll1)
                     int to = gr.edges.value(st).value(a, -1);
                     if (to >= 0)
                     {
-                        QString prev = action[st].value(a);
-                        QString now  = QString("s%1").arg(to);
-                        if (!prev.isEmpty() && prev != now)
-                            action[st][a] = prev + "|" + now;
-                        else
-                            action[st][a] = now;
+                        actionsSet[st][a].insert(QString("s%1").arg(to));
                     }
                 }
             }
             else
             {
-                auto followA = ll1.follow.value(it.left);
+                auto    followA = ll1.follow.value(it.left);
+                QString rhsText = it.right.isEmpty() ? QString("#") : it.right.join(" ");
+                QString red     = QString("r %1 -> %2").arg(it.left).arg(rhsText);
                 for (const auto& a : followA)
                 {
-                    QString prev = action[st].value(a);
-                    QString now  = QString("r %1 -> %2").arg(it.left).arg(it.right.join(" "));
-                    if (!prev.isEmpty() && prev != now)
-                        action[st][a] = prev + "|" + now;
-                    else
-                        action[st][a] = now;
+                    actionsSet[st][a].insert(red);
                 }
             }
         }
     }
     SLRCheckResult res;
-    for (auto sit = action.begin(); sit != action.end(); ++sit)
+    for (auto sit = actionsSet.begin(); sit != actionsSet.end(); ++sit)
     {
         int st = sit.key();
         for (auto ait = sit.value().begin(); ait != sit.value().end(); ++ait)
         {
-            QString a = ait.key();
-            QString v = ait.value();
-            if (v.contains("|"))
+            const QString& a   = ait.key();
+            const auto&    set = ait.value();
+            if (set.size() >= 2)
             {
+                bool hasShift = false, hasReduce = false;
+                for (const auto& act : set)
+                {
+                    if (act.startsWith("s"))
+                        hasShift = true;
+                    if (act.startsWith("r"))
+                        hasReduce = true;
+                }
+                QStringList list = QStringList(set.begin(), set.end());
+                std::sort(list.begin(), list.end());
                 SLRConflict c;
                 c.state    = st;
                 c.terminal = a;
-                c.type     = "conflict";
-                c.detail   = v;
+                c.type     = (hasShift && hasReduce) ? "shift/reduce" : "reduce/reduce";
+                c.detail   = list.join("|");
                 res.conflicts.push_back(c);
             }
         }

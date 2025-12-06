@@ -19,9 +19,12 @@ LR1ActionTableDialog::LR1ActionTableDialog(const Grammar&        g,
     QDialog(parent)
 {
     setWindowTitle(QStringLiteral("LR(1) 分析表"));
-    auto v    = new QVBoxLayout(this);
+    auto h     = new QHBoxLayout(this);
+    auto left  = new QVBoxLayout;
+    auto right = new QVBoxLayout;
+
     auto lblA = new QLabel(QStringLiteral("ACTION"));
-    v->addWidget(lblA);
+    left->addWidget(lblA);
     QStringList termCols;
     termCols << "state";
     for (const auto& s : g.terminals)
@@ -46,9 +49,10 @@ LR1ActionTableDialog::LR1ActionTableDialog(const Grammar&        g,
         ++r;
     }
     tblA->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    v->addWidget(tblA);
+    left->addWidget(tblA);
+
     auto lblG = new QLabel(QStringLiteral("GOTO"));
-    v->addWidget(lblG);
+    left->addWidget(lblG);
     QStringList ntCols;
     ntCols << "state";
     for (const auto& s : g.nonterminals) ntCols << s;
@@ -70,6 +74,27 @@ LR1ActionTableDialog::LR1ActionTableDialog(const Grammar&        g,
         ++r;
     }
     tblG->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    v->addWidget(tblG);
-    resize(1000, 700);
+    left->addWidget(tblG);
+
+    auto lblR = new QLabel(QStringLiteral("规约规则"));
+    right->addWidget(lblR);
+    auto tblR = new QTableWidget;
+    tblR->setColumnCount(2);
+    tblR->setHorizontalHeaderLabels(QStringList()
+                                    << QStringLiteral("规约编号") << QStringLiteral("规约规则"));
+    tblR->setRowCount(t.reductions.size());
+    for (int i = 0; i < t.reductions.size(); ++i)
+    {
+        const auto& pr = t.reductions[i];
+        tblR->setItem(i, 0, new QTableWidgetItem(QString("r%1").arg(pr.first)));
+        tblR->setItem(i, 1, new QTableWidgetItem(pr.second));
+    }
+    tblR->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    right->addWidget(tblR);
+
+    h->addLayout(left);
+    h->addLayout(right);
+    h->setStretch(0, 4);
+    h->setStretch(1, 1);
+    resize(1100, 700);
 }

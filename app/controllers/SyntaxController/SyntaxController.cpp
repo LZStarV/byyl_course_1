@@ -217,10 +217,8 @@ void SyntaxController::parseGrammar()
         notify_->error("文法错误：" + err);
         return;
     }
-    hasGrammar_ = true;
-    ll1_        = engine_->computeLL1(grammar_);
-    if (!ll1_.conflicts.isEmpty())
-        notify_->warning("存在LL(1)冲突");
+    hasGrammar_    = true;
+    ll1_           = engine_->computeLL1(grammar_);
     auto firstRows = engine_->firstFollowAsRows(ll1_);
     SyntaxTableHelper::fillFirstTable(tblF, firstRows);
     auto followRows = ll1_.follow;

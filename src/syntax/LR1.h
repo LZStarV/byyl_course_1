@@ -38,6 +38,7 @@ struct LR1ActionTable
 {
     QMap<int, QMap<QString, QString>> action;
     QMap<int, QMap<QString, int>>     gotoTable;
+    QVector<QPair<int, QString>>      reductions;
 };
 
 class LR1Builder

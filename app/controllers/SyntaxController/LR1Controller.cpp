@@ -446,7 +446,16 @@ void LR1Controller::loadSemanticActions()
             auto bits   = actstr.split(' ', Qt::SkipEmptyParts);
             QVector<int> vs;
             for (auto b : bits) vs.push_back(b.toInt());
-            if (vs.size() != syms.size())
+            if (syms.isEmpty())
+            {
+                // ε 产生式允许 0 或 1 位动作（用于给归约结果标注角色）
+                if (!(vs.size() == 0 || vs.size() == 1))
+                {
+                    notify_->error(QStringLiteral("ε 产生式动作位数非法: ") + L);
+                    return;
+                }
+            }
+            else if (vs.size() != syms.size())
             {
                 notify_->error(QStringLiteral("动作位数与候选符号数不匹配: ") + L);
                 return;
