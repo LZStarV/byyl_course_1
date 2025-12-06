@@ -49,6 +49,6 @@ LR1TreeTab::LR1TreeTab(QWidget* parent) : QWidget(parent)
     // 组装主布局
     hMain->addLayout(left);
     hMain->addLayout(right);
-    hMain->setStretch(0, 1);
+    hMain->setStretch(0, 2);
     hMain->setStretch(1, 3);
 }

@@ -69,11 +69,16 @@ void LR1Controller::fillProcessTable(QTableWidget*             tbl,
                        .arg(ps.rest.isEmpty() ? Config::eofSymbol() : ps.rest[0]);
         else if (ps.action.startsWith("r"))
             desc = QString("reduce %1").arg(ps.production);
+        else if (ps.action == "error")
+            desc = ps.production + QStringLiteral(" （中止）");
         else if (ps.action == "acc")
             desc = QStringLiteral("acc，分析完成");
         else
             desc = QString("动作 %1").arg(ps.action);
-        tbl->setItem(r, 1, new QTableWidgetItem(desc));
+        auto item = new QTableWidgetItem(desc);
+        if (ps.action == "error")
+            item->setForeground(Qt::red);
+        tbl->setItem(r, 1, item);
     }
     tbl->setEditTriggers(QAbstractItemView::NoEditTriggers);
 }
@@ -259,7 +264,6 @@ void LR1Controller::loadDefault()
             edt->setPlainText(in.readAll());
         ft.close();
     }
-    // 语义动作不参与默认加载
 }
 
 void LR1Controller::pickSource()
@@ -449,18 +453,28 @@ void LR1Controller::runLR1Process()
             lf.close();
         }
         notify_->error("语法分析失败 " + detail);
-        return;
+        if (!r.steps.isEmpty())
+        {
+            ParseStep psErr;
+            psErr.step       = r.steps.back().step + 1;
+            psErr.action     = QStringLiteral("error");
+            psErr.production = QStringLiteral("错误：") + detail + QStringLiteral(" （中止）");
+            psErr.stack      = r.steps.back().stack;
+            psErr.rest       = r.steps.back().rest;
+            r.steps.push_back(psErr);
+            r.semanticSteps.push_back(psErr);
+        }
+        // 不中止：继续填充树/过程并缓存结果，便于查看过程
     }
-    if (r.astRoot)
-        lastDot_ = semanticAstToDot(r.astRoot);
-    else
-        lastDot_ = parseTreeToDotWithTokens(r.root, tokens);
     if (auto tree = page_->findChild<QTreeWidget*>("treeSemanticLR1"))
         fillSemanticTree(tree, r.astRoot);
     // 缓存解析结果与表用于“语法分析过程”对话框
     lastResult_      = r;
     lastActionTable_ = tbl;
-    notify_->info(QString("LR(1)分析完成，共 %1 步").arg(r.steps.size()));
+    if (r.errorPos >= 0)
+        notify_->warning(QString("LR(1)分析失败，已执行 %1 步").arg(r.steps.size()));
+    else
+        notify_->info(QString("LR(1)分析完成，共 %1 步").arg(r.steps.size()));
 }
 
 void LR1Controller::openGrammarProcessDialog()

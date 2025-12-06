@@ -117,14 +117,31 @@ ParseResult LR1Parser::parse(const QVector<QString>& tokens,
             }
             else
             {
+                // 冲突策略未配置，输出错误步骤并中止
+                QString msg =
+                    QString("错误：状态=%1, 前瞻=%2, 动作冲突未配置，中止").arg(st).arg(a);
+                pushStep(res.steps, step++, stack, input, QStringLiteral("error"), msg);
                 res.errorPos = res.steps.size();
                 break;
             }
         }
         if (act.isEmpty())
         {
-            res.errorPos = res.steps.size();
-            break;
+            // 错误触发点后移：若上一步为移进，则用当前lookahead的下一符号重试一次
+            if (!res.steps.isEmpty() && res.steps.back().action.startsWith("s") && input.size() > 1)
+            {
+                QString a2   = input[1];
+                QString act2 = actionFor(t, st, a2);
+                if (!act2.isEmpty())
+                    act = act2;
+            }
+            if (act.isEmpty())
+            {
+                QString msg = QString("错误：状态=%1, 前瞻=%2, 无可用动作，中止").arg(st).arg(a);
+                pushStep(res.steps, step++, stack, input, QStringLiteral("error"), msg);
+                res.errorPos = res.steps.size();
+                break;
+            }
         }
         if (act == "acc")
         {
@@ -171,6 +188,9 @@ ParseResult LR1Parser::parse(const QVector<QString>& tokens,
             int to    = gotoFor(t, stTop, L);
             if (to < 0)
             {
+                QString msg =
+                    QString("错误：goto 失败，状态=%1, 归约到=%2，中止").arg(stTop).arg(L);
+                pushStep(res.steps, step++, stack, input, QStringLiteral("error"), msg);
                 res.errorPos = res.steps.size();
                 break;
             }
@@ -193,6 +213,12 @@ ParseResult LR1Parser::parse(const QVector<QString>& tokens,
             pushStep(res.steps, step++, stack, input, act, QString("%1 -> %2").arg(L).arg(R));
             continue;
         }
+        pushStep(res.steps,
+                 step++,
+                 stack,
+                 input,
+                 QStringLiteral("error"),
+                 QString("错误：未知动作 '%1'，中止").arg(act));
         res.errorPos = res.steps.size();
         break;
     }
@@ -334,14 +360,31 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
             }
             else
             {
+                QString msg =
+                    QString("错误：状态=%1, 前瞻=%2, 动作冲突未配置，中止").arg(st).arg(a);
+                pushStep(res.steps, step++, stack, input, QStringLiteral("error"), msg);
+                pushStep(res.semanticSteps, step, stack, input, QStringLiteral("error"), msg);
                 res.errorPos = res.steps.size();
                 break;
             }
         }
         if (act.isEmpty())
         {
-            res.errorPos = res.steps.size();
-            break;
+            if (!res.steps.isEmpty() && res.steps.back().action.startsWith("s") && input.size() > 1)
+            {
+                QString a2   = input[1];
+                QString act2 = actionFor(t, st, a2);
+                if (!act2.isEmpty())
+                    act = act2;
+            }
+            if (act.isEmpty())
+            {
+                QString msg = QString("错误：状态=%1, 前瞻=%2, 无可用动作，中止").arg(st).arg(a);
+                pushStep(res.steps, step++, stack, input, QStringLiteral("error"), msg);
+                pushStep(res.semanticSteps, step, stack, input, QStringLiteral("error"), msg);
+                res.errorPos = res.steps.size();
+                break;
+            }
         }
         if (act == "acc")
         {
@@ -397,6 +440,10 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
             int to    = gotoFor(t, stTop, L);
             if (to < 0)
             {
+                QString msg =
+                    QString("错误：goto 失败，状态=%1, 归约到=%2，中止").arg(stTop).arg(L);
+                pushStep(res.steps, step++, stack, input, QStringLiteral("error"), msg);
+                pushStep(res.semanticSteps, step, stack, input, QStringLiteral("error"), msg);
                 res.errorPos = res.steps.size();
                 break;
             }
@@ -447,6 +494,18 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
             pushStep(res.steps, step++, stack, input, act, QString("%1 -> %2").arg(L).arg(R));
             continue;
         }
+        pushStep(res.steps,
+                 step++,
+                 stack,
+                 input,
+                 QStringLiteral("error"),
+                 QString("错误：未知动作 '%1'，中止").arg(act));
+        pushStep(res.semanticSteps,
+                 step,
+                 stack,
+                 input,
+                 QStringLiteral("error"),
+                 QString("错误：未知动作 '%1'，中止").arg(act));
         res.errorPos = res.steps.size();
         break;
     }

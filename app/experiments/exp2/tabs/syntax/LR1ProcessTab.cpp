@@ -19,7 +19,7 @@ LR1ProcessTab::LR1ProcessTab(QWidget* parent) : QWidget(parent)
 {
     auto v         = new QVBoxLayout(this);
     auto hBtns     = new QHBoxLayout;
-    btnLoadDefault = new QPushButton("加载默认正则表达式");
+    btnLoadDefault = new QPushButton("加载已有正则与 Token");
     btnLoadDefault->setObjectName("btnLoadDefaultLR1");
     cmbPickSource = new QComboBox();
     cmbPickSource->addItem(QStringLiteral("导入正则表达式"));

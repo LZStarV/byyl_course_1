@@ -1,6 +1,7 @@
 #include "GrammarProcessDialog.h"
 #include <QVBoxLayout>
 #include <QLabel>
+#include <QHeaderView>
 #include "../../../src/config/Config.h"
 
 static QMap<QString, int> makeReductionIndex(const LR1ActionTable& t)
@@ -50,9 +51,10 @@ GrammarProcessDialog::GrammarProcessDialog(const ParseResult&    r,
     for (int i = 0; i < r.steps.size(); ++i)
     {
         const auto& ps = r.steps[i];
-        tbl_->setItem(i, 0, new QTableWidgetItem(QString::number(ps.step)));
-        tbl_->setItem(i, 1, new QTableWidgetItem(formatStack(ps.stack)));
-        tbl_->setItem(i, 2, new QTableWidgetItem(formatRest(ps.rest)));
+        auto        c0 = new QTableWidgetItem(QString::number(ps.step));
+        auto        c1 = new QTableWidgetItem(formatStack(ps.stack));
+        auto        c2 = new QTableWidgetItem(formatRest(ps.rest));
+        c2->setTextAlignment(Qt::AlignLeft | Qt::AlignTop);
         QString desc;
         if (ps.action.startsWith("s"))
         {
@@ -92,9 +94,25 @@ GrammarProcessDialog::GrammarProcessDialog(const ParseResult&    r,
         {
             desc = QStringLiteral("动作：%1").arg(ps.action);
         }
-        tbl_->setItem(i, 3, new QTableWidgetItem(desc));
+        auto c3 = new QTableWidgetItem(desc);
+        if (ps.action == "error")
+        {
+            c0->setForeground(Qt::red);
+            c1->setForeground(Qt::red);
+            c2->setForeground(Qt::red);
+            c3->setForeground(Qt::red);
+        }
+        tbl_->setItem(i, 0, c0);
+        tbl_->setItem(i, 1, c1);
+        tbl_->setItem(i, 2, c2);
+        tbl_->setItem(i, 3, c3);
     }
     tbl_->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    tbl_->setWordWrap(true);
+    tbl_->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    tbl_->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    int inputCol = 2;
+    tbl_->setColumnWidth(inputCol, 420);
     v->addWidget(tbl_);
     resize(1000, 600);
 }
