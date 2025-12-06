@@ -1,5 +1,6 @@
 #pragma once
 #include "../model/Automata.h"
+#include "../regex/RegexLexer.h"
 #include <QString>
 
 class DotExporter
@@ -8,7 +9,13 @@ class DotExporter
     static QString toDot(const NFA& nfa);
     static QString toDot(const DFA& dfa);
     static QString toDot(const MinDFA& mdfa);
+    static QString toDot(const NFA& nfa, const QMap<QString, Rule>& macros);
+    static QString toDot(const DFA& dfa, const QMap<QString, Rule>& macros);
+    static QString toDot(const MinDFA& mdfa, const QMap<QString, Rule>& macros);
     static bool    exportToDot(const NFA& nfa, const QString& filename);
     static bool    exportToDot(const DFA& dfa, const QString& filename);
     static bool    exportToDot(const MinDFA& mdfa, const QString& filename);
+    static bool    exportToDot(const NFA& nfa, const QMap<QString, Rule>& macros, const QString& filename);
+    static bool    exportToDot(const DFA& dfa, const QMap<QString, Rule>& macros, const QString& filename);
+    static bool    exportToDot(const MinDFA& mdfa, const QMap<QString, Rule>& macros, const QString& filename);
 };

@@ -9,4 +9,5 @@ class AutomataTableHelper
    public:
     static void             fillTable(QTableWidget* tbl, const Tables& t);
     static QVector<QString> unionSyms(const QVector<Tables>& tables, bool includeEps);
+    static void             pruneEmptyColumns(QTableWidget* tbl);
 };

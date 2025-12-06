@@ -33,6 +33,154 @@ static void appendStartArrow(QString& out, const QString& startNode)
     out += QStringLiteral("__start -> ") + startNode + QStringLiteral(";\n");
 }
 
+static QVector<QChar> macroCharsLetter(const Alphabet& a)
+{
+    QVector<QChar> v;
+    for (ushort u = 'A'; u <= 'Z'; ++u) v.push_back(QChar(u));
+    for (ushort u = 'a'; u <= 'z'; ++u) v.push_back(QChar(u));
+    if (a.allowUnderscoreInLetter) v.push_back('_');
+    if (a.allowDollarInLetter) v.push_back('$');
+    return v;
+}
+static QVector<QChar> macroCharsDigit()
+{
+    QVector<QChar> v;
+    for (ushort u = '0'; u <= '9'; ++u) v.push_back(QChar(u));
+    return v;
+}
+static QString macroLabelTopFromRules(const QMap<QString, Rule>& macros)
+{
+    if (macros.isEmpty()) return QString();
+    QStringList lines;
+    auto keys = macros.keys();
+    std::sort(keys.begin(), keys.end());
+    for (const auto& k : keys)
+    {
+        const auto& r = macros.value(k);
+        lines << (r.name + QStringLiteral(" = ") + r.expr);
+    }
+    return QStringLiteral("labelloc=t;\nlabel=\"") + esc(lines.join("; ")) + QStringLiteral("\";\n");
+}
+static bool isSingle(const QString& s)
+{
+    return s.size() == 1;
+}
+static bool isDigitChar(QChar c)
+{
+    return c >= '0' && c <= '9';
+}
+static bool isLetterChar(const Alphabet& a, QChar c)
+{
+    if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) return true;
+    if (a.allowUnderscoreInLetter && c == '_') return true;
+    if (a.allowDollarInLetter && c == '$') return true;
+    return false;
+}
+
+static QMap<QString, QSet<QChar>> computeMacroSets(const QMap<QString, Rule>& macros)
+{
+    QMap<QString, QSet<QChar>> msets;
+    // parse each macro expr and collect character set
+    std::function<QSet<QChar>(const QString&, const QMap<QString, Rule>&)> getSet;
+    getSet = [&](const QString& expr, const QMap<QString, Rule>& macrosRef) -> QSet<QChar>
+    {
+        // local lightweight parser for charset and symbols
+        QSet<QChar> set;
+        int i = 0;
+        std::function<void()> parseExpr;
+        std::function<void()> parseConcat;
+        std::function<void()> parseFactor;
+        std::function<void()> parseAtom;
+        parseAtom = [&]() {
+            while (i < expr.size() && (expr[i] == ' ' || expr[i] == '\t' || expr[i] == '\n' || expr[i] == '\r')) i++;
+            if (i >= expr.size()) return;
+            QChar c = expr[i];
+            if (c == '[')
+            {
+                i++;
+                while (i < expr.size() && expr[i] != ']')
+                {
+                    if (i + 2 < expr.size() && expr[i + 1] == '-' && expr[i + 2] != ']')
+                    {
+                        QChar a = expr[i], b = expr[i + 2];
+                        for (int u = a.unicode(); u <= b.unicode(); ++u) set.insert(QChar(u));
+                        i += 3;
+                    }
+                    else
+                    {
+                        set.insert(expr[i]);
+                        i++;
+                    }
+                }
+                if (i < expr.size() && expr[i] == ']') i++;
+                return;
+            }
+            if (c == '(')
+            {
+                i++;
+                parseExpr();
+                if (i < expr.size() && expr[i] == ')') i++;
+                return;
+            }
+            if (c == '\\')
+            {
+                if (i + 1 < expr.size()) { i++; set.insert(expr[i]); i++; }
+                return;
+            }
+            if (c.isLetter())
+            {
+                QString ident;
+                while (i < expr.size() && (expr[i].isLetter() || expr[i].isDigit() || expr[i] == '_')) { ident.append(expr[i]); i++; }
+                if (macrosRef.contains(ident))
+                {
+                    auto sub = getSet(macrosRef.value(ident).expr, macrosRef);
+                    for (auto ch : sub) set.insert(ch);
+                }
+                else
+                {
+                    for (auto ch : ident) set.insert(ch);
+                }
+                return;
+            }
+            if (c != '|' && c != '*' && c != '+' && c != '?' && c != ')' )
+            {
+                set.insert(c); i++; return;
+            }
+        };
+        parseFactor = [&]() {
+            parseAtom();
+            while (i < expr.size())
+            {
+                QChar c = expr[i];
+                if (c == '*' || c == '+' || c == '?') { i++; }
+                else break;
+            }
+        };
+        parseConcat = [&]() {
+            parseFactor();
+            while (i < expr.size())
+            {
+                if (expr[i] == '|' || expr[i] == ')') break;
+                parseFactor();
+            }
+        };
+        parseExpr = [&]() {
+            parseConcat();
+            while (i < expr.size() && expr[i] == '|') { i++; parseConcat(); }
+        };
+        parseExpr();
+        return set;
+    };
+    auto keys = macros.keys();
+    for (const auto& k : keys)
+    {
+        const auto& r = macros.value(k);
+        auto s = getSet(r.expr, macros);
+        if (!s.isEmpty()) msets.insert(r.name, s);
+    }
+    return msets;
+}
+
 QString DotExporter::toDot(const NFA& nfa)
 {
     QString out = header("NFA");
@@ -47,11 +195,51 @@ QString DotExporter::toDot(const NFA& nfa)
     for (auto it = nfa.states.begin(); it != nfa.states.end(); ++it)
     {
         int from = it->id;
+        QMap<int, QSet<QChar>> digits;
+        QMap<int, QSet<QChar>> letters;
         for (const auto& e : it->edges)
         {
-            QString lbl = e.epsilon ? Config::dotEpsilonLabel() : esc(e.symbol);
-            out += QString::number(from) + QStringLiteral(" -> ") + QString::number(e.to) +
-                   QStringLiteral(" [label=\"") + lbl + QStringLiteral("\"];\n");
+            if (e.epsilon)
+            {
+                out += QString::number(from) + QStringLiteral(" -> ") + QString::number(e.to) +
+                       QStringLiteral(" [label=\"") + Config::dotEpsilonLabel() +
+                       QStringLiteral("\"];\n");
+                continue;
+            }
+            if (isSingle(e.symbol))
+            {
+                QChar ch = e.symbol[0];
+                if (nfa.alpha.hasDigit && isDigitChar(ch)) digits[e.to].insert(ch);
+                else if (nfa.alpha.hasLetter && isLetterChar(nfa.alpha, ch)) letters[e.to].insert(ch);
+                else
+                {
+                    out += QString::number(from) + QStringLiteral(" -> ") + QString::number(e.to) +
+                           QStringLiteral(" [label=\"") + esc(e.symbol) +
+                           QStringLiteral("\"];\n");
+                }
+            }
+            else
+            {
+                out += QString::number(from) + QStringLiteral(" -> ") + QString::number(e.to) +
+                       QStringLiteral(" [label=\"") + esc(e.symbol) +
+                       QStringLiteral("\"];\n");
+            }
+        }
+        for (auto it2 = digits.begin(); it2 != digits.end(); ++it2)
+        {
+            for (QChar ch : it2.value())
+            {
+                out += QString::number(from) + QStringLiteral(" -> ") + QString::number(it2.key()) +
+                       QStringLiteral(" [label=\"") + esc(QString(ch)) + QStringLiteral("\"];\n");
+            }
+        }
+        for (auto it2 = letters.begin(); it2 != letters.end(); ++it2)
+        {
+            for (QChar ch : it2.value())
+            {
+                out += QString::number(from) + QStringLiteral(" -> ") + QString::number(it2.key()) +
+                       QStringLiteral(" [label=\"") + esc(QString(ch)) + QStringLiteral("\"];\n");
+            }
         }
     }
     out += trailer();
@@ -85,13 +273,44 @@ QString DotExporter::toDot(const DFA& dfa)
     for (auto it = dfa.states.begin(); it != dfa.states.end(); ++it)
     {
         int from = it->id;
+        QMap<int, QSet<QChar>> digits;
+        QMap<int, QSet<QChar>> letters;
         for (auto a : dfa.alpha.ordered())
         {
             int to = it->trans.value(a, -1);
-            if (to == -1)
-                continue;
-            out += QString::number(from) + QStringLiteral(" -> ") + QString::number(to) +
-                   QStringLiteral(" [label=\"") + esc(a) + QStringLiteral("\"];\n");
+            if (to == -1) continue;
+            if (isSingle(a))
+            {
+                QChar ch = a[0];
+                if (dfa.alpha.hasDigit && isDigitChar(ch)) digits[to].insert(ch);
+                else if (dfa.alpha.hasLetter && isLetterChar(dfa.alpha, ch)) letters[to].insert(ch);
+                else
+                {
+                    out += QString::number(from) + QStringLiteral(" -> ") + QString::number(to) +
+                           QStringLiteral(" [label=\"") + esc(a) + QStringLiteral("\"];\n");
+                }
+            }
+            else
+            {
+                out += QString::number(from) + QStringLiteral(" -> ") + QString::number(to) +
+                       QStringLiteral(" [label=\"") + esc(a) + QStringLiteral("\"];\n");
+            }
+        }
+        for (auto it2 = digits.begin(); it2 != digits.end(); ++it2)
+        {
+            for (QChar ch : it2.value())
+            {
+                out += QString::number(from) + QStringLiteral(" -> ") + QString::number(it2.key()) +
+                       QStringLiteral(" [label=\"") + esc(QString(ch)) + QStringLiteral("\"];\n");
+            }
+        }
+        for (auto it2 = letters.begin(); it2 != letters.end(); ++it2)
+        {
+            for (QChar ch : it2.value())
+            {
+                out += QString::number(from) + QStringLiteral(" -> ") + QString::number(it2.key()) +
+                       QStringLiteral(" [label=\"") + esc(QString(ch)) + QStringLiteral("\"];\n");
+            }
         }
     }
     out += trailer();
@@ -112,13 +331,225 @@ QString DotExporter::toDot(const MinDFA& mdfa)
     for (auto it = mdfa.states.begin(); it != mdfa.states.end(); ++it)
     {
         int from = it->id;
+        QMap<int, QSet<QChar>> digits;
+        QMap<int, QSet<QChar>> letters;
         for (auto a : mdfa.alpha.ordered())
         {
             int to = it->trans.value(a, -1);
-            if (to == -1)
+            if (to == -1) continue;
+            if (isSingle(a))
+            {
+                QChar ch = a[0];
+                if (mdfa.alpha.hasDigit && isDigitChar(ch)) digits[to].insert(ch);
+                else if (mdfa.alpha.hasLetter && isLetterChar(mdfa.alpha, ch)) letters[to].insert(ch);
+                else
+                {
+                    out += QString::number(from) + QStringLiteral(" -> ") + QString::number(to) +
+                           QStringLiteral(" [label=\"") + esc(a) + QStringLiteral("\"];\n");
+                }
+            }
+            else
+            {
+                out += QString::number(from) + QStringLiteral(" -> ") + QString::number(to) +
+                       QStringLiteral(" [label=\"") + esc(a) + QStringLiteral("\"];\n");
+            }
+        }
+        for (auto it2 = digits.begin(); it2 != digits.end(); ++it2)
+        {
+            for (QChar ch : it2.value())
+            {
+                out += QString::number(from) + QStringLiteral(" -> ") + QString::number(it2.key()) +
+                       QStringLiteral(" [label=\"") + esc(QString(ch)) + QStringLiteral("\"];\n");
+            }
+        }
+        for (auto it2 = letters.begin(); it2 != letters.end(); ++it2)
+        {
+            for (QChar ch : it2.value())
+            {
+                out += QString::number(from) + QStringLiteral(" -> ") + QString::number(it2.key()) +
+                       QStringLiteral(" [label=\"") + esc(QString(ch)) + QStringLiteral("\"];\n");
+            }
+        }
+    }
+    out += trailer();
+    return out;
+}
+
+// overloads using parsed macros to aggregate arbitrary defined variables
+QString DotExporter::toDot(const NFA& nfa, const QMap<QString, Rule>& macros)
+{
+    auto msets = computeMacroSets(macros);
+    QString out = header("NFA");
+    out += macroLabelTopFromRules(macros);
+    for (auto it = nfa.states.begin(); it != nfa.states.end(); ++it)
+    {
+        int id = it->id; bool acc = it->accept;
+        out += QString::number(id) + QStringLiteral(" [shape=") + (acc ? "doublecircle" : "circle") + QStringLiteral("];\n");
+    }
+    appendStartArrow(out, QString::number(nfa.start));
+    for (auto it = nfa.states.begin(); it != nfa.states.end(); ++it)
+    {
+        int from = it->id;
+        QMap<int, QSet<QChar>> charsPerTo;
+        QVector<QString> nonSingleEdges;
+        QVector<int>     nonSingleTos;
+        for (const auto& e : it->edges)
+        {
+            if (e.epsilon)
+            {
+                out += QString::number(from) + QStringLiteral(" -> ") + QString::number(e.to) +
+                       QStringLiteral(" [label=\"") + Config::dotEpsilonLabel() + QStringLiteral("\"];\n");
                 continue;
-            out += QString::number(from) + QStringLiteral(" -> ") + QString::number(to) +
-                   QStringLiteral(" [label=\"") + esc(a) + QStringLiteral("\"];\n");
+            }
+            if (isSingle(e.symbol)) charsPerTo[e.to].insert(e.symbol[0]);
+            else { nonSingleEdges.push_back(e.symbol); nonSingleTos.push_back(e.to); }
+        }
+        for (int i = 0; i < nonSingleEdges.size(); ++i)
+        {
+            out += QString::number(from) + QStringLiteral(" -> ") + QString::number(nonSingleTos[i]) +
+                   QStringLiteral(" [label=\"") + esc(nonSingleEdges[i]) + QStringLiteral("\"];\n");
+        }
+        for (auto it2 = charsPerTo.begin(); it2 != charsPerTo.end(); ++it2)
+        {
+            int to = it2.key(); QSet<QChar> present = it2.value();
+            // try macros in stable order
+            auto keys = msets.keys(); std::sort(keys.begin(), keys.end());
+            for (const auto& name : keys)
+            {
+                const auto& set = msets.value(name);
+                if (set.isEmpty()) continue;
+                if (present.contains(*set.begin()))
+                {
+                    bool all = true;
+                    for (auto ch : set) { if (!present.contains(ch)) { all = false; break; } }
+                    if (all)
+                    {
+                        out += QString::number(from) + QStringLiteral(" -> ") + QString::number(to) +
+                               QStringLiteral(" [label=\"") + esc(name) + QStringLiteral("\"];\n");
+                        for (auto ch : set) present.remove(ch);
+                    }
+                }
+            }
+            // remaining single chars
+            for (auto ch : present)
+            {
+                out += QString::number(from) + QStringLiteral(" -> ") + QString::number(to) +
+                       QStringLiteral(" [label=\"") + esc(QString(ch)) + QStringLiteral("\"];\n");
+            }
+        }
+    }
+    out += trailer();
+    return out;
+}
+
+QString DotExporter::toDot(const DFA& dfa, const QMap<QString, Rule>& macros)
+{
+    auto msets = computeMacroSets(macros);
+    QString out = header("DFA");
+    out += macroLabelTopFromRules(macros);
+    for (auto it = dfa.states.begin(); it != dfa.states.end(); ++it)
+    {
+        int id = it->id; bool acc = it->accept; QString label = "";
+        QList<int> v = QList<int>(it->nfaSet.begin(), it->nfaSet.end()); std::sort(v.begin(), v.end());
+        label += "{"; for (int i = 0; i < v.size(); ++i) { label += QString::number(v[i]); if (i + 1 < v.size()) label += ", "; } label += "}";
+        out += QString::number(id) + QStringLiteral(" [shape=") + (acc ? "doublecircle" : "circle") + QStringLiteral(",label=\"") + esc(label) + QStringLiteral("\"];\n");
+    }
+    appendStartArrow(out, QString::number(dfa.start));
+    for (auto it = dfa.states.begin(); it != dfa.states.end(); ++it)
+    {
+        int from = it->id;
+        QMap<int, QSet<QChar>> charsPerTo;
+        QVector<QString> nonSingleEdges;
+        QVector<int>     nonSingleTos;
+        for (auto a : dfa.alpha.ordered())
+        {
+            int to = it->trans.value(a, -1);
+            if (to == -1) continue;
+            if (isSingle(a)) charsPerTo[to].insert(a[0]); else { nonSingleEdges.push_back(a); nonSingleTos.push_back(to); }
+        }
+        for (int i = 0; i < nonSingleEdges.size(); ++i)
+        {
+            out += QString::number(from) + QStringLiteral(" -> ") + QString::number(nonSingleTos[i]) +
+                   QStringLiteral(" [label=\"") + esc(nonSingleEdges[i]) + QStringLiteral("\"];\n");
+        }
+        for (auto it2 = charsPerTo.begin(); it2 != charsPerTo.end(); ++it2)
+        {
+            int to = it2.key(); QSet<QChar> present = it2.value();
+            auto keys = msets.keys(); std::sort(keys.begin(), keys.end());
+            for (const auto& name : keys)
+            {
+                const auto& set = msets.value(name);
+                if (set.isEmpty()) continue;
+                bool all = true;
+                for (auto ch : set) { if (!present.contains(ch)) { all = false; break; } }
+                if (all)
+                {
+                    out += QString::number(from) + QStringLiteral(" -> ") + QString::number(to) +
+                           QStringLiteral(" [label=\"") + esc(name) + QStringLiteral("\"];\n");
+                    for (auto ch : set) present.remove(ch);
+                }
+            }
+            for (auto ch : present)
+            {
+                out += QString::number(from) + QStringLiteral(" -> ") + QString::number(to) +
+                       QStringLiteral(" [label=\"") + esc(QString(ch)) + QStringLiteral("\"];\n");
+            }
+        }
+    }
+    out += trailer();
+    return out;
+}
+
+QString DotExporter::toDot(const MinDFA& mdfa, const QMap<QString, Rule>& macros)
+{
+    auto msets = computeMacroSets(macros);
+    QString out = header("MinDFA");
+    out += macroLabelTopFromRules(macros);
+    for (auto it = mdfa.states.begin(); it != mdfa.states.end(); ++it)
+    {
+        int id = it->id; bool acc = it->accept;
+        out += QString::number(id) + QStringLiteral(" [shape=") + (acc ? "doublecircle" : "circle") + QStringLiteral("];\n");
+    }
+    appendStartArrow(out, QString::number(mdfa.start));
+    for (auto it = mdfa.states.begin(); it != mdfa.states.end(); ++it)
+    {
+        int from = it->id;
+        QMap<int, QSet<QChar>> charsPerTo;
+        QVector<QString> nonSingleEdges;
+        QVector<int>     nonSingleTos;
+        for (auto a : mdfa.alpha.ordered())
+        {
+            int to = it->trans.value(a, -1);
+            if (to == -1) continue;
+            if (isSingle(a)) charsPerTo[to].insert(a[0]); else { nonSingleEdges.push_back(a); nonSingleTos.push_back(to); }
+        }
+        for (int i = 0; i < nonSingleEdges.size(); ++i)
+        {
+            out += QString::number(from) + QStringLiteral(" -> ") + QString::number(nonSingleTos[i]) +
+                   QStringLiteral(" [label=\"") + esc(nonSingleEdges[i]) + QStringLiteral("\"];\n");
+        }
+        for (auto it2 = charsPerTo.begin(); it2 != charsPerTo.end(); ++it2)
+        {
+            int to = it2.key(); QSet<QChar> present = it2.value();
+            auto keys = msets.keys(); std::sort(keys.begin(), keys.end());
+            for (const auto& name : keys)
+            {
+                const auto& set = msets.value(name);
+                if (set.isEmpty()) continue;
+                bool all = true;
+                for (auto ch : set) { if (!present.contains(ch)) { all = false; break; } }
+                if (all)
+                {
+                    out += QString::number(from) + QStringLiteral(" -> ") + QString::number(to) +
+                           QStringLiteral(" [label=\"") + esc(name) + QStringLiteral("\"];\n");
+                    for (auto ch : set) present.remove(ch);
+                }
+            }
+            for (auto ch : present)
+            {
+                out += QString::number(from) + QStringLiteral(" -> ") + QString::number(to) +
+                       QStringLiteral(" [label=\"") + esc(QString(ch)) + QStringLiteral("\"];\n");
+            }
         }
     }
     out += trailer();
@@ -147,4 +578,17 @@ bool DotExporter::exportToDot(const DFA& dfa, const QString& filename)
 bool DotExporter::exportToDot(const MinDFA& mdfa, const QString& filename)
 {
     return writeFile(filename, toDot(mdfa));
+}
+
+bool DotExporter::exportToDot(const NFA& nfa, const QMap<QString, Rule>& macros, const QString& filename)
+{
+    return writeFile(filename, toDot(nfa, macros));
+}
+bool DotExporter::exportToDot(const DFA& dfa, const QMap<QString, Rule>& macros, const QString& filename)
+{
+    return writeFile(filename, toDot(dfa, macros));
+}
+bool DotExporter::exportToDot(const MinDFA& mdfa, const QMap<QString, Rule>& macros, const QString& filename)
+{
+    return writeFile(filename, toDot(mdfa, macros));
 }

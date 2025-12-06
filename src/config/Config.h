@@ -29,8 +29,6 @@ class Config
     static QString        generatedOutputDir();
     static QString        syntaxOutputDir();
     static QString        graphsDir();
-    static QString        macroLetterName();
-    static QString        macroDigitName();
     static bool           isWhitespace(QChar ch);
     static QVector<QChar> whitespaces();
     static bool           tokenMapUseHeuristics();
@@ -95,8 +93,6 @@ class Config
     // setters for settings dialog
     static void setSyntaxOutputDir(const QString& dir);
     static void setGraphsDir(const QString& dir);
-    static void setMacroLetterName(const QString& name);
-    static void setMacroDigitName(const QString& name);
     static void setWhitespaces(const QVector<QChar>& ws);
     static void setTokenMapUseHeuristics(bool v);
     static void setGraphvizExecutable(const QString& exe);
@@ -126,8 +122,6 @@ class Config
     static QString             s_outDir;
     static QString             s_syntaxDir;
     static QString             s_graphsDir;
-    static QString             s_macroLetter;
-    static QString             s_macroDigit;
     static QVector<QChar>      s_ws;
     static bool                s_tokenMapUseHeuristics;
     static QString             s_graphvizExe;

@@ -47,8 +47,6 @@ class SettingsDialog : public QDialog
     // extra configs
     QLineEdit*    edtSyntaxOutDir;
     QLineEdit*    edtGraphsDir;
-    QLineEdit*    edtMacroLetter;
-    QLineEdit*    edtMacroDigit;
     QCheckBox*    chkTokenMapHeur;
     QLineEdit*    edtWhitespaces;
     QLineEdit*    edtEpsilon;

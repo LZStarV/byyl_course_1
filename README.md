@@ -70,7 +70,6 @@
 - `skip`：跳过开关（`brace_comment/line_comment/block_comment/hash_comment/single_quote_string/double_quote_string/template_string`）
 
 ### 词法与标识符
-- `macro_names.letter/digit`：宏名称（例如 `letter`/`digit`）
 - `token_map.use_heuristics`：是否启用名称与组规则的启发式映射
 - `whitespaces`：空白字符集合（默认：`[" ", "\t", "\n", "\r"]`）
 - `emit_identifier_lexeme`：是否在 `identifier` 后追加词素（默认：`true`）

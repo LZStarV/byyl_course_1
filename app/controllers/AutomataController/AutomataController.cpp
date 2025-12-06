@@ -61,7 +61,7 @@ void AutomataController::bind(QWidget* root)
                     return QString();
                 auto pt  = parsed->tokens[idx - 1];
                 auto nfa = mw_->getEngine()->buildNFA(pt.ast, parsed->alpha);
-                return DotExporter::toDot(nfa);
+                return DotExporter::toDot(nfa, parsed->macros);
             });
     }
     if (btnPrevNfa)
@@ -90,7 +90,7 @@ void AutomataController::bind(QWidget* root)
                 auto pt  = parsed->tokens[idx - 1];
                 auto nfa = mw_->getEngine()->buildNFA(pt.ast, parsed->alpha);
                 auto dfa = mw_->getEngine()->buildDFA(nfa);
-                return DotExporter::toDot(dfa);
+                return DotExporter::toDot(dfa, parsed->macros);
             });
     }
     if (btnPrevDfa)
@@ -120,7 +120,7 @@ void AutomataController::bind(QWidget* root)
                 auto nfa  = mw_->getEngine()->buildNFA(pt.ast, parsed->alpha);
                 auto dfa  = mw_->getEngine()->buildDFA(nfa);
                 auto mdfa = mw_->getEngine()->buildMinDFA(dfa);
-                return DotExporter::toDot(mdfa);
+                return DotExporter::toDot(mdfa, parsed->macros);
             });
     }
     if (btnPrevMin)

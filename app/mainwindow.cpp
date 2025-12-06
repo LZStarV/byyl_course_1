@@ -1698,7 +1698,9 @@ void MainWindow::onSaveLexResultAsClicked(bool)
     auto userPath = QFileDialog::getSaveFileName(this,
                                                  QStringLiteral("另存为词法结果"),
                                                  QStringLiteral("sample.lex"),
-                                                 QStringLiteral("Text (*.txt);;All (*)"));
+                                                 QStringLiteral("Lex (*.lex);;All (*)"));
+    if (!userPath.endsWith(QStringLiteral(".lex"), Qt::CaseInsensitive))
+        userPath += QStringLiteral(".lex");
     if (userPath.isEmpty())
         return;
     QFile fu(userPath);

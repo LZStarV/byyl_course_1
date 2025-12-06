@@ -12,8 +12,6 @@ QVector<Config::WeightTier> Config::s_tiers;
 QString                     Config::s_outDir;
 QString                     Config::s_syntaxDir;
 QString                     Config::s_graphsDir;
-QString                     Config::s_macroLetter;
-QString                     Config::s_macroDigit;
 QVector<QChar>              Config::s_ws;
 bool                        Config::s_tokenMapUseHeuristics = true;
 QString                     Config::s_graphvizExe;
@@ -77,8 +75,6 @@ void Config::load()
     s_outDir      = QString();
     s_syntaxDir   = QString();
     s_graphsDir   = QString();
-    s_macroLetter = QString("letter");
-    s_macroDigit  = QString("digit");
     s_ws.clear();
     s_tokenMapUseHeuristics = true;
     s_graphvizExe           = QString("dot");
@@ -165,16 +161,6 @@ void Config::load()
                     }
                     if (!tiers.isEmpty())
                         s_tiers = tiers;
-                }
-                if (obj.contains("macro_names") && obj.value("macro_names").isObject())
-                {
-                    auto mo = obj.value("macro_names").toObject();
-                    auto ml = mo.value("letter").toString();
-                    auto md = mo.value("digit").toString();
-                    if (!ml.trimmed().isEmpty())
-                        s_macroLetter = ml.trimmed();
-                    if (!md.trimmed().isEmpty())
-                        s_macroDigit = md.trimmed();
                 }
                 if (obj.contains("whitespaces") && obj.value("whitespaces").isArray())
                 {
@@ -429,17 +415,6 @@ QString Config::graphsDir()
     return s_graphsDir.isEmpty() ? (generatedOutputDir() + "/graphs") : s_graphsDir;
 }
 
-QString Config::macroLetterName()
-{
-    load();
-    return s_macroLetter;
-}
-
-QString Config::macroDigitName()
-{
-    load();
-    return s_macroDigit;
-}
 
 QVector<QChar> Config::whitespaces()
 {
@@ -954,13 +929,6 @@ bool Config::saveJson(const QString& path)
         }
         obj.insert("whitespaces", arr);
     }
-    // macro names
-    {
-        QJsonObject mo;
-        mo.insert("letter", s_macroLetter);
-        mo.insert("digit", s_macroDigit);
-        obj.insert("macro_names", mo);
-    }
     // token_map
     {
         QJsonObject to;
@@ -1057,16 +1025,6 @@ void Config::setGraphsDir(const QString& dir)
 {
     load();
     s_graphsDir = dir.trimmed();
-}
-void Config::setMacroLetterName(const QString& name)
-{
-    load();
-    s_macroLetter = name.trimmed();
-}
-void Config::setMacroDigitName(const QString& name)
-{
-    load();
-    s_macroDigit = name.trimmed();
 }
 void Config::setWhitespaces(const QVector<QChar>& ws)
 {

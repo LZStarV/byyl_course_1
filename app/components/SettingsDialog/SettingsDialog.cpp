@@ -100,11 +100,6 @@ void SettingsDialog::buildUi()
     pageLexerId = new QWidget(this);
     {
         auto v = new QVBoxLayout(pageLexerId);
-        v->addWidget(new QLabel("宏名称（letter/digit）"));
-        auto lMacro = new QHBoxLayout; edtMacroLetter = new QLineEdit; edtMacroDigit = new QLineEdit;
-        lMacro->addWidget(new QLabel("letter")); lMacro->addWidget(edtMacroLetter);
-        lMacro->addWidget(new QLabel("digit")); lMacro->addWidget(edtMacroDigit);
-        v->addLayout(lMacro);
         chkTokenMapHeur = new QCheckBox("启用 token_map 启发式"); v->addWidget(chkTokenMapHeur);
         auto lWs = new QHBoxLayout; lWs->addWidget(new QLabel("空白字符（逗号分隔，支持 \\t/\\n/\\r）"));
         edtWhitespaces = new QLineEdit; lWs->addWidget(edtWhitespaces); v->addLayout(lWs);
@@ -260,8 +255,6 @@ void SettingsDialog::loadCurrent()
     edtOutDir->setText(Config::generatedOutputDir());
     edtSyntaxOutDir->setText(Config::syntaxOutputDir());
     edtGraphsDir->setText(Config::graphsDir());
-    edtMacroLetter->setText(Config::macroLetterName());
-    edtMacroDigit->setText(Config::macroDigitName());
     chkTokenMapHeur->setChecked(Config::tokenMapUseHeuristics());
     {
         QString s; auto ws = Config::whitespaces();
@@ -382,8 +375,6 @@ bool SettingsDialog::collectAndApply()
     Config::setGeneratedOutputDir(dir);
     Config::setSyntaxOutputDir(edtSyntaxOutDir->text().trimmed());
     Config::setGraphsDir(edtGraphsDir->text().trimmed());
-    Config::setMacroLetterName(edtMacroLetter->text().trimmed());
-    Config::setMacroDigitName(edtMacroDigit->text().trimmed());
     Config::setTokenMapUseHeuristics(chkTokenMapHeur->isChecked());
     {
         QVector<QChar> ws;

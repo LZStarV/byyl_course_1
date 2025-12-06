@@ -19,6 +19,7 @@ void AutomataTableHelper::fillTable(QTableWidget* tbl, const Tables& t)
         }
     }
     tbl->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    pruneEmptyColumns(tbl);
 }
 
 QVector<QString> AutomataTableHelper::unionSyms(const QVector<Tables>& tables, bool includeEps)
@@ -36,4 +37,25 @@ QVector<QString> AutomataTableHelper::unionSyms(const QVector<Tables>& tables, b
     QVector<QString> v = QVector<QString>(s.begin(), s.end());
     std::sort(v.begin(), v.end());
     return v;
+}
+
+void AutomataTableHelper::pruneEmptyColumns(QTableWidget* tbl)
+{
+    if (!tbl) return;
+    QSet<QString> keep;
+    keep.insert(QStringLiteral("标记"));
+    keep.insert(QStringLiteral("状态 ID"));
+    keep.insert(QStringLiteral("状态集合"));
+    for (int c = tbl->columnCount() - 1; c >= 0; --c)
+    {
+        QString header = tbl->horizontalHeaderItem(c) ? tbl->horizontalHeaderItem(c)->text() : QString();
+        if (keep.contains(header)) continue;
+        bool any = false;
+        for (int r = 0; r < tbl->rowCount(); ++r)
+        {
+            auto it = tbl->item(r, c);
+            if (it && !it->text().trimmed().isEmpty()) { any = true; break; }
+        }
+        if (!any) tbl->removeColumn(c);
+    }
 }
