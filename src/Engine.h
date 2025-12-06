@@ -1,3 +1,15 @@
+/*
+ * 版权信息：Copyright (c) 2023 林展星
+ * 文件名称：Engine.h
+ *           状态表生成、代码生成与运行、以及 LL(1) 语法分析的展示数据生成。
+ *
+ * 当前版本：1.0.0
+ * 作    者：林展星
+ * 完成日期：2023年12月7日
+ *
+ * 版本历史：
+ * 1.0.0 2023-12-07 林展星 初始版本
+ */
 #pragma once
 #include <QString>
 #include <QVector>
@@ -31,39 +43,93 @@ struct Tables
 class Engine
 {
    public:
-    /** \brief 词法阶段：解析文本为规则文件结构 */
+    /**
+     * @param {QString} text - 规则文件文本内容
+     * @return {RegexFile} 解析后的规则文件（含宏与 Token 头）
+     * @note 文本需符合 Token 头与宏规则约定
+     */
     RegexFile lexFile(const QString& text);
-    /** \brief 语法阶段：将规则文件解析为 AST 与 Token 列表 */
+    /**
+     * @param {RegexFile} f - 词法解析得到的规则文件
+     * @return {ParsedFile} 包含 AST、Token、Alphabet 的解析结果
+     */
     ParsedFile parseFile(const RegexFile& f);
-    /** \brief 构建 NFA */
+    /**
+     * @param {ASTNode*} ast - 正则表达式 AST
+     * @param {Alphabet} alpha - 统一字母表
+     * @return {NFA} 构建的非确定有限自动机
+     */
     NFA buildNFA(ASTNode* ast, const Alphabet& alpha);
-    /** \brief 构建 DFA */
+    /**
+     * @param {NFA} nfa - 非确定自动机
+     * @return {DFA} 确定有限自动机
+     */
     DFA buildDFA(const NFA& nfa);
-    /** \brief 最小化 DFA */
+    /**
+     * @param {DFA} dfa - 确定自动机
+     * @return {MinDFA} 最小化自动机
+     */
     MinDFA buildMinDFA(const DFA& dfa);
-    /** \brief 生成 NFA 状态表用于展示 */
+    /**
+     * @param {NFA} nfa - 非确定自动机
+     * @return {Tables} 包含列、标记、状态与行的表格数据
+     */
     Tables nfaTable(const NFA& nfa);
-    /** \brief 生成 DFA 状态表用于展示 */
+    /**
+     * @param {DFA} dfa - 确定自动机
+     * @return {Tables} 表格数据
+     */
     Tables dfaTable(const DFA& dfa);
-    /** \brief 生成 MinDFA 状态表用于展示 */
+    /**
+     * @param {MinDFA} dfa - 最小化自动机
+     * @return {Tables} 表格数据
+     */
     Tables minTable(const MinDFA& dfa);
-    /** \brief 生成状态表（宏列聚合版本） */
+    /**
+     * @param {NFA/DFA/MinDFA} 自动机 - 对应自动机实例
+     * @param {QMap<QString,Rule>} macros - 宏规则映射
+     * @return {Tables} 表格数据
+     */
     Tables nfaTableWithMacros(const NFA& nfa, const QMap<QString, Rule>& macros);
     Tables dfaTableWithMacros(const DFA& dfa, const QMap<QString, Rule>& macros);
     Tables minTableWithMacros(const MinDFA& dfa, const QMap<QString, Rule>& macros);
-    /** \brief 生成单词法扫描器源码 */
+    /**
+     * @param {MinDFA} mdfa - 最小化自动机
+     * @param {QMap<QString,int>} tokenCodes - Token 名称到编码的映射
+     * @return {QString} C++ 源码文本
+     */
     QString generateCode(const MinDFA& mdfa, const QMap<QString, int>& tokenCodes);
-    /** \brief 运行单词法，返回编码结果 */
+    /**
+     * @param {MinDFA} mdfa - 最小化自动机
+     * @param {QString} source - 源文本
+     * @param {int} tokenCode - 目标 Token 编码（接受终止）
+     * @return {QString} 编码结果（含 ERR 标记）
+     */
     QString run(const MinDFA& mdfa, const QString& source, int tokenCode);
-    /** \brief 为多个 Token 构建各自的 MinDFA */
+    /**
+     * @param {ParsedFile} pf - 解析结果
+     * @param {QVector<int>&} codes - 输出：Token 编码顺序
+     * @return {QVector<MinDFA>} 多个最小化自动机
+     */
     QVector<MinDFA> buildAllMinDFA(const ParsedFile& pf, QVector<int>& codes);
-    /** \brief 运行组合词法，返回编码序列 */
+    /**
+     * @param {QVector<MinDFA>} mdfas - 多个最小化自动机
+     * @param {QVector<int>} codes - 对应编码序列
+     * @param {QString} source - 源文本
+     * @param {QSet<int>} identifierCodes - 标识符编码集合（用于词素处理）
+     * @return {QString} 编码序列（以空格分隔）
+     */
     QString                               runMultiple(const QVector<MinDFA>& mdfas,
                                                       const QVector<int>&    codes,
                                                       const QString&         source,
                                                       const QSet<int>&       identifierCodes);
-    Grammar                               parseGrammarText(const QString& text, QString& error);
-    LL1Info                               computeLL1(const Grammar& g);
-    QMap<QString, QVector<QString>>       firstFollowAsRows(const LL1Info& info);
+    /**
+     * @param {QString} text - 文法文本（BNF）
+     * @param {QString&} error - 输出：错误信息
+     * @return {Grammar} 解析结果
+     */
+    Grammar parseGrammarText(const QString& text, QString& error);
+    LL1Info computeLL1(const Grammar& g);
+    QMap<QString, QVector<QString>> firstFollowAsRows(const LL1Info& info);
     QMap<QString, QMap<QString, QString>> parsingTableAsRows(const Grammar& g, const LL1Info& info);
 };

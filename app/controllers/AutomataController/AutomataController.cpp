@@ -1,3 +1,16 @@
+/*
+ * 版权信息：Copyright (c) 2023 林展星
+ * 文件名称：AutomataController.cpp
+ *           提供 DOT 导出与 PNG 预览（Graphviz），以及按 Token 选择联动展示。
+ *
+ * 当前版本：1.0.0
+ * 作    者：林展星
+ * 完成日期：2023年12月07日
+ *
+ * 版本历史：
+ * 1.0.0 2023-12-07 林展星 初始版本
+ * 1.0.1 2025-12-07 林展星 完善文件头说明与版本历史
+ */
 #include "AutomataController.h"
 #include <QWidget>
 #include <QPushButton>

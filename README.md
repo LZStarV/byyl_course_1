@@ -24,7 +24,7 @@
   - First / Follow 计算与表格展示；
   - LR(0) 项集 DFA 构造、预览与导出；
   - LR(1) 项集 DFA 构造与预览，Action/GOTO 表生成；
-  - LR(1) 解析流程可视化（步骤、描述），冲突策略可配置（prefer_shift / prefer_reduce / error）；
+  - LR(1) 解析流程可视化（步骤、描述），冲突策略可配置（prefer_shift / prefer_reduce / error），支持“优先移进终结符列表”（如 `else`、`;`）
   - SLR(1) 检查与冲突明细；
   - 语义动作导入（偶数行文件：产生式行 + 动作行）；
   - 语义语法树 AST 预览/导出（DOT），支持文本树视图（Qt Tree）；
@@ -57,64 +57,13 @@
   - `generated/lex/graphs/`：图导出根目录（可通过配置覆盖；语法图导出位于其 `syntax/` 子目录）
 
 ## 设置
-- 配置文件：`config/lexer.json`（可通过 `config_search_paths` 指定自定义搜索路径）。所有配置均可在应用菜单“设置”中编辑，左侧目录分区如下：
-
-### 目录与输出
-- `generated_output_dir`：词法生成根目录（默认：`generated/lex`）
-- `syntax_output_dir`：语法生成目录（默认：`<generated_output_dir>/syntax`）
-- `graphs_dir`：图导出根目录（默认：`<generated_output_dir>/graphs`，语法图位于其 `syntax/` 子目录）
-- `config_search_paths`：配置文件搜索路径数组（优先于默认相对路径；分号分隔）
-
-### 权重与跳过
-- `weight_tiers`：权重阈值数组（例：`[{"min_code":220,"weight":3},...]`）
-- `skip`：跳过开关（`brace_comment/line_comment/block_comment/hash_comment/single_quote_string/double_quote_string/template_string`）
-
-### 词法与标识符
-- `token_map.use_heuristics`：是否启用名称与组规则的启发式映射
-- `whitespaces`：空白字符集合（默认：`[" ", "\t", "\n", "\r"]`）
-- `emit_identifier_lexeme`：是否在 `identifier` 后追加词素（默认：`true`）
-- `identifier_token_names`：视为标识符的规则名数组（默认：`["identifier"]`，大小写不敏感，按规则名包含判断）
-- Token 头部解析约定：`_NAME123`（`_NAME123S` 表示组），用于提取编码与是否为组；无需额外配置。
- - `token_header`：Token 头部解析配置（默认兼容 `_NAME123` / `_NAME123S`）：
-   - `prefix`：默认 `"_"`
-   - `name_first_ranges`：默认 `"A-Za-z"`
-   - `name_rest_ranges`：默认 `"A-Za-z0-9_"`
-   - `code_digit_ranges`：默认 `"0-9"`
-   - `group_suffix`：默认 `"S"`
-   - `group_suffix_optional`：默认 `true`
-   - 范围表达式支持区间与单字符：如 `A-Z`、`A-D E-G`、`0-9`、以及任意 Unicode 区间（例如 `A-å`），用空格或逗号分隔。
-
-### 语法与算法
-- `epsilon_symbol`（默认：`#`）、`eof_symbol`（默认：`$`）、`aug_suffix`（默认：`'`）
-- `lr1_conflict_policy`：`prefer_shift|prefer_reduce|error`（默认：`prefer_shift`）
-- `nonterminal_pattern`：非终结符正则（可空）
-- `grammar_tokens.multi_ops`：多字符操作符（默认：`["<=", ">=", "<>", ":="]`）
-- `grammar_tokens.single_ops`：单字符操作符（默认：`["(", ")", ";", "<", ">", "=", "+", "-", "*", "/", "%", "^"]`）
-
-### 表头与 DOT
-- `i18n.table_mark/table_state_id/table_state_set/epsilon_column_label`：表头与 ε 列名
-- `dot.rankdir/node_shape/epsilon_label`：DOT 样式（默认：`LR/circle/ε`）
-
-### Graphviz
-- `graphviz.executable`：`dot` 可执行名（默认：`dot`）
-- `graphviz.default_dpi`：默认 DPI（默认：`150`）
-- `graphviz.timeout_ms`：渲染超时毫秒数（默认：`20000`）
-
-### 语义策略
-- `semantic_actions.root_selection_policy`：语义树根选择策略（如 `first_1/last_1`）
-- `semantic_actions.child_order_policy`：子节点顺序策略（如 `rhs_order`）
-
-### 环境变量（可选，优先级低于显式配置）
-- `BYYL_GEN_DIR`：覆盖生成目录根
-- `LEXER_WEIGHTS`：`min:weight` 列表，如 `220:3,200:4,...`
-- `LEXER_SKIP_*`：跳过注释/字符串（`LINE/BLOCK/HASH/SQ/DQ/TPL`）
-- `LEXER_EMIT_IDENTIFIER_LEXEME`：组合扫描器运行时控制在 `identifier` 后追加词素（`1/true/yes` 开启）
+- 所有配置项可在应用菜单“设置”或 `config/lexer.json` 中管理，支持搜索路径、覆盖默认值与环境变量合并。
+- 涵盖目录与输出、权重与跳过、词法与标识符、语法与算法（含 LR(1) 冲突策略与优先移进终结符）、表头与 DOT、Graphviz 与语义策略等。
+- 详细配置项与示例说明见 `docs/Settings.md`。
 
 ## 测试目标
-- `GuiTest`：UI 关键控件与流程
-- `CliRegexTest`：词法命令行管线
-- `CodegenTest`：组合扫描器源码编译运行
-- `GrammarParserTest`、`LL1Test`、`LR0Test`、`LR1Test`、`SLRTest`、`DotExportTest`：语法与导出模块
+- 测试覆盖 UI 流程、词法流水线、自动机核心（NFA/DFA/MinDFA）、语法（LL(1)/LR(0)/LR(1)/SLR）与代码生成等主流程；支持按名称筛选与关闭集成测试的快速运行模式。
+- 详细说明（目录结构、运行方式、覆盖点与常见问题）见 `docs/Tests.md`。
 
 ## 常见问题
 - Qt 查找失败：为 `cmake` 添加 Qt 路径（macOS：`-DCMAKE_PREFIX_PATH=$(brew --prefix qt)`；Windows：指向 Qt 安装的 MSVC 目录）。
