@@ -54,6 +54,25 @@ ParseResult LR1Parser::parse(const QVector<QString>& tokens,
         {
             auto    parts  = act.split('|');
             QString policy = Config::lr1ConflictPolicy().trimmed().toLower();
+            auto    prefer = Config::lr1PreferShiftTokens();
+            QString nextTok = a;
+            if (!prefer.isEmpty())
+            {
+                for (const auto& pt : prefer)
+                {
+                    if (nextTok == pt)
+                    {
+                        QString pick;
+                        for (auto p : parts)
+                            if (p.startsWith("s"))
+                            {
+                                pick = p;
+                                break;
+                            }
+                        if (!pick.isEmpty()) { act = pick; break; }
+                    }
+                }
+            }
             if (policy == "prefer_shift")
             {
                 QString pick;
@@ -236,6 +255,25 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
         {
             auto    parts  = act.split('|');
             QString policy = Config::lr1ConflictPolicy().trimmed().toLower();
+            auto    prefer = Config::lr1PreferShiftTokens();
+            QString nextTok = a;
+            if (!prefer.isEmpty())
+            {
+                for (const auto& pt : prefer)
+                {
+                    if (nextTok == pt)
+                    {
+                        QString pick;
+                        for (auto p : parts)
+                            if (p.startsWith("s"))
+                            {
+                                pick = p;
+                                break;
+                            }
+                        if (!pick.isEmpty()) { act = pick; break; }
+                    }
+                }
+            }
             if (policy == "prefer_shift")
             {
                 QString pick;
@@ -290,7 +328,7 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
             n->symbol        = a;
             res.root         = n;
             nodeStk.push_back(n);
-            // 语义：移进叶子占位（在归约时统一组装）；这里先压入一个叶子节点（tag=a）
+            // 语义：移进叶子占位；默认 tag=a
             semStk.push_back(makeSemNode(a));
             pushStep(res.steps, step++, stack, input, act, QString());
             input.pop_front();
@@ -343,6 +381,192 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
                 const auto& vec = actions.value(L);
                 // 根据实际规约候选（RHS 完整匹配）选择角色位
                 int pick = -1;
+                if (g.productions.contains(L))
+                {
+                    const auto& alts = g.productions.value(L);
+                    for (int i = 0; i < alts.size(); ++i)
+                    {
+                        const auto& alt = alts[i];
+                        if (alt.right.size() == rhs.size())
+                        {
+                            bool eq = true;
+                            for (int j = 0; j < rhs.size(); ++j)
+                            {
+                                if (alt.right[j] != rhs[j])
+                                {
+                                    eq = false;
+                                    break;
+                                }
+                            }
+                            if (eq)
+                            {
+                                pick = i;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (pick >= 0 && pick < vec.size())
+                    roles = vec[pick];
+            }
+            auto sem = buildSemantic(L, semKids, roles, roleMeaning, rootPolicy, childOrder);
+            semStk.push_back(sem);
+            res.astRoot = sem;
+            pushStep(res.steps, step++, stack, input, act, QString("%1 -> %2").arg(L).arg(R));
+            continue;
+        }
+        res.errorPos = res.steps.size();
+        break;
+    }
+    return res;
+}
+
+ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&                     tokens,
+                                          const Grammar&                              g,
+                                          const LR1ActionTable&                       t,
+                                          const QMap<QString, QVector<QVector<int>>>& actions,
+                                          const QMap<int, QString>&                   roleMeaning,
+                                          const QString&                              rootPolicy,
+                                          const QString&                              childOrder,
+                                          const QVector<QString>&                     lexemes)
+{
+    ParseResult      res;
+    QVector<QString> input = tokens;
+    input.push_back("$");
+    QVector<QPair<int, QString>> stack;
+    QVector<ParseTreeNode*>      nodeStk;
+    QVector<SemanticASTNode*>    semStk;
+    stack.push_back({0, QString()});
+    int           step = 0;
+    int           ip   = 0;  // 输入位置索引
+    QSet<QString> idNames;
+    for (auto s : Config::identifierTokenNames()) idNames.insert(s.trimmed().toLower());
+    while (!input.isEmpty())
+    {
+        QString a   = input[0];
+        int     st  = stack.isEmpty() ? -1 : stack.back().first;
+        QString act = actionFor(t, st, a);
+        if (act.contains('|'))
+        {
+            auto    parts  = act.split('|');
+            QString policy = Config::lr1ConflictPolicy().trimmed().toLower();
+            if (policy == "prefer_shift")
+            {
+                QString pick;
+                for (auto p : parts)
+                    if (p.startsWith("s"))
+                    {
+                        pick = p;
+                        break;
+                    }
+                if (pick.isEmpty())
+                    pick = parts[0];
+                act = pick;
+            }
+            else if (policy == "prefer_reduce")
+            {
+                QString pick;
+                for (auto p : parts)
+                    if (p.startsWith("r"))
+                    {
+                        pick = p;
+                        break;
+                    }
+                if (pick.isEmpty())
+                    pick = parts[0];
+                act = pick;
+            }
+            else
+            {
+                res.errorPos = res.steps.size();
+                break;
+            }
+        }
+        if (act.isEmpty())
+        {
+            res.errorPos = res.steps.size();
+            break;
+        }
+        if (act == "acc")
+        {
+            pushStep(res.steps, step++, stack, input, act, QString());
+            if (!nodeStk.isEmpty())
+                res.root = nodeStk.back();
+            if (!semStk.isEmpty())
+                res.astRoot = semStk.back();
+            break;
+        }
+        if (act.startsWith("s"))
+        {
+            int to = act.mid(1).toInt();
+            stack.push_back({to, a});
+            ParseTreeNode* n = new ParseTreeNode;
+            n->symbol        = a;
+            res.root         = n;
+            nodeStk.push_back(n);
+            // 语义：identifier 等使用词素作为叶子标签
+            QString tag  = a;
+            QString mlow = a.trimmed().toLower();
+            if (idNames.contains(mlow))
+            {
+                if (ip < lexemes.size())
+                {
+                    QString lx = lexemes[ip].trimmed();
+                    if (!lx.isEmpty())
+                        tag = lx;
+                }
+            }
+            semStk.push_back(makeSemNode(tag));
+            pushStep(res.steps, step++, stack, input, act, QString());
+            input.pop_front();
+            ip++;
+            continue;
+        }
+        if (act.startsWith("r"))
+        {
+            QString                   prod  = act.mid(1).trimmed();
+            int                       arrow = prod.indexOf("->");
+            QString                   L     = prod.left(arrow).trimmed();
+            QString                   R     = prod.mid(arrow + 2).trimmed();
+            QVector<QString>          rhs   = tokenize(R);
+            int                       k     = rhs[0] == "#" ? 0 : rhs.size();
+            QVector<ParseTreeNode*>   kids;
+            QVector<SemanticASTNode*> semKids;
+            for (int i = 0; i < k; ++i)
+            {
+                if (!stack.isEmpty())
+                    stack.pop_back();
+                if (!nodeStk.isEmpty())
+                {
+                    kids.push_back(nodeStk.back());
+                    nodeStk.pop_back();
+                }
+                if (!semStk.isEmpty())
+                {
+                    semKids.push_back(semStk.back());
+                    semStk.pop_back();
+                }
+            }
+            std::reverse(kids.begin(), kids.end());
+            std::reverse(semKids.begin(), semKids.end());
+            int stTop = stack.isEmpty() ? -1 : stack.back().first;
+            int to    = gotoFor(t, stTop, L);
+            if (to < 0)
+            {
+                res.errorPos = res.steps.size();
+                break;
+            }
+            stack.push_back({to, L});
+            ParseTreeNode* p = new ParseTreeNode;
+            p->symbol        = L;
+            p->children      = kids;
+            nodeStk.push_back(p);
+            res.root = p;
+            QVector<int> roles;
+            if (actions.contains(L))
+            {
+                const auto& vec  = actions.value(L);
+                int         pick = -1;
                 if (g.productions.contains(L))
                 {
                     const auto& alts = g.productions.value(L);

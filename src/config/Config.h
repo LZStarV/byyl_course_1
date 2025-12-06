@@ -43,7 +43,9 @@ class Config
     static QString          epsilonSymbol();
     static QString          eofSymbol();
     static QString          augSuffix();
-    static QString          lr1ConflictPolicy();
+    static QString lr1ConflictPolicy();
+    static QVector<QString> lr1PreferShiftTokens();
+    static void setLr1PreferShiftTokens(const QVector<QString>& toks);
     static QString          nonterminalPattern();
     static QVector<QString> grammarMultiOps();
     static QVector<QString> grammarSingleOps();
@@ -162,6 +164,7 @@ class Config
     static QString             s_tokDigitRanges;
     static QString             s_tokGroupSuffix;
     static bool                s_tokGroupSuffixOptional;
+    static QVector<QString>    s_lr1PreferShift;
     // semantics
     static QMap<int, QString>  s_semRoleMeaning;
     static QString             s_semRootPolicy;

@@ -61,6 +61,7 @@ bool                        Config::s_skipTemplate    = false;
 QMap<int, QString>          Config::s_semRoleMeaning;
 QString                     Config::s_semRootPolicy;
 QString                     Config::s_semChildOrder;
+QVector<QString>            Config::s_lr1PreferShift;
 
 static QVector<Config::WeightTier> defaultTiers()
 {
@@ -89,7 +90,8 @@ void Config::load()
     s_epsilon               = QString("#");
     s_eof                   = QString("$");
     s_augSuffix             = QString("'");
-    s_lr1Policy             = QString("prefer_shift");
+    s_lr1Policy             = QString("prefer_reduce");
+    // prefer-shift tokens storage defined in Config.h
     s_nontermPat.clear();
     s_multiOps.clear();
     s_singleOps.clear();
@@ -217,7 +219,16 @@ void Config::load()
                 if (obj.contains("aug_suffix"))
                     s_augSuffix = obj.value("aug_suffix").toString("'");
                 if (obj.contains("lr1_conflict_policy"))
-                    s_lr1Policy = obj.value("lr1_conflict_policy").toString("prefer_shift");
+                    s_lr1Policy = obj.value("lr1_conflict_policy").toString("prefer_reduce");
+                if (obj.contains("lr1_prefer_shift_tokens") && obj.value("lr1_prefer_shift_tokens").isArray())
+                {
+                    s_lr1PreferShift.clear();
+                    for (auto v : obj.value("lr1_prefer_shift_tokens").toArray())
+                    {
+                        auto s = v.toString().trimmed();
+                        if (!s.isEmpty()) s_lr1PreferShift.push_back(s);
+                    }
+                }
                 if (obj.contains("emit_identifier_lexeme"))
                     s_emitIdentifierLexeme = obj.value("emit_identifier_lexeme").toBool(true);
                 if (obj.contains("identifier_token_names") &&
@@ -499,6 +510,23 @@ QString Config::lr1ConflictPolicy()
 {
     load();
     return s_lr1Policy;
+}
+
+QVector<QString> Config::lr1PreferShiftTokens()
+{
+    load();
+    return s_lr1PreferShift;
+}
+
+void Config::setLr1PreferShiftTokens(const QVector<QString>& toks)
+{
+    load();
+    s_lr1PreferShift.clear();
+    for (auto x : toks)
+    {
+        auto s = x.trimmed();
+        if (!s.isEmpty()) s_lr1PreferShift.push_back(s);
+    }
 }
 
 QString Config::nonterminalPattern()
@@ -986,6 +1014,11 @@ bool Config::saveJson(const QString& path)
     obj.insert("eof_symbol", s_eof);
     obj.insert("aug_suffix", s_augSuffix);
     obj.insert("lr1_conflict_policy", s_lr1Policy);
+    {
+        QJsonArray arr;
+        for (const auto& s : s_lr1PreferShift) arr.append(s);
+        obj.insert("lr1_prefer_shift_tokens", arr);
+    }
     if (!s_nontermPat.trimmed().isEmpty())
         obj.insert("nonterminal_pattern", s_nontermPat);
     {

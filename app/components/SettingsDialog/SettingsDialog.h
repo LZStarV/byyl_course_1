@@ -58,8 +58,9 @@ class SettingsDialog : public QDialog
     QCheckBox* chkTokGroupSuffixOptional;
     QLineEdit* edtEpsilon;
     QLineEdit* edtEof;
-    QLineEdit* edtAug;
-    QLineEdit* edtLr1Policy;
+    QLineEdit*     edtAug;
+    QLineEdit*     edtLr1Policy;
+    QLineEdit*     edtLr1PreferShift;
     QLineEdit* edtNontermPat;
     QLineEdit* edtMultiOps;
     QLineEdit* edtSingleOps;

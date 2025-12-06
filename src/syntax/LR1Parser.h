@@ -42,4 +42,12 @@ class LR1Parser
                                           const QMap<int, QString>&                   roleMeaning,
                                           const QString&                              rootPolicy,
                                           const QString&                              childOrder);
+    static ParseResult parseWithSemantics(const QVector<QString>&                     tokens,
+                                          const Grammar&                              g,
+                                          const LR1ActionTable&                       t,
+                                          const QMap<QString, QVector<QVector<int>>>& actions,
+                                          const QMap<int, QString>&                   roleMeaning,
+                                          const QString&                              rootPolicy,
+                                          const QString&                              childOrder,
+                                          const QVector<QString>&                     lexemes);
 };

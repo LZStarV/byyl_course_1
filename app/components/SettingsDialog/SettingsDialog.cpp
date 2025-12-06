@@ -185,6 +185,9 @@ void SettingsDialog::buildUi()
         lLr->addWidget(new QLabel("LR(1) 冲突策略"));
         edtLr1Policy = new QLineEdit;
         lLr->addWidget(edtLr1Policy);
+        lLr->addWidget(new QLabel("优先移进的终结符（逗号分隔）"));
+        edtLr1PreferShift = new QLineEdit;
+        lLr->addWidget(edtLr1PreferShift);
         v->addLayout(lLr);
         v->addStretch(1);
     }
@@ -381,6 +384,16 @@ void SettingsDialog::loadCurrent()
     if (edtLr1Policy)
         edtLr1Policy->setText(Config::lr1ConflictPolicy());
     {
+        QString s;
+        auto    ps = Config::lr1PreferShiftTokens();
+        for (int i = 0; i < ps.size(); ++i)
+        {
+            s += ps[i];
+            if (i + 1 < ps.size()) s += ",";
+        }
+        edtLr1PreferShift->setText(s);
+    }
+    {
         QString s1, s2;
         auto    mo = Config::grammarMultiOps();
         auto    so = Config::grammarSingleOps();
@@ -533,6 +546,11 @@ bool SettingsDialog::collectAndApply()
     Config::setNonterminalPattern(edtNontermPat->text().trimmed());
     if (edtLr1Policy)
         Config::setLr1ConflictPolicy(edtLr1Policy->text().trimmed());
+    {
+        QVector<QString> toks;
+        for (auto x : edtLr1PreferShift->text().split(',', Qt::SkipEmptyParts)) toks.push_back(x.trimmed());
+        Config::setLr1PreferShiftTokens(toks);
+    }
     {
         QVector<QString> mo, so;
         for (auto x : edtMultiOps->text().split(',', Qt::SkipEmptyParts)) mo.push_back(x.trimmed());

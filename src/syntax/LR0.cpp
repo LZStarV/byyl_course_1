@@ -152,19 +152,28 @@ QString LR0Builder::toDot(const LR0Graph& gr)
     s += "digraph G {\nrankdir=LR\n";
     for (int i = 0; i < gr.states.size(); ++i)
     {
-        QString label;
+        // 聚合核心项：相同 left+右部+点位 合并计数
+        QMap<QString, int> core;
         for (const auto& it : gr.states[i])
         {
-            label += escape(it.left) + " -> ";
+            QString rhs;
             for (int j = 0; j < it.right.size(); ++j)
             {
                 if (j == it.dot)
-                    label += " .";
-                label += " " + escape(it.right[j]);
+                    rhs += " •";
+                rhs += " " + escape(it.right[j]);
             }
             if (it.dot >= it.right.size())
-                label += " .";
-            label += "\\n";
+                rhs += " •";
+            QString coreKey = escape(it.left) + " ->" + rhs;
+            core[coreKey]   = core.value(coreKey, 0) + 1;
+        }
+        QString label;
+        for (auto it = core.begin(); it != core.end(); ++it)
+        {
+            // 引号已在 escape 中处理，这里整体再做转义
+            QString line = it.key();
+            label += line.replace("\"", "\\\"") + QString(" /%1\\n").arg(it.value());
         }
         s += QString("  n%1 [shape=box,label=\"%2\"]\n").arg(i).arg(label);
     }

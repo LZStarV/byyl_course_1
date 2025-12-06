@@ -9,6 +9,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QTreeWidget>
+#include "../../../src/syntax/TokenMapBuilder.h"
 
 LR1Controller::LR1Controller(MainWindow* mw, Engine* engine, NotificationService* notify) :
     mw_(mw), engine_(engine), notify_(notify)
@@ -224,49 +225,32 @@ void LR1Controller::runLR1Process()
     }
     auto                   tokensCodes = splitTokens(tokensStr);
     QVector<QString>       tokens;
+    QVector<QString>       lexemes;
     QMap<QString, QString> tokMap;
-    // 优先：转换阶段生成的映射
-    QString genMap = Config::generatedOutputDir() + "/syntax/token_map.json";
-    if (QFile::exists(genMap))
+    // 始终使用当前正则重建映射
+    QString regexText;
+    if (auto srcEdt = page_->findChild<QPlainTextEdit*>("txtSourceViewLR1"))
+        regexText = srcEdt->toPlainText();
+    if (regexText.trimmed().isEmpty())
     {
-        QFile f(genMap);
-        if (f.open(QIODevice::ReadOnly | QIODevice::Text))
+        QString dir     = Config::syntaxOutputDir();
+        QString srcPath = dir + "/last_regex.txt";
+        QFile   fr(srcPath);
+        if (fr.open(QIODevice::ReadOnly | QIODevice::Text))
         {
-            auto doc = QJsonDocument::fromJson(f.readAll());
-            f.close();
-            if (doc.isObject())
-            {
-                auto obj = doc.object();
-                for (auto k : obj.keys()) tokMap[k] = obj.value(k).toString();
-            }
+            QTextStream in(&fr);
+            regexText = in.readAll();
+            fr.close();
         }
     }
-    else
+    if (regexText.trimmed().isEmpty())
     {
-        // 次级：项目配置映射
-        QString appDir = QCoreApplication::applicationDirPath();
-        QString cfg1   = appDir + "/../../config/syntax_token_map.json";
-        QString cfg2   = appDir + "/config/syntax_token_map.json";
-        QString use;
-        if (QFile::exists(cfg1))
-            use = cfg1;
-        else if (QFile::exists(cfg2))
-            use = cfg2;
-        if (!use.isEmpty())
-        {
-            QFile f(use);
-            if (f.open(QIODevice::ReadOnly | QIODevice::Text))
-            {
-                auto doc = QJsonDocument::fromJson(f.readAll());
-                f.close();
-                if (doc.isObject())
-                {
-                    auto obj = doc.object();
-                    for (auto k : obj.keys()) tokMap[k] = obj.value(k).toString();
-                }
-            }
-        }
+        notify_->error("无法获取正则表达式文本用于映射");
+        return;
     }
+    auto rf = engine_->lexFile(regexText);
+    auto pf = engine_->parseFile(rf);
+    tokMap  = TokenMapBuilder::build(regexText, pf);
     int           unknown = 0;
     QSet<QString> idNames;
     for (auto s : Config::identifierTokenNames()) idNames.insert(s.trimmed().toLower());
@@ -280,12 +264,19 @@ void LR1Controller::runLR1Process()
         if (idNames.contains(mlow))
         {
             tokens.push_back(mapped);
+            QString lx;
             if (i + 1 < tokensCodes.size())
+            {
+                lx = tokensCodes[i + 1];
                 i++;
+            }
+            lexemes.push_back(lx);
             continue;
         }
         tokens.push_back(mapped);
+        lexemes.push_back(QString());
     }
+    // 解析前校验
     if (unknown > 0)
         notify_->warning(QString("存在未映射的Token编码数量: %1").arg(unknown));
     // 语义动作策略（外部配置）
@@ -293,7 +284,7 @@ void LR1Controller::runLR1Process()
     auto rootPolicy  = Config::semanticRootSelectionPolicy();
     auto childOrder  = Config::semanticChildOrderPolicy();
     auto r           = LR1Parser::parseWithSemantics(
-        tokens, g, tbl, semanticActions_, roleMeaning, rootPolicy, childOrder);
+        tokens, g, tbl, semanticActions_, roleMeaning, rootPolicy, childOrder, lexemes);
     if (auto tblw = page_->findChild<QTableWidget*>("tblLR1Process"))
     {
         QVector<QString> cols;
@@ -307,7 +298,32 @@ void LR1Controller::runLR1Process()
             const auto& ps   = r.steps.back();
             QString     next = ps.rest.isEmpty() ? QStringLiteral("$") : ps.rest[0];
             int         st   = ps.stack.isEmpty() ? -1 : ps.stack.back().first;
-            detail = QString("(state=%1, next=%2, action=%3)").arg(st).arg(next).arg(ps.action);
+            QStringList availActs = tbl.action.value(st).keys();
+            QStringList availGoto = tbl.gotoTable.value(st).keys();
+            detail = QString("(state=%1, next=%2, action=%3, avail_action=%4, avail_goto=%5)")
+                         .arg(st)
+                         .arg(next)
+                         .arg(ps.action)
+                         .arg(availActs.join(','))
+                         .arg(availGoto.join(','));
+        }
+        // 写入错误日志文件
+        QString dir = Config::syntaxOutputDir();
+        if (dir.trimmed().isEmpty()) dir = Config::generatedOutputDir() + "/syntax";
+        QDir d(dir);
+        if (!d.exists()) d.mkpath(".");
+        QFile lf(dir + "/lr1_last_error.log");
+        if (lf.open(QIODevice::WriteOnly | QIODevice::Text))
+        {
+            QTextStream out(&lf);
+            out << "Token map (from current regex):\n";
+            // 简要打印当前映射键集合
+            out << "tokens(mapped): ";
+            for (const auto& t : tokens) out << t << ' ';
+            out << "\nlexemes: ";
+            for (const auto& lx : lexemes) out << lx << ' ';
+            out << "\nerror: " << detail << "\n";
+            lf.close();
         }
         notify_->error("语法分析失败 " + detail);
         return;
