@@ -169,11 +169,11 @@ void AutomataController::onTokenChanged(int idx)
     auto nfa  = eng->buildNFA(pt.ast, parsed->alpha);
     auto dfa  = eng->buildDFA(nfa);
     auto mdfa = eng->buildMinDFA(dfa);
-    auto tn   = eng->nfaTable(nfa);
+    auto tn   = eng->nfaTableWithMacros(nfa, parsed->macros);
     fillTable(tblNfa_, tn);
-    auto td = eng->dfaTable(dfa);
+    auto td = eng->dfaTableWithMacros(dfa, parsed->macros);
     fillTable(tblDfa_, td);
-    auto tm = eng->minTable(mdfa);
+    auto tm = eng->minTableWithMacros(mdfa, parsed->macros);
     fillTable(tblMin_, tm);
 }
 
@@ -194,9 +194,9 @@ void AutomataController::onTokenChangedDFA(int idx)
     auto nfa  = eng->buildNFA(pt.ast, parsed->alpha);
     auto dfa  = eng->buildDFA(nfa);
     auto mdfa = eng->buildMinDFA(dfa);
-    auto td   = eng->dfaTable(dfa);
+    auto td   = eng->dfaTableWithMacros(dfa, parsed->macros);
     fillTable(tblDfa_, td);
-    auto tm = eng->minTable(mdfa);
+    auto tm = eng->minTableWithMacros(mdfa, parsed->macros);
     fillTable(tblMin_, tm);
 }
 
@@ -217,7 +217,7 @@ void AutomataController::onTokenChangedMin(int idx)
     auto nfa  = eng->buildNFA(pt.ast, parsed->alpha);
     auto dfa  = eng->buildDFA(nfa);
     auto mdfa = eng->buildMinDFA(dfa);
-    auto tm   = eng->minTable(mdfa);
+    auto tm   = eng->minTableWithMacros(mdfa, parsed->macros);
     fillTable(tblMin_, tm);
 }
 
@@ -272,6 +272,11 @@ void AutomataController::fillAllNFA()
             t.rows.push_back(newRow);
         }
     }
+    {
+        auto msets = AutomataTableHelper::buildMacroSets(parsed->macros);
+        auto mexps = AutomataTableHelper::buildMacroExprs(parsed->macros);
+        AutomataTableHelper::aggregateByMacros(t, msets, mexps);
+    }
     fillTable(tblNfa_, t);
 }
 
@@ -324,6 +329,11 @@ void AutomataController::fillAllDFA()
             }
             t.rows.push_back(newRow);
         }
+    }
+    {
+        auto msets = AutomataTableHelper::buildMacroSets(parsed->macros);
+        auto mexps = AutomataTableHelper::buildMacroExprs(parsed->macros);
+        AutomataTableHelper::aggregateByMacros(t, msets, mexps);
     }
     fillTable(tblDfa_, t);
 }
@@ -379,6 +389,11 @@ void AutomataController::fillAllMin()
             t.rows.push_back(newRow);
         }
     }
+    {
+        auto msets = AutomataTableHelper::buildMacroSets(parsed->macros);
+        auto mexps = AutomataTableHelper::buildMacroExprs(parsed->macros);
+        AutomataTableHelper::aggregateByMacros(t, msets, mexps);
+    }
     fillTable(tblMin_, t);
 }
 
@@ -405,7 +420,7 @@ void AutomataController::exportNfaDot()
     QString outPath = dot_->pickDotSavePath(suggest);
     if (outPath.isEmpty())
         return;
-    if (!DotExporter::exportToDot(nfa, outPath))
+    if (!DotExporter::exportToDot(nfa, parsed->macros, outPath))
     {
         mw_->statusBar()->showMessage("DOT文件写入失败");
         return;
@@ -439,7 +454,7 @@ void AutomataController::exportNfaImage()
     QString outPath = dot_->pickImageSavePath(suggest, "png");
     if (outPath.isEmpty())
         return;
-    if (!dot_->renderToFile(DotExporter::toDot(nfa), outPath, "png", dpi))
+    if (!dot_->renderToFile(DotExporter::toDot(nfa, parsed->macros), outPath, "png", dpi))
     {
         mw_->statusBar()->showMessage("图片导出失败");
         return;
@@ -469,7 +484,7 @@ void AutomataController::previewNfa()
     int  dpi =
         (dpiEdit && !dpiEdit->text().trimmed().isEmpty()) ? dpiEdit->text().trimmed().toInt() : 150;
     QString pngPath;
-    if (!dot_->renderToTempPng(DotExporter::toDot(nfa), pngPath, dpi))
+    if (!dot_->renderToTempPng(DotExporter::toDot(nfa, parsed->macros), pngPath, dpi))
     {
         mw_->statusBar()->showMessage("Graphviz渲染失败，请确认已安装dot");
         return;
@@ -502,7 +517,7 @@ void AutomataController::exportDfaDot()
     QString outPath = dot_->pickDotSavePath(suggest);
     if (outPath.isEmpty())
         return;
-    if (!DotExporter::exportToDot(dfa, outPath))
+    if (!DotExporter::exportToDot(dfa, parsed->macros, outPath))
     {
         mw_->statusBar()->showMessage("DOT文件写入失败");
         return;
@@ -537,7 +552,7 @@ void AutomataController::exportDfaImage()
     QString outPath = dot_->pickImageSavePath(suggest, "png");
     if (outPath.isEmpty())
         return;
-    if (!dot_->renderToFile(DotExporter::toDot(dfa), outPath, "png", dpi))
+    if (!dot_->renderToFile(DotExporter::toDot(dfa, parsed->macros), outPath, "png", dpi))
     {
         mw_->statusBar()->showMessage("图片导出失败");
         return;
@@ -568,7 +583,7 @@ void AutomataController::previewDfa()
     int  dpi =
         (dpiEdit && !dpiEdit->text().trimmed().isEmpty()) ? dpiEdit->text().trimmed().toInt() : 150;
     QString pngPath;
-    if (!dot_->renderToTempPng(DotExporter::toDot(dfa), pngPath, dpi))
+    if (!dot_->renderToTempPng(DotExporter::toDot(dfa, parsed->macros), pngPath, dpi))
     {
         mw_->statusBar()->showMessage("Graphviz渲染失败，请确认已安装dot");
         return;
@@ -602,7 +617,7 @@ void AutomataController::exportMinDot()
     QString outPath = dot_->pickDotSavePath(suggest);
     if (outPath.isEmpty())
         return;
-    if (!DotExporter::exportToDot(mdfa, outPath))
+    if (!DotExporter::exportToDot(mdfa, parsed->macros, outPath))
     {
         mw_->statusBar()->showMessage("DOT文件写入失败");
         return;
@@ -638,7 +653,7 @@ void AutomataController::exportMinImage()
     QString outPath = dot_->pickImageSavePath(suggest, "png");
     if (outPath.isEmpty())
         return;
-    if (!dot_->renderToFile(DotExporter::toDot(mdfa), outPath, "png", dpi))
+    if (!dot_->renderToFile(DotExporter::toDot(mdfa, parsed->macros), outPath, "png", dpi))
     {
         mw_->statusBar()->showMessage("图片导出失败");
         return;
@@ -670,7 +685,7 @@ void AutomataController::previewMin()
     int  dpi =
         (dpiEdit && !dpiEdit->text().trimmed().isEmpty()) ? dpiEdit->text().trimmed().toInt() : 150;
     QString pngPath;
-    if (!dot_->renderToTempPng(DotExporter::toDot(mdfa), pngPath, dpi))
+    if (!dot_->renderToTempPng(DotExporter::toDot(mdfa, parsed->macros), pngPath, dpi))
     {
         mw_->statusBar()->showMessage("Graphviz渲染失败，请确认已安装dot");
         return;

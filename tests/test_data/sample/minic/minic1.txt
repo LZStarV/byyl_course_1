@@ -1,5 +1,5 @@
 // This is a simple minic program to calculate factorial
-// minic1.minic @
+// minic1.minic
 
 int main() {
     int x = 5;

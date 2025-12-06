@@ -33,6 +33,7 @@
 #include <QMenu>
 #include <QAction>
 #include "components/ToastManager/ToastManager.h"
+#include "experiments/exp1/helpers/AutomataTableHelper.h"
 #include "pages/home/HomePage.h"
 #include "pages/exp1/Exp1Page.h"
 #include "pages/exp2/Exp2Page.h"
@@ -310,6 +311,8 @@ void MainWindow::setupUiCustom()
         testController = new TestValidationController(this);
         testController->bind(w6);
     }
+    // 监听页签切换，确保切换到自动机页签时刷新为“全部”的聚合表
+    connect(tabs, &QTabWidget::currentChanged, this, &MainWindow::onTabChanged);
 }
 
 void MainWindow::fillTable(QTableWidget* tbl, const Tables& t)
@@ -901,11 +904,11 @@ void MainWindow::onTokenChanged(int idx)
     if (lastMinPtr)
         delete lastMinPtr;
     lastMinPtr = new MinDFA(mdfa);
-    auto tn    = engine->nfaTable(nfa);
+    auto tn    = engine->nfaTableWithMacros(nfa, parsedPtr->macros);
     fillTable(tblNFA, tn);
-    auto td = engine->dfaTable(dfa);
+    auto td = engine->dfaTableWithMacros(dfa, parsedPtr->macros);
     fillTable(tblDFA, td);
-    auto tm = engine->minTable(mdfa);
+    auto tm = engine->minTableWithMacros(mdfa, parsedPtr->macros);
     fillTable(tblMinDFA, tm);
 }
 
@@ -924,9 +927,9 @@ void MainWindow::onTokenChangedDFA(int idx)
     auto nfa  = engine->buildNFA(pt.ast, parsedPtr->alpha);
     auto dfa  = engine->buildDFA(nfa);
     auto mdfa = engine->buildMinDFA(dfa);
-    auto td   = engine->dfaTable(dfa);
+    auto td   = engine->dfaTableWithMacros(dfa, parsedPtr->macros);
     fillTable(tblDFA, td);
-    auto tm = engine->minTable(mdfa);
+    auto tm = engine->minTableWithMacros(mdfa, parsedPtr->macros);
     fillTable(tblMinDFA, tm);
 }
 
@@ -945,7 +948,7 @@ void MainWindow::onTokenChangedMin(int idx)
     auto nfa  = engine->buildNFA(pt.ast, parsedPtr->alpha);
     auto dfa  = engine->buildDFA(nfa);
     auto mdfa = engine->buildMinDFA(dfa);
-    auto tm   = engine->minTable(mdfa);
+    auto tm   = engine->minTableWithMacros(mdfa, parsedPtr->macros);
     fillTable(tblMinDFA, tm);
 }
 
@@ -972,7 +975,7 @@ void MainWindow::fillAllNFA()
     for (const auto& tok : parsedPtr->tokens)
     {
         auto nfa = engine->buildNFA(tok.ast, parsedPtr->alpha);
-        parts.push_back(engine->nfaTable(nfa));
+        parts.push_back(engine->nfaTableWithMacros(nfa, parsedPtr->macros));
     }
     auto   syms = unionSyms(parts, true);
     Tables t;
@@ -1013,6 +1016,11 @@ void MainWindow::fillAllNFA()
             t.rows.push_back(newRow);
         }
     }
+    {
+        auto msets = AutomataTableHelper::buildMacroSets(parsedPtr->macros);
+        auto mexps = AutomataTableHelper::buildMacroExprs(parsedPtr->macros);
+        AutomataTableHelper::aggregateByMacros(t, msets, mexps);
+    }
     fillTable(tblNFA, t);
 }
 
@@ -1023,7 +1031,7 @@ void MainWindow::fillAllDFA()
     {
         auto nfa = engine->buildNFA(tok.ast, parsedPtr->alpha);
         auto dfa = engine->buildDFA(nfa);
-        parts.push_back(engine->dfaTable(dfa));
+        parts.push_back(engine->dfaTableWithMacros(dfa, parsedPtr->macros));
     }
     auto   syms = unionSyms(parts, false);
     Tables t;
@@ -1062,6 +1070,11 @@ void MainWindow::fillAllDFA()
             t.rows.push_back(newRow);
         }
     }
+    {
+        auto msets = AutomataTableHelper::buildMacroSets(parsedPtr->macros);
+        auto mexps = AutomataTableHelper::buildMacroExprs(parsedPtr->macros);
+        AutomataTableHelper::aggregateByMacros(t, msets, mexps);
+    }
     fillTable(tblDFA, t);
 }
 
@@ -1073,7 +1086,7 @@ void MainWindow::fillAllMin()
         auto nfa  = engine->buildNFA(tok.ast, parsedPtr->alpha);
         auto dfa  = engine->buildDFA(nfa);
         auto mdfa = engine->buildMinDFA(dfa);
-        parts.push_back(engine->minTable(mdfa));
+        parts.push_back(engine->minTableWithMacros(mdfa, parsedPtr->macros));
     }
     auto   syms = unionSyms(parts, false);
     Tables t;
@@ -1111,6 +1124,11 @@ void MainWindow::fillAllMin()
             }
             t.rows.push_back(newRow);
         }
+    }
+    {
+        auto msets = AutomataTableHelper::buildMacroSets(parsedPtr->macros);
+        auto mexps = AutomataTableHelper::buildMacroExprs(parsedPtr->macros);
+        AutomataTableHelper::aggregateByMacros(t, msets, mexps);
     }
     fillTable(tblMinDFA, t);
 }
@@ -1314,6 +1332,25 @@ void MainWindow::onTabChanged(int idx)
             syntaxCodeView->setPlainText(in.readAll());
             f.close();
         }
+    }
+    // 当切换到 Automata 相关页签时，重置下拉框到“全部”并刷新聚合表
+    auto cmbN = w->findChild<QComboBox*>("cmbTokens");
+    auto cmbD = w->findChild<QComboBox*>("cmbTokensDFA");
+    auto cmbM = w->findChild<QComboBox*>("cmbTokensMin");
+    if (cmbN && tblNFA)
+    {
+        cmbN->setCurrentIndex(0);
+        fillAllNFA();
+    }
+    if (cmbD && tblDFA)
+    {
+        cmbD->setCurrentIndex(0);
+        fillAllDFA();
+    }
+    if (cmbM && tblMinDFA)
+    {
+        cmbM->setCurrentIndex(0);
+        fillAllMin();
     }
 }
 
@@ -1740,3 +1777,4 @@ void MainWindow::onPreviewSyntaxTreeClicked(bool)
     if (syntaxController)
         syntaxController->previewTree();
 }
+    

@@ -40,7 +40,7 @@ void SettingsDialog::buildUi()
     // Paths page
     pagePaths = new QWidget(this);
     {
-        auto v = new QVBoxLayout(pagePaths);
+        auto v    = new QVBoxLayout(pagePaths);
         auto lOut = new QHBoxLayout;
         lOut->addWidget(new QLabel("生成输出目录"));
         edtOutDir       = new QLineEdit;
@@ -49,10 +49,16 @@ void SettingsDialog::buildUi()
         lOut->addWidget(btnBrowseOutDir);
         v->addLayout(lOut);
         v->addWidget(new QLabel("语法输出目录"));
-        edtSyntaxOutDir = new QLineEdit; v->addWidget(edtSyntaxOutDir);
+        edtSyntaxOutDir = new QLineEdit;
+        v->addWidget(edtSyntaxOutDir);
         v->addWidget(new QLabel("图导出目录"));
-        edtGraphsDir = new QLineEdit; v->addWidget(edtGraphsDir);
-        auto lCfg = new QHBoxLayout; lCfg->addWidget(new QLabel("配置搜索路径（分号分隔）")); edtCfgSearchPaths = new QLineEdit; lCfg->addWidget(edtCfgSearchPaths); v->addLayout(lCfg);
+        edtGraphsDir = new QLineEdit;
+        v->addWidget(edtGraphsDir);
+        auto lCfg = new QHBoxLayout;
+        lCfg->addWidget(new QLabel("配置搜索路径（分号分隔）"));
+        edtCfgSearchPaths = new QLineEdit;
+        lCfg->addWidget(edtCfgSearchPaths);
+        v->addLayout(lCfg);
         v->addStretch(1);
     }
     stacked->addWidget(pagePaths);
@@ -63,8 +69,10 @@ void SettingsDialog::buildUi()
     {
         auto v = new QVBoxLayout(pageWeightsSkip);
         v->addWidget(new QLabel("权重层级（min_code / weight）"));
-        tblTiers = new QTableWidget; tblTiers->setColumnCount(2);
-        QStringList headers; headers << "min_code" << "weight";
+        tblTiers = new QTableWidget;
+        tblTiers->setColumnCount(2);
+        QStringList headers;
+        headers << "min_code" << "weight";
         tblTiers->setHorizontalHeaderLabels(headers);
         tblTiers->horizontalHeader()->setStretchLastSection(true);
         tblTiers->verticalHeader()->setVisible(false);
@@ -99,13 +107,50 @@ void SettingsDialog::buildUi()
     // Lexer & Identifier page
     pageLexerId = new QWidget(this);
     {
-        auto v = new QVBoxLayout(pageLexerId);
-        chkTokenMapHeur = new QCheckBox("启用 token_map 启发式"); v->addWidget(chkTokenMapHeur);
-        auto lWs = new QHBoxLayout; lWs->addWidget(new QLabel("空白字符（逗号分隔，支持 \\t/\\n/\\r）"));
-        edtWhitespaces = new QLineEdit; lWs->addWidget(edtWhitespaces); v->addLayout(lWs);
+        auto v          = new QVBoxLayout(pageLexerId);
+        chkTokenMapHeur = new QCheckBox("启用 token_map 启发式");
+        v->addWidget(chkTokenMapHeur);
+        auto lWs = new QHBoxLayout;
+        lWs->addWidget(new QLabel("空白字符（逗号分隔，支持 \\t/\\n/\\r）"));
+        edtWhitespaces = new QLineEdit;
+        lWs->addWidget(edtWhitespaces);
+        v->addLayout(lWs);
+        v->addWidget(new QLabel("Token 头部解析"));
+        auto lTok1 = new QHBoxLayout;
+        lTok1->addWidget(new QLabel("前缀"));
+        edtTokPrefix = new QLineEdit;
+        lTok1->addWidget(edtTokPrefix);
+        v->addLayout(lTok1);
+        auto lTok2 = new QHBoxLayout;
+        lTok2->addWidget(new QLabel("首字符范围"));
+        edtTokNameFirst = new QLineEdit;
+        lTok2->addWidget(edtTokNameFirst);
+        v->addLayout(lTok2);
+        auto lTok3 = new QHBoxLayout;
+        lTok3->addWidget(new QLabel("后续字符范围"));
+        edtTokNameRest = new QLineEdit;
+        lTok3->addWidget(edtTokNameRest);
+        v->addLayout(lTok3);
+        auto lTok4 = new QHBoxLayout;
+        lTok4->addWidget(new QLabel("编码数字范围"));
+        edtTokDigitRanges = new QLineEdit;
+        lTok4->addWidget(edtTokDigitRanges);
+        v->addLayout(lTok4);
+        auto lTok5 = new QHBoxLayout;
+        lTok5->addWidget(new QLabel("组后缀"));
+        edtTokGroupSuffix = new QLineEdit;
+        lTok5->addWidget(edtTokGroupSuffix);
+        chkTokGroupSuffixOptional = new QCheckBox("可选");
+        lTok5->addWidget(chkTokGroupSuffixOptional);
+        v->addLayout(lTok5);
         v->addWidget(new QLabel("标识符设置"));
-        chkEmitIdLexeme = new QCheckBox("在 identifier 后追加词素"); v->addWidget(chkEmitIdLexeme);
-        auto lId = new QHBoxLayout; lId->addWidget(new QLabel("标识符规则名（逗号分隔）")); edtIdentifierNames = new QLineEdit; lId->addWidget(edtIdentifierNames); v->addLayout(lId);
+        chkEmitIdLexeme = new QCheckBox("在 identifier 后追加词素");
+        v->addWidget(chkEmitIdLexeme);
+        auto lId = new QHBoxLayout;
+        lId->addWidget(new QLabel("标识符规则名（逗号分隔）"));
+        edtIdentifierNames = new QLineEdit;
+        lId->addWidget(edtIdentifierNames);
+        v->addLayout(lId);
         v->addStretch(1);
     }
     stacked->addWidget(pageLexerId);
@@ -114,14 +159,33 @@ void SettingsDialog::buildUi()
     // Grammar page
     pageGrammar = new QWidget(this);
     {
-        auto v = new QVBoxLayout(pageGrammar);
-        auto lSyn = new QHBoxLayout; lSyn->addWidget(new QLabel("epsilon/eof/aug"));
-        edtEpsilon = new QLineEdit; edtEof = new QLineEdit; edtAug = new QLineEdit;
-        lSyn->addWidget(edtEpsilon); lSyn->addWidget(edtEof); lSyn->addWidget(edtAug);
+        auto v    = new QVBoxLayout(pageGrammar);
+        auto lSyn = new QHBoxLayout;
+        lSyn->addWidget(new QLabel("epsilon/eof/aug"));
+        edtEpsilon = new QLineEdit;
+        edtEof     = new QLineEdit;
+        edtAug     = new QLineEdit;
+        lSyn->addWidget(edtEpsilon);
+        lSyn->addWidget(edtEof);
+        lSyn->addWidget(edtAug);
         v->addLayout(lSyn);
-        auto lNon = new QHBoxLayout; lNon->addWidget(new QLabel("非终结符正则（可空）")); edtNontermPat = new QLineEdit; lNon->addWidget(edtNontermPat); v->addLayout(lNon);
-        auto lOps = new QHBoxLayout; lOps->addWidget(new QLabel("多/单字符操作符（逗号分隔）")); edtMultiOps = new QLineEdit; edtSingleOps = new QLineEdit; lOps->addWidget(edtMultiOps); lOps->addWidget(edtSingleOps); v->addLayout(lOps);
-        auto lLr = new QHBoxLayout; lLr->addWidget(new QLabel("LR(1) 冲突策略")); edtLr1Policy = new QLineEdit; lLr->addWidget(edtLr1Policy); v->addLayout(lLr);
+        auto lNon = new QHBoxLayout;
+        lNon->addWidget(new QLabel("非终结符正则（可空）"));
+        edtNontermPat = new QLineEdit;
+        lNon->addWidget(edtNontermPat);
+        v->addLayout(lNon);
+        auto lOps = new QHBoxLayout;
+        lOps->addWidget(new QLabel("多/单字符操作符（逗号分隔）"));
+        edtMultiOps  = new QLineEdit;
+        edtSingleOps = new QLineEdit;
+        lOps->addWidget(edtMultiOps);
+        lOps->addWidget(edtSingleOps);
+        v->addLayout(lOps);
+        auto lLr = new QHBoxLayout;
+        lLr->addWidget(new QLabel("LR(1) 冲突策略"));
+        edtLr1Policy = new QLineEdit;
+        lLr->addWidget(edtLr1Policy);
+        v->addLayout(lLr);
         v->addStretch(1);
     }
     stacked->addWidget(pageGrammar);
@@ -132,9 +196,25 @@ void SettingsDialog::buildUi()
     {
         auto v = new QVBoxLayout(pageI18nDot);
         v->addWidget(new QLabel("表头（标记/状态ID/状态集合/ε列名）"));
-        auto lTbl = new QHBoxLayout; edtTblMark = new QLineEdit; edtTblStateId = new QLineEdit; edtTblStateSet = new QLineEdit; edtTblEpsCol = new QLineEdit; lTbl->addWidget(edtTblMark); lTbl->addWidget(edtTblStateId); lTbl->addWidget(edtTblStateSet); lTbl->addWidget(edtTblEpsCol); v->addLayout(lTbl);
+        auto lTbl      = new QHBoxLayout;
+        edtTblMark     = new QLineEdit;
+        edtTblStateId  = new QLineEdit;
+        edtTblStateSet = new QLineEdit;
+        edtTblEpsCol   = new QLineEdit;
+        lTbl->addWidget(edtTblMark);
+        lTbl->addWidget(edtTblStateId);
+        lTbl->addWidget(edtTblStateSet);
+        lTbl->addWidget(edtTblEpsCol);
+        v->addLayout(lTbl);
         v->addWidget(new QLabel("DOT 样式（rankdir/node_shape/epsilon_label）"));
-        auto lDot = new QHBoxLayout; edtDotRankdir = new QLineEdit; edtDotNodeShape = new QLineEdit; edtDotEpsLabel = new QLineEdit; lDot->addWidget(edtDotRankdir); lDot->addWidget(edtDotNodeShape); lDot->addWidget(edtDotEpsLabel); v->addLayout(lDot);
+        auto lDot       = new QHBoxLayout;
+        edtDotRankdir   = new QLineEdit;
+        edtDotNodeShape = new QLineEdit;
+        edtDotEpsLabel  = new QLineEdit;
+        lDot->addWidget(edtDotRankdir);
+        lDot->addWidget(edtDotNodeShape);
+        lDot->addWidget(edtDotEpsLabel);
+        v->addLayout(lDot);
         v->addStretch(1);
     }
     stacked->addWidget(pageI18nDot);
@@ -145,7 +225,14 @@ void SettingsDialog::buildUi()
     {
         auto v = new QVBoxLayout(pageGraphviz);
         v->addWidget(new QLabel("Graphviz（executable/dpi/timeout_ms）"));
-        auto lGv = new QHBoxLayout; edtGraphvizExe = new QLineEdit; edtGraphvizDpi = new QLineEdit; edtGraphvizTimeout = new QLineEdit; lGv->addWidget(edtGraphvizExe); lGv->addWidget(edtGraphvizDpi); lGv->addWidget(edtGraphvizTimeout); v->addLayout(lGv);
+        auto lGv           = new QHBoxLayout;
+        edtGraphvizExe     = new QLineEdit;
+        edtGraphvizDpi     = new QLineEdit;
+        edtGraphvizTimeout = new QLineEdit;
+        lGv->addWidget(edtGraphvizExe);
+        lGv->addWidget(edtGraphvizDpi);
+        lGv->addWidget(edtGraphvizTimeout);
+        v->addLayout(lGv);
         v->addStretch(1);
     }
     stacked->addWidget(pageGraphviz);
@@ -154,8 +241,14 @@ void SettingsDialog::buildUi()
     // Semantic page
     pageSemantic = new QWidget(this);
     {
-        auto v = new QVBoxLayout(pageSemantic);
-        auto lSem = new QHBoxLayout; lSem->addWidget(new QLabel("语义策略（root/child）")); edtSemRootPolicy = new QLineEdit; edtSemChildOrder = new QLineEdit; lSem->addWidget(edtSemRootPolicy); lSem->addWidget(edtSemChildOrder); v->addLayout(lSem);
+        auto v    = new QVBoxLayout(pageSemantic);
+        auto lSem = new QHBoxLayout;
+        lSem->addWidget(new QLabel("语义策略（root/child）"));
+        edtSemRootPolicy = new QLineEdit;
+        edtSemChildOrder = new QLineEdit;
+        lSem->addWidget(edtSemRootPolicy);
+        lSem->addWidget(edtSemChildOrder);
+        v->addLayout(lSem);
         v->addStretch(1);
     }
     stacked->addWidget(pageSemantic);
@@ -257,20 +350,54 @@ void SettingsDialog::loadCurrent()
     edtGraphsDir->setText(Config::graphsDir());
     chkTokenMapHeur->setChecked(Config::tokenMapUseHeuristics());
     {
-        QString s; auto ws = Config::whitespaces();
-        for (int i=0;i<ws.size();++i){ QChar c=ws[i]; if (c=='\t') s+="\\t"; else if (c=='\n') s+="\\n"; else if (c=='\r') s+="\\r"; else s+=c; if (i+1<ws.size()) s+=","; }
+        QString s;
+        auto    ws = Config::whitespaces();
+        for (int i = 0; i < ws.size(); ++i)
+        {
+            QChar c = ws[i];
+            if (c == '\t')
+                s += "\\t";
+            else if (c == '\n')
+                s += "\\n";
+            else if (c == '\r')
+                s += "\\r";
+            else
+                s += c;
+            if (i + 1 < ws.size())
+                s += ",";
+        }
         edtWhitespaces->setText(s);
     }
+    edtTokPrefix->setText(Config::tokenHeaderPrefix());
+    edtTokNameFirst->setText(Config::tokenHeaderNameFirstRanges());
+    edtTokNameRest->setText(Config::tokenHeaderNameRestRanges());
+    edtTokDigitRanges->setText(Config::tokenHeaderCodeDigitRanges());
+    edtTokGroupSuffix->setText(Config::tokenHeaderGroupSuffix());
+    chkTokGroupSuffixOptional->setChecked(Config::tokenHeaderGroupSuffixOptional());
     edtEpsilon->setText(Config::epsilonSymbol());
     edtEof->setText(Config::eofSymbol());
     edtAug->setText(Config::augSuffix());
     edtNontermPat->setText(Config::nonterminalPattern());
-    if (edtLr1Policy) edtLr1Policy->setText(Config::lr1ConflictPolicy());
+    if (edtLr1Policy)
+        edtLr1Policy->setText(Config::lr1ConflictPolicy());
     {
-        QString s1,s2; auto mo=Config::grammarMultiOps(); auto so=Config::grammarSingleOps();
-        for (int i=0;i<mo.size();++i){ s1+=mo[i]; if (i+1<mo.size()) s1+=","; }
-        for (int i=0;i<so.size();++i){ s2+=so[i]; if (i+1<so.size()) s2+=","; }
-        edtMultiOps->setText(s1); edtSingleOps->setText(s2);
+        QString s1, s2;
+        auto    mo = Config::grammarMultiOps();
+        auto    so = Config::grammarSingleOps();
+        for (int i = 0; i < mo.size(); ++i)
+        {
+            s1 += mo[i];
+            if (i + 1 < mo.size())
+                s1 += ",";
+        }
+        for (int i = 0; i < so.size(); ++i)
+        {
+            s2 += so[i];
+            if (i + 1 < so.size())
+                s2 += ",";
+        }
+        edtMultiOps->setText(s1);
+        edtSingleOps->setText(s2);
     }
     edtTblMark->setText(Config::tableMarkLabel());
     edtTblStateId->setText(Config::tableStateIdLabel());
@@ -283,8 +410,14 @@ void SettingsDialog::loadCurrent()
     edtGraphvizDpi->setText(QString::number(Config::graphvizDefaultDpi()));
     edtGraphvizTimeout->setText(QString::number(Config::graphvizTimeoutMs()));
     {
-        QString s; auto arr=Config::configSearchPaths();
-        for (int i=0;i<arr.size();++i){ s+=arr[i]; if (i+1<arr.size()) s+=';'; }
+        QString s;
+        auto    arr = Config::configSearchPaths();
+        for (int i = 0; i < arr.size(); ++i)
+        {
+            s += arr[i];
+            if (i + 1 < arr.size())
+                s += ';';
+        }
         edtCfgSearchPaths->setText(s);
     }
     edtSemRootPolicy->setText(Config::semanticRootSelectionPolicy());
@@ -323,12 +456,13 @@ void SettingsDialog::loadCurrent()
     chkSkipTemplate->setChecked(Config::skipTemplateString());
     chkEmitIdLexeme->setChecked(Config::emitIdentifierLexeme());
     {
-        auto names = Config::identifierTokenNames();
+        auto    names = Config::identifierTokenNames();
         QString s;
         for (int i = 0; i < names.size(); ++i)
         {
             s += names[i];
-            if (i + 1 < names.size()) s += ",";
+            if (i + 1 < names.size())
+                s += ",";
         }
         edtIdentifierNames->setText(s);
     }
@@ -380,21 +514,34 @@ bool SettingsDialog::collectAndApply()
         QVector<QChar> ws;
         for (auto x : edtWhitespaces->text().split(',', Qt::SkipEmptyParts))
         {
-            QString s=x.trimmed(); if (s=="\\t") ws.push_back('\t'); else if (s=="\\n") ws.push_back('\n'); else if (s=="\\r") ws.push_back('\r'); else if (!s.isEmpty()) ws.push_back(s[0]);
+            QString s = x.trimmed();
+            if (s == "\\t")
+                ws.push_back('\t');
+            else if (s == "\\n")
+                ws.push_back('\n');
+            else if (s == "\\r")
+                ws.push_back('\r');
+            else if (!s.isEmpty())
+                ws.push_back(s[0]);
         }
-        if (!ws.isEmpty()) Config::setWhitespaces(ws);
+        if (!ws.isEmpty())
+            Config::setWhitespaces(ws);
     }
     Config::setEpsilonSymbol(edtEpsilon->text().trimmed());
     Config::setEofSymbol(edtEof->text().trimmed());
     Config::setAugSuffix(edtAug->text().trimmed());
     Config::setNonterminalPattern(edtNontermPat->text().trimmed());
-    if (edtLr1Policy) Config::setLr1ConflictPolicy(edtLr1Policy->text().trimmed());
+    if (edtLr1Policy)
+        Config::setLr1ConflictPolicy(edtLr1Policy->text().trimmed());
     {
-        QVector<QString> mo,so;
+        QVector<QString> mo, so;
         for (auto x : edtMultiOps->text().split(',', Qt::SkipEmptyParts)) mo.push_back(x.trimmed());
-        for (auto x : edtSingleOps->text().split(',', Qt::SkipEmptyParts)) so.push_back(x.trimmed());
-        if (!mo.isEmpty()) Config::setGrammarMultiOps(mo);
-        if (!so.isEmpty()) Config::setGrammarSingleOps(so);
+        for (auto x : edtSingleOps->text().split(',', Qt::SkipEmptyParts))
+            so.push_back(x.trimmed());
+        if (!mo.isEmpty())
+            Config::setGrammarMultiOps(mo);
+        if (!so.isEmpty())
+            Config::setGrammarSingleOps(so);
     }
     Config::setTableMarkLabel(edtTblMark->text().trimmed());
     Config::setTableStateIdLabel(edtTblStateId->text().trimmed());
@@ -408,7 +555,8 @@ bool SettingsDialog::collectAndApply()
     Config::setGraphvizTimeoutMs(edtGraphvizTimeout->text().trimmed().toInt());
     {
         QVector<QString> paths;
-        for (auto x : edtCfgSearchPaths->text().split(';', Qt::SkipEmptyParts)) paths.push_back(x.trimmed());
+        for (auto x : edtCfgSearchPaths->text().split(';', Qt::SkipEmptyParts))
+            paths.push_back(x.trimmed());
         Config::setConfigSearchPaths(paths);
     }
     Config::setSemanticRootSelectionPolicy(edtSemRootPolicy->text().trimmed());

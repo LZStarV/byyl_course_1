@@ -15,7 +15,13 @@ class DotExporter
     static bool    exportToDot(const NFA& nfa, const QString& filename);
     static bool    exportToDot(const DFA& dfa, const QString& filename);
     static bool    exportToDot(const MinDFA& mdfa, const QString& filename);
-    static bool    exportToDot(const NFA& nfa, const QMap<QString, Rule>& macros, const QString& filename);
-    static bool    exportToDot(const DFA& dfa, const QMap<QString, Rule>& macros, const QString& filename);
-    static bool    exportToDot(const MinDFA& mdfa, const QMap<QString, Rule>& macros, const QString& filename);
+    static bool    exportToDot(const NFA&                 nfa,
+                               const QMap<QString, Rule>& macros,
+                               const QString&             filename);
+    static bool    exportToDot(const DFA&                 dfa,
+                               const QMap<QString, Rule>& macros,
+                               const QString&             filename);
+    static bool    exportToDot(const MinDFA&              mdfa,
+                               const QMap<QString, Rule>& macros,
+                               const QString&             filename);
 };

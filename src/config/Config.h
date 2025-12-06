@@ -51,6 +51,18 @@ class Config
     static QVector<QString> identifierTokenNames();
     static void             setEmitIdentifierLexeme(bool v);
     static void             setIdentifierTokenNames(const QVector<QString>& names);
+    static QString          tokenHeaderPrefix();
+    static QString          tokenHeaderNameFirstRanges();
+    static QString          tokenHeaderNameRestRanges();
+    static QString          tokenHeaderCodeDigitRanges();
+    static QString          tokenHeaderGroupSuffix();
+    static bool             tokenHeaderGroupSuffixOptional();
+    static void             setTokenHeaderPrefix(const QString& s);
+    static void             setTokenHeaderNameFirstRanges(const QString& s);
+    static void             setTokenHeaderNameRestRanges(const QString& s);
+    static void             setTokenHeaderCodeDigitRanges(const QString& s);
+    static void             setTokenHeaderGroupSuffix(const QString& s);
+    static void             setTokenHeaderGroupSuffixOptional(bool b);
     // i18n for tables
     static QString tableMarkLabel();
     static QString tableStateIdLabel();
@@ -144,6 +156,12 @@ class Config
     static QVector<QString>    s_cfgSearchPaths;
     static bool                s_emitIdentifierLexeme;
     static QVector<QString>    s_identifierNames;
+    static QString             s_tokPrefix;
+    static QString             s_tokNameFirst;
+    static QString             s_tokNameRest;
+    static QString             s_tokDigitRanges;
+    static QString             s_tokGroupSuffix;
+    static bool                s_tokGroupSuffixOptional;
     // semantics
     static QMap<int, QString>  s_semRoleMeaning;
     static QString             s_semRootPolicy;

@@ -35,6 +35,8 @@ set(CORE_SOURCES
     src/model/Automata.h
     src/regex/RegexLexer.h
     src/regex/RegexLexer.cpp
+    src/regex/TokenHeaderParser.h
+    src/regex/TokenHeaderParser.cpp
     src/regex/RegexParser.h
     src/regex/RegexParser.cpp
     src/automata/Thompson.h
@@ -213,6 +215,7 @@ target_sources(GuiTest PRIVATE
     src/generator/SyntaxCodeGenerator.cpp
     src/visual/DotExporter.cpp
     src/regex/RegexLexer.cpp
+    src/regex/TokenHeaderParser.cpp
     src/regex/RegexParser.cpp
     src/automata/Thompson.cpp
     src/automata/SubsetConstruction.cpp
@@ -264,6 +267,7 @@ add_executable(TinyLR1FlowTest tests/syntax/tiny_lr1_flow_test.cpp)
 target_sources(TinyLR1FlowTest PRIVATE
     src/Engine.cpp
     src/regex/RegexLexer.cpp
+    src/regex/TokenHeaderParser.cpp
     src/regex/RegexParser.cpp
     src/config/Config.cpp
     src/generator/CodeGenerator.cpp
@@ -308,6 +312,7 @@ target_sources(CliRegexTest PRIVATE
     tests/cli/cli_regex_test.h
     src/visual/DotExporter.cpp
     src/regex/RegexLexer.cpp
+    src/regex/TokenHeaderParser.cpp
     src/regex/RegexParser.cpp
     src/automata/Thompson.cpp
     src/automata/SubsetConstruction.cpp
@@ -327,6 +332,7 @@ target_sources(CodegenTest PRIVATE
     tests/codegen/codegen_compile_run_test.h
     src/visual/DotExporter.cpp
     src/regex/RegexLexer.cpp
+    src/regex/TokenHeaderParser.cpp
     src/regex/RegexParser.cpp
     src/automata/Thompson.cpp
     src/automata/SubsetConstruction.cpp
@@ -346,6 +352,7 @@ target_sources(ConfigWeightTest PRIVATE
     tests/config/config_weight_test.h
     src/visual/DotExporter.cpp
     src/regex/RegexLexer.cpp
+    src/regex/TokenHeaderParser.cpp
     src/regex/RegexParser.cpp
     src/automata/Thompson.cpp
     src/automata/SubsetConstruction.cpp
@@ -381,6 +388,7 @@ target_sources(DotExportTest PRIVATE
     tests/automata/dot_export_test.h
     src/visual/DotExporter.cpp
     src/regex/RegexLexer.cpp
+    src/regex/TokenHeaderParser.cpp
     src/regex/RegexParser.cpp
     src/automata/Thompson.cpp
     src/automata/SubsetConstruction.cpp
@@ -394,3 +402,23 @@ target_sources(DotExportTest PRIVATE
 )
 target_link_libraries(DotExportTest PRIVATE Qt6::Core Qt6::Test)
 add_test(NAME DOT导出测试 COMMAND DotExportTest)
+
+add_executable(FATableMacroTest tests/automata/fa_table_macro_test.cpp)
+target_sources(FATableMacroTest PRIVATE
+    tests/automata/fa_table_macro_test.h
+    src/visual/DotExporter.cpp
+    src/regex/RegexLexer.cpp
+    src/regex/TokenHeaderParser.cpp
+    src/regex/RegexParser.cpp
+    src/automata/Thompson.cpp
+    src/automata/SubsetConstruction.cpp
+    src/automata/Hopcroft.cpp
+    src/generator/CodeGenerator.cpp
+    src/Engine.cpp
+    src/syntax/Grammar.cpp
+    src/syntax/GrammarParser.cpp
+    src/syntax/LL1.cpp
+    src/config/Config.cpp
+)
+target_link_libraries(FATableMacroTest PRIVATE Qt6::Core Qt6::Test)
+add_test(NAME FA表宏列聚合测试 COMMAND FATableMacroTest)

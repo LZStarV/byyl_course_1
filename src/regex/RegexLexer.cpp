@@ -1,17 +1,17 @@
 #include "RegexLexer.h"
 #include <QStringList>
-#include <QRegularExpression>
+#include "TokenHeaderParser.h"
+#include "../config/Config.h"
 static bool parseTokenHeader(const QString& name, int& code, bool& isGroup)
 {
-    if (!name.startsWith('_'))
-        return false;
-    QRegularExpression re("^_([A-Za-z][A-Za-z0-9_]*?)(\\d+)(S)?$");
-    auto               m = re.match(name);
-    if (!m.hasMatch())
-        return false;
-    code    = m.captured(2).toInt();
-    isGroup = !m.captured(3).isEmpty();
-    return true;
+    TokenHeaderConfig cfg;
+    cfg.prefix                = Config::tokenHeaderPrefix();
+    cfg.name_first_ranges     = Config::tokenHeaderNameFirstRanges();
+    cfg.name_rest_ranges      = Config::tokenHeaderNameRestRanges();
+    cfg.code_digit_ranges     = Config::tokenHeaderCodeDigitRanges();
+    cfg.group_suffix          = Config::tokenHeaderGroupSuffix();
+    cfg.group_suffix_optional = Config::tokenHeaderGroupSuffixOptional();
+    return TokenHeaderParser::parseHeader(name, cfg, code, isGroup);
 }
 RegexFile RegexLexer::lex(const QString& input)
 {

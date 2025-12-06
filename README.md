@@ -75,6 +75,14 @@
 - `emit_identifier_lexeme`：是否在 `identifier` 后追加词素（默认：`true`）
 - `identifier_token_names`：视为标识符的规则名数组（默认：`["identifier"]`，大小写不敏感，按规则名包含判断）
 - Token 头部解析约定：`_NAME123`（`_NAME123S` 表示组），用于提取编码与是否为组；无需额外配置。
+ - `token_header`：Token 头部解析配置（默认兼容 `_NAME123` / `_NAME123S`）：
+   - `prefix`：默认 `"_"`
+   - `name_first_ranges`：默认 `"A-Za-z"`
+   - `name_rest_ranges`：默认 `"A-Za-z0-9_"`
+   - `code_digit_ranges`：默认 `"0-9"`
+   - `group_suffix`：默认 `"S"`
+   - `group_suffix_optional`：默认 `true`
+   - 范围表达式支持区间与单字符：如 `A-Z`、`A-D E-G`、`0-9`、以及任意 Unicode 区间（例如 `A-å`），用空格或逗号分隔。
 
 ### 语法与算法
 - `epsilon_symbol`（默认：`#`）、`eof_symbol`（默认：`$`）、`aug_suffix`（默认：`'`）

@@ -47,6 +47,10 @@ class Engine
     Tables dfaTable(const DFA& dfa);
     /** \brief 生成 MinDFA 状态表用于展示 */
     Tables minTable(const MinDFA& dfa);
+    /** \brief 生成状态表（宏列聚合版本） */
+    Tables nfaTableWithMacros(const NFA& nfa, const QMap<QString, Rule>& macros);
+    Tables dfaTableWithMacros(const DFA& dfa, const QMap<QString, Rule>& macros);
+    Tables minTableWithMacros(const MinDFA& dfa, const QMap<QString, Rule>& macros);
     /** \brief 生成单词法扫描器源码 */
     QString generateCode(const MinDFA& mdfa, const QMap<QString, int>& tokenCodes);
     /** \brief 运行单词法，返回编码结果 */

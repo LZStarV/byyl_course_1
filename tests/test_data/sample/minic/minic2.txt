@@ -1,5 +1,5 @@
 // This is a more complex minic program demonstrating various features
-// minic2.minic @
+// minic2.minic
 
 float calculate_area(float radius) {
     // Calculate area of a circle

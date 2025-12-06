@@ -34,6 +34,12 @@ QString                     Config::s_dotEpsLabel;
 QVector<QString>            Config::s_cfgSearchPaths;
 bool                        Config::s_emitIdentifierLexeme = true;
 QVector<QString>            Config::s_identifierNames;
+QString                     Config::s_tokPrefix;
+QString                     Config::s_tokNameFirst;
+QString                     Config::s_tokNameRest;
+QString                     Config::s_tokDigitRanges;
+QString                     Config::s_tokGroupSuffix;
+bool                        Config::s_tokGroupSuffixOptional;
 bool                        Config::s_hasOutDirOverride = false;
 QString                     Config::s_outDirOverride;
 bool                        Config::s_hasTiersOverride = false;
@@ -70,11 +76,11 @@ void Config::load()
 {
     if (s_loaded)
         return;
-    s_loaded      = true;
-    s_tiers       = defaultTiers();
-    s_outDir      = QString();
-    s_syntaxDir   = QString();
-    s_graphsDir   = QString();
+    s_loaded    = true;
+    s_tiers     = defaultTiers();
+    s_outDir    = QString();
+    s_syntaxDir = QString();
+    s_graphsDir = QString();
     s_ws.clear();
     s_tokenMapUseHeuristics = true;
     s_graphvizExe           = QString("dot");
@@ -95,17 +101,23 @@ void Config::load()
     s_dotNodeShape  = QStringLiteral("circle");
     s_dotEpsLabel   = QStringLiteral("ε");
     s_cfgSearchPaths.clear();
-    s_emitIdentifierLexeme = true;
-    s_identifierNames      = QVector<QString>({QStringLiteral("identifier")});
-    s_hasOutDirOverride    = false;
-    s_hasTiersOverride     = false;
-    s_hasSkipBrace         = false;
-    s_hasSkipLine          = false;
-    s_hasSkipBlock         = false;
-    s_hasSkipHash          = false;
-    s_hasSkipSingle        = false;
-    s_hasSkipDouble        = false;
-    s_hasSkipTemplate      = false;
+    s_emitIdentifierLexeme   = true;
+    s_identifierNames        = QVector<QString>({QStringLiteral("identifier")});
+    s_tokPrefix              = QStringLiteral("_");
+    s_tokNameFirst           = QStringLiteral("A-Za-z");
+    s_tokNameRest            = QStringLiteral("A-Za-z0-9_");
+    s_tokDigitRanges         = QStringLiteral("0-9");
+    s_tokGroupSuffix         = QStringLiteral("S");
+    s_tokGroupSuffixOptional = true;
+    s_hasOutDirOverride      = false;
+    s_hasTiersOverride       = false;
+    s_hasSkipBrace           = false;
+    s_hasSkipLine            = false;
+    s_hasSkipBlock           = false;
+    s_hasSkipHash            = false;
+    s_hasSkipSingle          = false;
+    s_hasSkipDouble          = false;
+    s_hasSkipTemplate        = false;
 
     // env override for output dir
     QByteArray genDirEnv = qgetenv("BYYL_GEN_DIR");
@@ -220,6 +232,17 @@ void Config::load()
                     }
                     if (s_identifierNames.isEmpty())
                         s_identifierNames.push_back(QStringLiteral("identifier"));
+                }
+                if (obj.contains("token_header") && obj.value("token_header").isObject())
+                {
+                    auto th          = obj.value("token_header").toObject();
+                    s_tokPrefix      = th.value("prefix").toString(s_tokPrefix);
+                    s_tokNameFirst   = th.value("name_first_ranges").toString(s_tokNameFirst);
+                    s_tokNameRest    = th.value("name_rest_ranges").toString(s_tokNameRest);
+                    s_tokDigitRanges = th.value("code_digit_ranges").toString(s_tokDigitRanges);
+                    s_tokGroupSuffix = th.value("group_suffix").toString(s_tokGroupSuffix);
+                    s_tokGroupSuffixOptional =
+                        th.value("group_suffix_optional").toBool(s_tokGroupSuffixOptional);
                 }
                 if (obj.contains("nonterminal_pattern"))
                     s_nontermPat = obj.value("nonterminal_pattern").toString();
@@ -414,7 +437,6 @@ QString Config::graphsDir()
     load();
     return s_graphsDir.isEmpty() ? (generatedOutputDir() + "/graphs") : s_graphsDir;
 }
-
 
 QVector<QChar> Config::whitespaces()
 {
@@ -900,8 +922,10 @@ bool Config::saveJson(const QString& path)
         tiersArr.append(o);
     }
     obj.insert("weight_tiers", tiersArr);
-    if (!s_syntaxDir.isEmpty()) obj.insert("syntax_output_dir", s_syntaxDir);
-    if (!s_graphsDir.isEmpty()) obj.insert("graphs_dir", s_graphsDir);
+    if (!s_syntaxDir.isEmpty())
+        obj.insert("syntax_output_dir", s_syntaxDir);
+    if (!s_graphsDir.isEmpty())
+        obj.insert("graphs_dir", s_graphsDir);
     obj.insert("skip_brace_comment", s_hasSkipBrace ? s_skipBrace : skipBraceComment());
     obj.insert("skip_line_comment", s_hasSkipLine ? s_skipLine : skipLineComment());
     obj.insert("skip_block_comment", s_hasSkipBlock ? s_skipBlock : skipBlockComment());
@@ -917,15 +941,29 @@ bool Config::saveJson(const QString& path)
         for (const auto& s : s_identifierNames) arr.append(s);
         obj.insert("identifier_token_names", arr);
     }
+    {
+        QJsonObject th;
+        th.insert("prefix", s_tokPrefix);
+        th.insert("name_first_ranges", s_tokNameFirst);
+        th.insert("name_rest_ranges", s_tokNameRest);
+        th.insert("code_digit_ranges", s_tokDigitRanges);
+        th.insert("group_suffix", s_tokGroupSuffix);
+        th.insert("group_suffix_optional", s_tokGroupSuffixOptional);
+        obj.insert("token_header", th);
+    }
     // whitespaces
     {
         QJsonArray arr;
         for (auto c : s_ws)
         {
-            if (c == '\t') arr.append("\\t");
-            else if (c == '\n') arr.append("\\n");
-            else if (c == '\r') arr.append("\\r");
-            else arr.append(QString(c));
+            if (c == '\t')
+                arr.append("\\t");
+            else if (c == '\n')
+                arr.append("\\n");
+            else if (c == '\r')
+                arr.append("\\r");
+            else
+                arr.append(QString(c));
         }
         obj.insert("whitespaces", arr);
     }
@@ -948,7 +986,8 @@ bool Config::saveJson(const QString& path)
     obj.insert("eof_symbol", s_eof);
     obj.insert("aug_suffix", s_augSuffix);
     obj.insert("lr1_conflict_policy", s_lr1Policy);
-    if (!s_nontermPat.trimmed().isEmpty()) obj.insert("nonterminal_pattern", s_nontermPat);
+    if (!s_nontermPat.trimmed().isEmpty())
+        obj.insert("nonterminal_pattern", s_nontermPat);
     {
         QJsonObject gt;
         QJsonArray  mo;
@@ -1044,12 +1083,14 @@ void Config::setGraphvizExecutable(const QString& exe)
 void Config::setGraphvizDefaultDpi(int dpi)
 {
     load();
-    if (dpi > 0) s_graphvizDpi = dpi;
+    if (dpi > 0)
+        s_graphvizDpi = dpi;
 }
 void Config::setGraphvizTimeoutMs(int ms)
 {
     load();
-    if (ms > 0) s_graphvizTimeout = ms;
+    if (ms > 0)
+        s_graphvizTimeout = ms;
 }
 void Config::setEpsilonSymbol(const QString& s)
 {
@@ -1147,6 +1188,66 @@ QVector<QString> Config::identifierTokenNames()
     load();
     return s_identifierNames;
 }
+QString Config::tokenHeaderPrefix()
+{
+    load();
+    return s_tokPrefix;
+}
+QString Config::tokenHeaderNameFirstRanges()
+{
+    load();
+    return s_tokNameFirst;
+}
+QString Config::tokenHeaderNameRestRanges()
+{
+    load();
+    return s_tokNameRest;
+}
+QString Config::tokenHeaderCodeDigitRanges()
+{
+    load();
+    return s_tokDigitRanges;
+}
+QString Config::tokenHeaderGroupSuffix()
+{
+    load();
+    return s_tokGroupSuffix;
+}
+bool Config::tokenHeaderGroupSuffixOptional()
+{
+    load();
+    return s_tokGroupSuffixOptional;
+}
+void Config::setTokenHeaderPrefix(const QString& s)
+{
+    load();
+    s_tokPrefix = s;
+}
+void Config::setTokenHeaderNameFirstRanges(const QString& s)
+{
+    load();
+    s_tokNameFirst = s;
+}
+void Config::setTokenHeaderNameRestRanges(const QString& s)
+{
+    load();
+    s_tokNameRest = s;
+}
+void Config::setTokenHeaderCodeDigitRanges(const QString& s)
+{
+    load();
+    s_tokDigitRanges = s;
+}
+void Config::setTokenHeaderGroupSuffix(const QString& s)
+{
+    load();
+    s_tokGroupSuffix = s;
+}
+void Config::setTokenHeaderGroupSuffixOptional(bool b)
+{
+    load();
+    s_tokGroupSuffixOptional = b;
+}
 void Config::setEmitIdentifierLexeme(bool v)
 {
     load();
@@ -1159,9 +1260,9 @@ void Config::setIdentifierTokenNames(const QVector<QString>& names)
     for (auto s : names)
     {
         auto t = s.trimmed();
-        if (!t.isEmpty()) s_identifierNames.push_back(t);
+        if (!t.isEmpty())
+            s_identifierNames.push_back(t);
     }
-    if (s_identifierNames.isEmpty()) s_identifierNames.push_back(QStringLiteral("identifier"));
+    if (s_identifierNames.isEmpty())
+        s_identifierNames.push_back(QStringLiteral("identifier"));
 }
-
- 
