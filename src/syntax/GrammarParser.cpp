@@ -30,10 +30,25 @@ static QVector<QString> splitRhs(const QString& rhs)
     QVector<QString> v;
     QString          s       = rhs;
     int              i       = 0;
-    auto          isWordChar = [](QChar c) { return c.isLetterOrNumber() || c == '_' || c == '-'; };
-    auto          multiOps   = Config::grammarMultiOps();
-    QSet<QString> singleOpsSet;
-    for (const auto& op : Config::grammarSingleOps()) singleOpsSet.insert(op);
+    auto isWordChar = [](QChar c) { return c.isLetterOrNumber() || c == '_' || c == '-'; };
+    auto isSingleOp = [](QChar c) {
+        static QSet<QChar> ops;
+        if (ops.isEmpty())
+        {
+            const QChar arr[] = { '(', ')', '{', '}', '[', ']', ';', ',', '<', '>', '=', '+', '-', '*', '/', '%', '^' };
+            for (QChar ch : arr) ops.insert(ch);
+        }
+        return ops.contains(c);
+    };
+    auto matchMultiOp = [&](const QString& s, int i) -> QString {
+        static const QVector<QString> mops = { "<=", ">=", "==", "!=", ":=", "++", "--" };
+        for (const auto& op : mops)
+        {
+            int L = op.size();
+            if (L > 0 && i + L <= s.size() && s.mid(i, L) == op) return op;
+        }
+        return QString();
+    };
     while (i < s.size())
     {
         QChar c = s[i];
@@ -42,21 +57,14 @@ static QVector<QString> splitRhs(const QString& rhs)
             i++;
             continue;
         }
-        bool matched = false;
-        for (const auto& op : multiOps)
+        QString mop = matchMultiOp(s, i);
+        if (!mop.isEmpty())
         {
-            int L = op.size();
-            if (L > 0 && i + L <= s.size() && s.mid(i, L) == op)
-            {
-                v.push_back(op);
-                i += L;
-                matched = true;
-                break;
-            }
-        }
-        if (matched)
+            v.push_back(mop);
+            i += mop.size();
             continue;
-        if (singleOpsSet.contains(QString(c)))
+        }
+        if (isSingleOp(c))
         {
             v.push_back(QString(c));
             i++;

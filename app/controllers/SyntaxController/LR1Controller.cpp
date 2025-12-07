@@ -389,6 +389,30 @@ void LR1Controller::runLR1Process()
     // 解析前校验
     if (unknown > 0)
         notify_->warning(QString("存在未映射的Token编码数量: %1").arg(unknown));
+    // 一致性校验：tokens ⊆ Grammar.Terminals
+    QSet<QString> gTerms = g.terminals;
+    QVector<QString> bad;
+    for (const auto& t : tokens)
+    {
+        if (t == "$") continue;
+        if (!gTerms.contains(t)) bad.push_back(t);
+    }
+    if (!bad.isEmpty())
+    {
+        notify_->error(QStringLiteral("Token名称与文法终结符不一致: ") + bad.join(","));
+        return;
+    }
+    // 一致性校验：Grammar.Terminals ⊆ TokenMap.Names
+    QSet<QString> mapNames;
+    for (auto it = tokMap.begin(); it != tokMap.end(); ++it) mapNames.insert(it.value());
+    QVector<QString> missing;
+    for (const auto& s : gTerms)
+        if (!mapNames.contains(s)) missing.push_back(s);
+    if (!missing.isEmpty())
+    {
+        notify_->error(QStringLiteral("文法终结符在映射中不存在: ") + missing.join(","));
+        return;
+    }
     // 语义动作策略（外部配置）
     auto roleMeaning = Config::semanticRoleMeaning();
     auto rootPolicy  = Config::semanticRootSelectionPolicy();
@@ -500,14 +524,17 @@ void LR1Controller::openGrammarProcessDialog()
     dlg.exec();
 }
 
-static void writeTreeText(QTextStream& out, const SemanticASTNode* n, int indent)
+static void writeTreeText(QTextStream& out, const SemanticASTNode* n, int indent, QSet<const SemanticASTNode*>& visited)
 {
     if (!n)
         return;
+    if (visited.contains(n))
+        return;
+    visited.insert(n);
     QString line(indent, ' ');
     line += n->tag;
     out << line << '\n';
-    for (auto c : n->children) writeTreeText(out, c, indent + 2);
+    for (auto c : n->children) writeTreeText(out, c, indent + 2, visited);
 }
 
 void LR1Controller::exportSemanticTree()
@@ -548,7 +575,8 @@ void LR1Controller::exportSemanticTree()
     }
     else
     {
-        writeTreeText(out, lastResult_.astRoot, 0);
+        QSet<const SemanticASTNode*> visited;
+        writeTreeText(out, lastResult_.astRoot, 0, visited);
     }
     f.close();
     notify_->info(QStringLiteral("语法树已导出"));

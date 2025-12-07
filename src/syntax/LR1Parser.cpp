@@ -370,31 +370,20 @@ static SemanticASTNode* buildSemantic(const QString&                   L,
                 root->children.push_back(semKids[idx]);
         }
     }
+    // 追加其它 root 标记的项为子节点
     for (int i = 0; i < rootIdxs.size(); ++i)
     {
         int idx = rootIdxs[i];
-        if (idx == rootIdx)
-            continue;
-        if (idx < semKids.size() && semKids[idx])
-            root->children.push_back(semKids[idx]);
+        if (idx == rootIdx) continue;
+        if (idx < semKids.size() && semKids[idx]) root->children.push_back(semKids[idx]);
     }
-    // 简化支持 sibling：作为根的额外子节点附加，避免信息丢失
-    QSet<int> added;
-    for (int idx : childIdx) added.insert(idx);
+    // sibling 附加
     for (int idx : siblingIdx)
     {
-        if (idx < semKids.size() && semKids[idx]) {
+        if (idx < semKids.size() && semKids[idx] && idx != rootIdx)
             root->children.push_back(semKids[idx]);
-            added.insert(idx);
-        }
     }
-    // 保险策略：将剩余未加入的孩子也附加，避免角色位不匹配导致信息丢失
-    for (int i = 0; i < semKids.size(); ++i)
-    {
-        if (i == rootIdx) continue;
-        if (added.contains(i)) continue;
-        if (semKids[i]) root->children.push_back(semKids[i]);
-    }
+    // 不再附加未标注项，避免语法树膨胀
     return root;
 }
 

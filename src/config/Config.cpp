@@ -344,10 +344,11 @@ void Config::load()
     if (s_ws.isEmpty())
         s_ws = QVector<QChar>({' ', '\t', '\n', '\r'});
     if (s_multiOps.isEmpty())
-        s_multiOps = QVector<QString>({"<=", ">=", "<>", ":="});
+        s_multiOps = QVector<QString>({"<=", ">=", "<>", ":=", "==", "!="});
     if (s_singleOps.isEmpty())
-        s_singleOps =
-            QVector<QString>({"(", ")", ";", "<", ">", "=", "+", "-", "*", "/", "%", "^"});
+        s_singleOps = QVector<QString>({
+            "(", ")", ";", ",", "<", ">", "=", "+", "-", "*", "/", "%", "^", "{", "}", "[", "]"
+        });
     if (s_semRoleMeaning.isEmpty())
     {
         s_semRoleMeaning[0] = "discard";
