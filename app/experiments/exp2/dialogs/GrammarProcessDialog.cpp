@@ -110,9 +110,18 @@ GrammarProcessDialog::GrammarProcessDialog(const ParseResult&    r,
     tbl_->setEditTriggers(QAbstractItemView::NoEditTriggers);
     tbl_->setWordWrap(true);
     tbl_->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    // 先按内容自适应，记录当前列宽
+    tbl_->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    int wStep  = tbl_->horizontalHeader()->sectionSize(0);
+    int wStack = tbl_->horizontalHeader()->sectionSize(1);
+    int wInput = tbl_->horizontalHeader()->sectionSize(2);
+    int wDesc  = tbl_->horizontalHeader()->sectionSize(3);
+    // 切换为固定列宽并按要求缩放
     tbl_->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-    int inputCol = 2;
-    tbl_->setColumnWidth(inputCol, 420);
+    tbl_->setColumnWidth(0, qMax(40, wStep / 3));
+    tbl_->setColumnWidth(1, qMax(40, wStack / 3));
+    tbl_->setColumnWidth(2, 420);
+    tbl_->setColumnWidth(3, wDesc);
     v->addWidget(tbl_);
     resize(1000, 600);
 }

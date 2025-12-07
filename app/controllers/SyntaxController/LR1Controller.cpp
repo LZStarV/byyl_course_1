@@ -16,9 +16,11 @@
 #include <QTextStream>
 #include <QDateTime>
 #include <QDir>
+#include <QHeaderView>
 #include "../../../src/config/Config.h"
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QTreeWidget>
 #include "../../../src/syntax/TokenMapBuilder.h"
 #include "../../../src/syntax/LR1Parser.h"
@@ -74,13 +76,21 @@ void LR1Controller::fillProcessTable(QTableWidget*             tbl,
         else if (ps.action == "acc")
             desc = QStringLiteral("acc，分析完成");
         else
-            desc = QString("动作 %1").arg(ps.action);
+            desc = ps.action;
         auto item = new QTableWidgetItem(desc);
         if (ps.action == "error")
             item->setForeground(Qt::red);
         tbl->setItem(r, 1, item);
     }
     tbl->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    tbl->setWordWrap(true);
+    tbl->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    tbl->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    int vw = tbl->viewport()->width();
+    int wStep = qMax(60, vw / 10);
+    int wDesc = qMax(200, vw - wStep - 20);
+    tbl->setColumnWidth(0, wStep);
+    tbl->setColumnWidth(1, wDesc);
 }
 
 static QVector<ParseStep> buildSemanticActionAuditSteps(
@@ -197,6 +207,12 @@ void LR1Controller::bind(QWidget* exp2Page)
         connect(b, &QPushButton::clicked, this, &LR1Controller::loadSemanticActions);
     if (auto b = page_->findChild<QPushButton*>("btnShowGrammarProcess"))
         connect(b, &QPushButton::clicked, this, &LR1Controller::openGrammarProcessDialog);
+    if (auto b = page_->findChild<QPushButton*>("btnExportSemanticTree"))
+        connect(b, &QPushButton::clicked, this, &LR1Controller::exportSemanticTree);
+    if (auto b = page_->findChild<QPushButton*>("btnExportSemanticProcess"))
+        connect(b, &QPushButton::clicked, this, &LR1Controller::exportSemanticProcess);
+    if (auto b = page_->findChild<QPushButton*>("btnExportGrammarProcess"))
+        connect(b, &QPushButton::clicked, this, &LR1Controller::exportGrammarProcess);
     // 移除预览与导出绑定
 }
 
@@ -482,6 +498,125 @@ void LR1Controller::openGrammarProcessDialog()
     // 放宽控制：即使步骤为空，也允许打开对话框（显示空表）
     GrammarProcessDialog dlg(lastResult_, lastActionTable_, mw_);
     dlg.exec();
+}
+
+static void writeTreeText(QTextStream& out, const SemanticASTNode* n, int indent)
+{
+    if (!n)
+        return;
+    QString line(indent, ' ');
+    line += n->tag;
+    out << line << '\n';
+    for (auto c : n->children) writeTreeText(out, c, indent + 2);
+}
+
+void LR1Controller::exportSemanticTree()
+{
+    if (lastResult_.astRoot == nullptr)
+    {
+        notify_->warning(QStringLiteral("请先运行LR(1)分析以生成语法树"));
+        return;
+    }
+    auto path = QFileDialog::getSaveFileName(mw_,
+                                             QStringLiteral("导出语法树"),
+                                             QStringLiteral("semantic_tree.txt"),
+                                             QStringLiteral("Text (*.txt);;JSON (*.json);;All (*)"));
+    if (path.isEmpty())
+        return;
+    QFile f(path);
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        notify_->error(QStringLiteral("文件写入失败"));
+        return;
+    }
+    QTextStream out(&f);
+    if (path.endsWith(".json", Qt::CaseInsensitive))
+    {
+        std::function<QJsonObject(const SemanticASTNode*)> toJson = [&](const SemanticASTNode* n)
+        {
+            QJsonObject o;
+            if (!n)
+                return o;
+            o.insert("tag", n->tag);
+            QJsonArray arr;
+            for (auto c : n->children) arr.append(toJson(c));
+            o.insert("children", arr);
+            return o;
+        };
+        QJsonDocument doc(toJson(lastResult_.astRoot));
+        out << doc.toJson(QJsonDocument::Indented);
+    }
+    else
+    {
+        writeTreeText(out, lastResult_.astRoot, 0);
+    }
+    f.close();
+    notify_->info(QStringLiteral("语法树已导出"));
+}
+
+void LR1Controller::exportSemanticProcess()
+{
+    if (lastResult_.semanticSteps.isEmpty())
+    {
+        notify_->warning(QStringLiteral("语义分析过程为空，请先运行LR(1)分析"));
+        return;
+    }
+    auto path = QFileDialog::getSaveFileName(mw_,
+                                             QStringLiteral("导出语义分析过程"),
+                                             QStringLiteral("semantic_process.txt"),
+                                             QStringLiteral("Text (*.txt);;All (*)"));
+    if (path.isEmpty()) return;
+    QFile f(path);
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        notify_->error(QStringLiteral("文件写入失败"));
+        return;
+    }
+    QTextStream out(&f);
+    for (const auto& ps : lastResult_.semanticSteps)
+        out << ps.step << ": " << ps.action << '\n';
+    f.close();
+    notify_->info(QStringLiteral("语义分析过程已导出"));
+}
+
+void LR1Controller::exportGrammarProcess()
+{
+    if (lastResult_.steps.isEmpty())
+    {
+        notify_->warning(QStringLiteral("语法分析过程为空，请先运行LR(1)分析"));
+        return;
+    }
+    auto path = QFileDialog::getSaveFileName(mw_,
+                                             QStringLiteral("导出语法分析过程"),
+                                             QStringLiteral("grammar_process.txt"),
+                                             QStringLiteral("Text (*.txt);;All (*)"));
+    if (path.isEmpty()) return;
+    QFile f(path);
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        notify_->error(QStringLiteral("文件写入失败"));
+        return;
+    }
+    QTextStream out(&f);
+    for (const auto& ps : lastResult_.steps)
+    {
+        QString desc;
+        if (ps.action.startsWith("s"))
+            desc = QString("shift 到 s%1，读入 '%2'")
+                       .arg(ps.stack.isEmpty() ? -1 : ps.stack.back().first)
+                       .arg(ps.rest.isEmpty() ? Config::eofSymbol() : ps.rest[0]);
+        else if (ps.action.startsWith("r"))
+            desc = QString("reduce %1").arg(ps.production);
+        else if (ps.action == "acc")
+            desc = QStringLiteral("acc，分析完成");
+        else if (ps.action == "error")
+            desc = ps.production + QStringLiteral(" （中止）");
+        else
+            desc = ps.action;
+        out << ps.step << ": " << desc << '\n';
+    }
+    f.close();
+    notify_->info(QStringLiteral("语法分析过程已导出"));
 }
 
 // 预览逻辑移除

@@ -303,6 +303,32 @@ target_sources(LR1Test PRIVATE
 target_link_libraries(LR1Test PRIVATE Qt6::Core Qt6::Test)
 add_test(NAME LR1算法测试 COMMAND LR1Test)
 
+add_executable(LR1SemanticTreeExampleTest tests/syntax/lr1_semantic_tree_example_test.cpp)
+target_sources(LR1SemanticTreeExampleTest PRIVATE
+    src/syntax/LR1.cpp
+    src/syntax/LL1.cpp
+    src/syntax/LR1Parser.cpp
+    src/syntax/TokenMapBuilder.cpp
+    src/syntax/GrammarParser.cpp
+    src/syntax/Grammar.cpp
+    src/config/Config.cpp
+)
+target_link_libraries(LR1SemanticTreeExampleTest PRIVATE Qt6::Core Qt6::Test)
+add_test(NAME 语义树示例测试 COMMAND LR1SemanticTreeExampleTest)
+
+add_executable(LR1SemanticTreeFullTest tests/syntax/lr1_semantic_tree_full_test.cpp)
+target_sources(LR1SemanticTreeFullTest PRIVATE
+    src/syntax/LR1.cpp
+    src/syntax/LL1.cpp
+    src/syntax/LR1Parser.cpp
+    src/syntax/TokenMapBuilder.cpp
+    src/syntax/GrammarParser.cpp
+    src/syntax/Grammar.cpp
+    src/config/Config.cpp
+)
+target_link_libraries(LR1SemanticTreeFullTest PRIVATE Qt6::Core Qt6::Test)
+add_test(NAME 语义树完整结构测试 COMMAND LR1SemanticTreeFullTest)
+
 ## TinyLR1FlowTest removed
 
 

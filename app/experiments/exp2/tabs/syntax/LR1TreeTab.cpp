@@ -33,6 +33,15 @@ LR1TreeTab::LR1TreeTab(QWidget* parent) : QWidget(parent)
     btnShowGrammarProcess = new QPushButton(QStringLiteral("查看语法分析过程"));
     btnShowGrammarProcess->setObjectName("btnShowGrammarProcess");
     btnBar->addWidget(btnShowGrammarProcess);
+    auto btnExportTree = new QPushButton(QStringLiteral("导出语法树"));
+    btnExportTree->setObjectName("btnExportSemanticTree");
+    btnBar->addWidget(btnExportTree);
+    auto btnExportSemanticProc = new QPushButton(QStringLiteral("导出语义分析过程"));
+    btnExportSemanticProc->setObjectName("btnExportSemanticProcess");
+    btnBar->addWidget(btnExportSemanticProc);
+    auto btnExportGrammarProc = new QPushButton(QStringLiteral("导出语法分析过程"));
+    btnExportGrammarProc->setObjectName("btnExportGrammarProcess");
+    btnBar->addWidget(btnExportGrammarProc);
     right->addLayout(btnBar);
     auto rightTables = new QHBoxLayout;
     auto col2        = new QVBoxLayout;
@@ -49,6 +58,19 @@ LR1TreeTab::LR1TreeTab(QWidget* parent) : QWidget(parent)
     // 组装主布局
     hMain->addLayout(left);
     hMain->addLayout(right);
-    hMain->setStretch(0, 2);
-    hMain->setStretch(1, 3);
+    hMain->setStretch(0, 1);
+    hMain->setStretch(1, 1);
+}
+
+void LR1TreeTab::resizeEvent(QResizeEvent* e)
+{
+    QWidget::resizeEvent(e);
+    if (auto t = findChild<QTableWidget*>("tblSemanticProcess"))
+    {
+        int vw   = t->viewport()->width();
+        int wStep = qMax(60, vw / 10);
+        int wDesc = qMax(200, vw - wStep - 20);
+        t->setColumnWidth(0, wStep);
+        t->setColumnWidth(1, wDesc);
+    }
 }

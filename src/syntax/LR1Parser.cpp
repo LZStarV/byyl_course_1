@@ -30,6 +30,59 @@ static QVector<QString> tokenize(const QString& s)
     return v;
 }
 
+static bool parseReduction(const LR1ActionTable& t,
+                           const QString&        act,
+                           QString&              L,
+                           QVector<QString>&     rhs)
+{
+    QString s = act.mid(1).trimmed();
+    bool    ok = false;
+    int     idx = s.toInt(&ok);
+    if (ok)
+    {
+        for (const auto& pr : t.reductions)
+        {
+            if (pr.first == idx)
+            {
+                QString text  = pr.second;
+                int     arrow = text.indexOf("->");
+                L             = text.left(arrow).trimmed();
+                QString R     = text.mid(arrow + 2).trimmed();
+                rhs.clear();
+                if (!R.isEmpty())
+                {
+                    for (auto x : R.split(' ', Qt::SkipEmptyParts)) rhs.push_back(x.trimmed());
+                }
+                return true;
+            }
+        }
+    }
+    int arrow = s.indexOf("->");
+    if (arrow >= 0)
+    {
+        L         = s.left(arrow).trimmed();
+        QString R = s.mid(arrow + 2).trimmed();
+        rhs.clear();
+        if (!R.isEmpty())
+        {
+            for (auto x : R.split(' ', Qt::SkipEmptyParts)) rhs.push_back(x.trimmed());
+        }
+        return true;
+    }
+    return false;
+}
+
+static int reductionIdFor(const LR1ActionTable& t, const QString& L, const QVector<QString>& rhs)
+{
+    QString key = L + " -> " + (rhs.isEmpty() ? QString("#") : rhs.join(" "));
+    for (const auto& pr : t.reductions)
+    {
+        if (pr.second == key)
+            return pr.first;
+    }
+    return -1;
+}
+
 static void pushStep(QVector<ParseStep>&                 steps,
                      int                                 stepIdx,
                      const QVector<QPair<int, QString>>& stk,
@@ -64,15 +117,47 @@ ParseResult LR1Parser::parse(const QVector<QString>& tokens,
         QString act = actionFor(t, st, a);
         if (act.contains('|'))
         {
-            auto    parts   = act.split('|');
-            QString policy  = Config::lr1ConflictPolicy().trimmed().toLower();
-            auto    prefer  = Config::lr1PreferShiftTokens();
-            QString nextTok = a;
-            if (!prefer.isEmpty())
-            {
-                for (const auto& pt : prefer)
+            auto parts = act.split('|');
+            bool hasAcc = false;
+            for (auto p : parts)
+                if (p == QStringLiteral("acc"))
                 {
-                    if (nextTok == pt)
+                    hasAcc = true;
+                    break;
+                }
+            if (hasAcc)
+            {
+                act = QStringLiteral("acc");
+            }
+            else
+            {
+                QString policy  = Config::lr1ConflictPolicy().trimmed().toLower();
+                auto    prefer  = Config::lr1PreferShiftTokens();
+                QString nextTok = a;
+                if (!prefer.isEmpty())
+                {
+                    for (const auto& pt : prefer)
+                    {
+                        if (nextTok == pt)
+                        {
+                            QString pick;
+                            for (auto p : parts)
+                                if (p.startsWith("s"))
+                                {
+                                    pick = p;
+                                    break;
+                                }
+                            if (!pick.isEmpty())
+                            {
+                                act = pick;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (act.isEmpty())
+                {
+                    if (policy == "prefer_shift")
                     {
                         QString pick;
                         for (auto p : parts)
@@ -81,48 +166,32 @@ ParseResult LR1Parser::parse(const QVector<QString>& tokens,
                                 pick = p;
                                 break;
                             }
-                        if (!pick.isEmpty())
-                        {
-                            act = pick;
-                            break;
-                        }
+                        if (pick.isEmpty())
+                            pick = parts[0];
+                        act = pick;
+                    }
+                    else if (policy == "prefer_reduce")
+                    {
+                        QString pick;
+                        for (auto p : parts)
+                            if (p.startsWith("r"))
+                            {
+                                pick = p;
+                                break;
+                            }
+                        if (pick.isEmpty())
+                            pick = parts[0];
+                        act = pick;
+                    }
+                    else
+                    {
+                        QString msg =
+                            QString("错误：状态=%1, 前瞻=%2, 动作冲突未配置，中止").arg(st).arg(a);
+                        pushStep(res.steps, step++, stack, input, QStringLiteral("error"), msg);
+                        res.errorPos = res.steps.size();
+                        break;
                     }
                 }
-            }
-            if (policy == "prefer_shift")
-            {
-                QString pick;
-                for (auto p : parts)
-                    if (p.startsWith("s"))
-                    {
-                        pick = p;
-                        break;
-                    }
-                if (pick.isEmpty())
-                    pick = parts[0];
-                act = pick;
-            }
-            else if (policy == "prefer_reduce")
-            {
-                QString pick;
-                for (auto p : parts)
-                    if (p.startsWith("r"))
-                    {
-                        pick = p;
-                        break;
-                    }
-                if (pick.isEmpty())
-                    pick = parts[0];
-                act = pick;
-            }
-            else
-            {
-                // 冲突策略未配置，输出错误步骤并中止
-                QString msg =
-                    QString("错误：状态=%1, 前瞻=%2, 动作冲突未配置，中止").arg(st).arg(a);
-                pushStep(res.steps, step++, stack, input, QStringLiteral("error"), msg);
-                res.errorPos = res.steps.size();
-                break;
             }
         }
         if (act.isEmpty())
@@ -166,12 +235,16 @@ ParseResult LR1Parser::parse(const QVector<QString>& tokens,
         }
         if (act.startsWith("r"))
         {
-            QString                 prod  = act.mid(1).trimmed();
-            int                     arrow = prod.indexOf("->");
-            QString                 L     = prod.left(arrow).trimmed();
-            QString                 R     = prod.mid(arrow + 2).trimmed();
-            QVector<QString>        rhs   = tokenize(R);
-            int                     k     = rhs[0] == "#" ? 0 : rhs.size();
+            QString                 L;
+            QVector<QString>        rhs;
+            if (!parseReduction(t, act, L, rhs))
+            {
+                QString msg = QString("错误：归约解析失败，动作=%1，中止").arg(act);
+                pushStep(res.steps, step++, stack, input, QStringLiteral("error"), msg);
+                res.errorPos = res.steps.size();
+                break;
+            }
+            int                     k = rhs.isEmpty() ? 0 : rhs.size();
             QVector<ParseTreeNode*> kids;
             for (int i = 0; i < k; ++i)
             {
@@ -200,7 +273,6 @@ ParseResult LR1Parser::parse(const QVector<QString>& tokens,
             p->children      = kids;
             nodeStk.push_back(p);
             res.root = p;
-            // 语义过程记录：构建语法树节点
             QString kidsStr;
             for (int i = 0; i < kids.size(); ++i)
                 kidsStr += (i ? "," : "") + (kids[i] ? kids[i]->symbol : QString());
@@ -208,9 +280,17 @@ ParseResult LR1Parser::parse(const QVector<QString>& tokens,
                      step,
                      stack,
                      input,
-                     QString("reduce %1 -> %2, children=[%3]").arg(L).arg(R).arg(kidsStr),
+                     QString("reduce %1 -> %2, children=[%3]")
+                         .arg(L)
+                         .arg(rhs.isEmpty() ? QString("#") : rhs.join(" "))
+                         .arg(kidsStr),
                      QString());
-            pushStep(res.steps, step++, stack, input, act, QString("%1 -> %2").arg(L).arg(R));
+            pushStep(res.steps,
+                     step++,
+                     stack,
+                     input,
+                     act,
+                     QString("%1 -> %2").arg(L).arg(rhs.isEmpty() ? QString("#") : rhs.join(" ")));
             continue;
         }
         pushStep(res.steps,
@@ -239,12 +319,14 @@ static SemanticASTNode* buildSemantic(const QString&                   L,
                                       const QString&                   rootPolicy,
                                       const QString&                   childOrder)
 {
-    int rootIdx = -1;
+    int               rootIdx = -1;
+    QVector<int>      rootIdxs;
     for (int i = 0; i < roles.size(); ++i)
     {
         auto m = roleMeaning.value(roles[i]);
         if (m == "root")
         {
+            rootIdxs.push_back(i);
             if (rootIdx < 0)
                 rootIdx = i;
             else if (rootPolicy == "last_1")
@@ -252,14 +334,20 @@ static SemanticASTNode* buildSemantic(const QString&                   L,
         }
     }
     QVector<int> childIdx;
+    QVector<int> siblingIdx;
     for (int i = 0; i < roles.size(); ++i)
-        if (roleMeaning.value(roles[i]) == "child")
-            childIdx.push_back(i);
-    SemanticASTNode* root = nullptr;
-    if (rootIdx >= 0)
     {
-        QString tag = (rootIdx < semKids.size() && semKids[rootIdx]) ? semKids[rootIdx]->tag : L;
-        root        = makeSemNode(tag);
+        auto m = roleMeaning.value(roles[i]);
+        if (m == "child")
+            childIdx.push_back(i);
+        else if (m == "sibling")
+            siblingIdx.push_back(i);
+    }
+    SemanticASTNode* root = nullptr;
+    if (rootIdx >= 0 && rootIdx < semKids.size() && semKids[rootIdx])
+    {
+        // 提升已有子树为根，保留其完整子结构
+        root = semKids[rootIdx];
     }
     else
     {
@@ -269,17 +357,43 @@ static SemanticASTNode* buildSemantic(const QString&                   L,
     {
         for (int idx : childIdx)
         {
-            if (idx < semKids.size() && semKids[idx])
+            if (idx < semKids.size() && semKids[idx] && idx != rootIdx)
                 root->children.push_back(semKids[idx]);
         }
     }
     else
     {
-        for (int idx : childIdx)
+        for (int i = childIdx.size() - 1; i >= 0; --i)
         {
-            if (idx < semKids.size() && semKids[idx])
+            int idx = childIdx[i];
+            if (idx < semKids.size() && semKids[idx] && idx != rootIdx)
                 root->children.push_back(semKids[idx]);
         }
+    }
+    for (int i = 0; i < rootIdxs.size(); ++i)
+    {
+        int idx = rootIdxs[i];
+        if (idx == rootIdx)
+            continue;
+        if (idx < semKids.size() && semKids[idx])
+            root->children.push_back(semKids[idx]);
+    }
+    // 简化支持 sibling：作为根的额外子节点附加，避免信息丢失
+    QSet<int> added;
+    for (int idx : childIdx) added.insert(idx);
+    for (int idx : siblingIdx)
+    {
+        if (idx < semKids.size() && semKids[idx]) {
+            root->children.push_back(semKids[idx]);
+            added.insert(idx);
+        }
+    }
+    // 保险策略：将剩余未加入的孩子也附加，避免角色位不匹配导致信息丢失
+    for (int i = 0; i < semKids.size(); ++i)
+    {
+        if (i == rootIdx) continue;
+        if (added.contains(i)) continue;
+        if (semKids[i]) root->children.push_back(semKids[i]);
     }
     return root;
 }
@@ -307,15 +421,47 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
         QString act = actionFor(t, st, a);
         if (act.contains('|'))
         {
-            auto    parts   = act.split('|');
-            QString policy  = Config::lr1ConflictPolicy().trimmed().toLower();
-            auto    prefer  = Config::lr1PreferShiftTokens();
-            QString nextTok = a;
-            if (!prefer.isEmpty())
-            {
-                for (const auto& pt : prefer)
+            auto parts = act.split('|');
+            bool hasAcc = false;
+            for (auto p : parts)
+                if (p == QStringLiteral("acc"))
                 {
-                    if (nextTok == pt)
+                    hasAcc = true;
+                    break;
+                }
+            if (hasAcc)
+            {
+                act = QStringLiteral("acc");
+            }
+            else
+            {
+                QString policy  = Config::lr1ConflictPolicy().trimmed().toLower();
+                auto    prefer  = Config::lr1PreferShiftTokens();
+                QString nextTok = a;
+                if (!prefer.isEmpty())
+                {
+                    for (const auto& pt : prefer)
+                    {
+                        if (nextTok == pt)
+                        {
+                            QString pick;
+                            for (auto p : parts)
+                                if (p.startsWith("s"))
+                                {
+                                    pick = p;
+                                    break;
+                                }
+                            if (!pick.isEmpty())
+                            {
+                                act = pick;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (act.isEmpty())
+                {
+                    if (policy == "prefer_shift")
                     {
                         QString pick;
                         for (auto p : parts)
@@ -324,48 +470,33 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
                                 pick = p;
                                 break;
                             }
-                        if (!pick.isEmpty())
-                        {
-                            act = pick;
-                            break;
-                        }
+                        if (pick.isEmpty())
+                            pick = parts[0];
+                        act = pick;
+                    }
+                    else if (policy == "prefer_reduce")
+                    {
+                        QString pick;
+                        for (auto p : parts)
+                            if (p.startsWith("r"))
+                            {
+                                pick = p;
+                                break;
+                            }
+                        if (pick.isEmpty())
+                            pick = parts[0];
+                        act = pick;
+                    }
+                    else
+                    {
+                        QString msg =
+                            QString("错误：状态=%1, 前瞻=%2, 动作冲突未配置，中止").arg(st).arg(a);
+                        pushStep(res.steps, step++, stack, input, QStringLiteral("error"), msg);
+                        pushStep(res.semanticSteps, step, stack, input, QStringLiteral("error"), msg);
+                        res.errorPos = res.steps.size();
+                        break;
                     }
                 }
-            }
-            if (policy == "prefer_shift")
-            {
-                QString pick;
-                for (auto p : parts)
-                    if (p.startsWith("s"))
-                    {
-                        pick = p;
-                        break;
-                    }
-                if (pick.isEmpty())
-                    pick = parts[0];
-                act = pick;
-            }
-            else if (policy == "prefer_reduce")
-            {
-                QString pick;
-                for (auto p : parts)
-                    if (p.startsWith("r"))
-                    {
-                        pick = p;
-                        break;
-                    }
-                if (pick.isEmpty())
-                    pick = parts[0];
-                act = pick;
-            }
-            else
-            {
-                QString msg =
-                    QString("错误：状态=%1, 前瞻=%2, 动作冲突未配置，中止").arg(st).arg(a);
-                pushStep(res.steps, step++, stack, input, QStringLiteral("error"), msg);
-                pushStep(res.semanticSteps, step, stack, input, QStringLiteral("error"), msg);
-                res.errorPos = res.steps.size();
-                break;
             }
         }
         if (act.isEmpty())
@@ -393,6 +524,14 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
                 res.root = nodeStk.back();
             if (!semStk.isEmpty())
                 res.astRoot = semStk.back();
+            // 顶层包装为起始非终结符名称
+            if (res.astRoot)
+            {
+                SemanticASTNode* top = new SemanticASTNode();
+                top->tag              = g.startSymbol;
+                top->children.push_back(res.astRoot);
+                res.astRoot = top;
+            }
             break;
         }
         if (act.startsWith("s"))
@@ -406,17 +545,28 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
             // 语义：移进叶子占位；默认 tag=a
             semStk.push_back(makeSemNode(a));
             pushStep(res.steps, step++, stack, input, act, QString());
+            pushStep(res.semanticSteps,
+                     step,
+                     stack,
+                     input,
+                     QString("移进符号[%1]，语义栈压入终结符节点").arg(a),
+                     QString());
             input.pop_front();
             continue;
         }
         if (act.startsWith("r"))
         {
-            QString                   prod  = act.mid(1).trimmed();
-            int                       arrow = prod.indexOf("->");
-            QString                   L     = prod.left(arrow).trimmed();
-            QString                   R     = prod.mid(arrow + 2).trimmed();
-            QVector<QString>          rhs   = tokenize(R);
-            int                       k     = rhs[0] == "#" ? 0 : rhs.size();
+            QString                   L;
+            QVector<QString>          rhs;
+            if (!parseReduction(t, act, L, rhs))
+            {
+                QString msg = QString("错误：归约解析失败，动作=%1，中止").arg(act);
+                pushStep(res.steps, step++, stack, input, QStringLiteral("error"), msg);
+                pushStep(res.semanticSteps, step, stack, input, QStringLiteral("error"), msg);
+                res.errorPos = res.steps.size();
+                break;
+            }
+            int                       k = rhs.isEmpty() ? 0 : rhs.size();
             QVector<ParseTreeNode*>   kids;
             QVector<SemanticASTNode*> semKids;
             for (int i = 0; i < k; ++i)
@@ -491,7 +641,18 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
             auto sem = buildSemantic(L, semKids, roles, roleMeaning, rootPolicy, childOrder);
             semStk.push_back(sem);
             res.astRoot = sem;
-            pushStep(res.steps, step++, stack, input, act, QString("%1 -> %2").arg(L).arg(R));
+            int rid = reductionIdFor(t, L, rhs);
+            pushStep(res.semanticSteps,
+                     step,
+                     stack,
+                     input,
+                     QString("准备归约：产生式 %1 → %2，执行语义动作构建非终结符节点 [%3]%4")
+                         .arg(rid >= 0 ? QString::number(rid) : QStringLiteral("?"))
+                         .arg(rhs.isEmpty() ? QString("#") : rhs.join(" "))
+                         .arg(sem ? sem->tag : L)
+                         .arg(rid >= 0 ? QString("（编码:%1）").arg(rid) : QString()),
+                     QString());
+            pushStep(res.steps, step++, stack, input, act, QString("%1 -> %2").arg(L).arg(rhs.isEmpty() ? QString("#") : rhs.join(" ")));
             continue;
         }
         pushStep(res.steps,
@@ -539,38 +700,51 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
         QString act = actionFor(t, st, a);
         if (act.contains('|'))
         {
-            auto    parts  = act.split('|');
-            QString policy = Config::lr1ConflictPolicy().trimmed().toLower();
-            if (policy == "prefer_shift")
+            auto parts = act.split('|');
+            bool hasAcc = false;
+            for (auto p : parts)
+                if (p == QStringLiteral("acc"))
+                {
+                    hasAcc = true;
+                    break;
+                }
+            if (hasAcc)
             {
-                QString pick;
-                for (auto p : parts)
-                    if (p.startsWith("s"))
-                    {
-                        pick = p;
-                        break;
-                    }
-                if (pick.isEmpty())
-                    pick = parts[0];
-                act = pick;
-            }
-            else if (policy == "prefer_reduce")
-            {
-                QString pick;
-                for (auto p : parts)
-                    if (p.startsWith("r"))
-                    {
-                        pick = p;
-                        break;
-                    }
-                if (pick.isEmpty())
-                    pick = parts[0];
-                act = pick;
+                act = QStringLiteral("acc");
             }
             else
             {
-                res.errorPos = res.steps.size();
-                break;
+                QString policy = Config::lr1ConflictPolicy().trimmed().toLower();
+                if (policy == "prefer_shift")
+                {
+                    QString pick;
+                    for (auto p : parts)
+                        if (p.startsWith("s"))
+                        {
+                            pick = p;
+                            break;
+                        }
+                    if (pick.isEmpty())
+                        pick = parts[0];
+                    act = pick;
+                }
+                else if (policy == "prefer_reduce")
+                {
+                    QString pick;
+                    for (auto p : parts)
+                        if (p.startsWith("r"))
+                        {
+                            pick = p;
+                            break;
+                        }
+                    if (pick.isEmpty())
+                        pick = parts[0];
+                    act = pick;
+                }
+                else
+                {
+                    act = parts[0];
+                }
             }
         }
         if (act.isEmpty())
@@ -585,6 +759,13 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
                 res.root = nodeStk.back();
             if (!semStk.isEmpty())
                 res.astRoot = semStk.back();
+            if (res.astRoot)
+            {
+                SemanticASTNode* top = new SemanticASTNode();
+                top->tag              = g.startSymbol;
+                top->children.push_back(res.astRoot);
+                res.astRoot = top;
+            }
             break;
         }
         if (act.startsWith("s"))
@@ -604,7 +785,14 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
                 {
                     QString lx = lexemes[ip].trimmed();
                     if (!lx.isEmpty())
-                        tag = lx;
+                    {
+                        if (mlow == QStringLiteral("identifier"))
+                            tag = QString("id(%1)").arg(lx);
+                        else if (mlow == QStringLiteral("number"))
+                            tag = QString("num(%1)").arg(lx);
+                        else
+                            tag = lx;
+                    }
                 }
             }
             semStk.push_back(makeSemNode(tag));
@@ -613,9 +801,9 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
                      step,
                      stack,
                      input,
-                     QString("shift %1%2")
+                     QString("移进符号[%1]%2，语义栈压入终结符节点")
                          .arg(a)
-                         .arg(tag != a ? QString(" (lexeme=%1)").arg(tag) : QString()),
+                         .arg(tag != a ? QString("（lexeme=%1）").arg(tag) : QString()),
                      QString());
             pushStep(res.steps, step++, stack, input, act, QString());
             input.pop_front();
@@ -624,12 +812,14 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
         }
         if (act.startsWith("r"))
         {
-            QString                   prod  = act.mid(1).trimmed();
-            int                       arrow = prod.indexOf("->");
-            QString                   L     = prod.left(arrow).trimmed();
-            QString                   R     = prod.mid(arrow + 2).trimmed();
-            QVector<QString>          rhs   = tokenize(R);
-            int                       k     = rhs[0] == "#" ? 0 : rhs.size();
+            QString                   L;
+            QVector<QString>          rhs;
+            if (!parseReduction(t, act, L, rhs))
+            {
+                res.errorPos = res.steps.size();
+                break;
+            }
+            int                       k = rhs.isEmpty() ? 0 : rhs.size();
             QVector<ParseTreeNode*>   kids;
             QVector<SemanticASTNode*> semKids;
             for (int i = 0; i < k; ++i)
@@ -702,17 +892,24 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
             QString kidsStr;
             for (int i = 0; i < semKids.size(); ++i)
                 kidsStr += (i ? "," : "") + (semKids[i] ? semKids[i]->tag : QString());
+            int rid2 = reductionIdFor(t, L, rhs);
             pushStep(res.semanticSteps,
                      step,
                      stack,
                      input,
-                     QString("reduce %1 -> %2, root=%3, children=[%4]")
-                         .arg(L)
-                         .arg(R)
+                     QString("准备归约：产生式 %1 → %2，执行语义动作构建非终结符节点 [%3]%4，子节点=[%5]")
+                         .arg(rid2 >= 0 ? QString::number(rid2) : QStringLiteral("?"))
+                         .arg(rhs.isEmpty() ? QString("#") : rhs.join(" "))
                          .arg(sem ? sem->tag : L)
+                         .arg(rid2 >= 0 ? QString("（编码:%1）").arg(rid2) : QString())
                          .arg(kidsStr),
                      QString());
-            pushStep(res.steps, step++, stack, input, act, QString("%1 -> %2").arg(L).arg(R));
+            pushStep(res.steps,
+                     step++,
+                     stack,
+                     input,
+                     act,
+                     QString("%1 -> %2").arg(L).arg(rhs.isEmpty() ? QString("#") : rhs.join(" ")));
             continue;
         }
         res.errorPos = res.steps.size();

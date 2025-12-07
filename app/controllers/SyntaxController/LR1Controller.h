@@ -52,6 +52,9 @@ class LR1Controller : public QObject
     void                    loadSemanticActions();
     void                    runLR1Process();
     void                    openGrammarProcessDialog();
+    void                    exportSemanticTree();
+    void                    exportSemanticProcess();
+    void                    exportGrammarProcess();
     static QVector<QString> splitTokens(const QString& s);
     static void             fillProcessTable(QTableWidget*             tbl,
                                              const QVector<QString>&   cols,

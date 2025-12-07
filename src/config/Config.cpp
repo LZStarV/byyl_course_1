@@ -115,7 +115,7 @@ void Config::load()
     s_dotEpsLabel   = QStringLiteral("ε");
     s_cfgSearchPaths.clear();
     s_emitIdentifierLexeme   = true;
-    s_identifierNames        = QVector<QString>({QStringLiteral("identifier")});
+    s_identifierNames        = QVector<QString>({QStringLiteral("identifier"), QStringLiteral("number")});
     s_tokPrefix              = QStringLiteral("_");
     s_tokNameFirst           = QStringLiteral("A-Za-z");
     s_tokNameRest            = QStringLiteral("A-Za-z0-9_");
