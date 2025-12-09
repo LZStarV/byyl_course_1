@@ -14,7 +14,7 @@
 #include <QMap>
 #include <QStringList>
 #include <QTableWidget>
-#include "../../../src/regex/RegexLexer.h"
+#include "../../../../src/regex/RegexLexer.h"
 
 void AutomataTableHelper::fillTable(QTableWidget* tbl, const Tables& t)
 {

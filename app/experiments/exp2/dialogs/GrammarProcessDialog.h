@@ -1,8 +1,8 @@
 #pragma once
 #include <QDialog>
 #include <QTableWidget>
-#include "../../../src/syntax/LR1.h"
-#include "../../../src/syntax/LR1Parser.h"
+#include "../../../../src/syntax/LR1.h"
+#include "../../../../src/syntax/LR1Parser.h"
 
 class GrammarProcessDialog : public QDialog
 {

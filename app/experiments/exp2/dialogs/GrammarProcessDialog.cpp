@@ -2,7 +2,7 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QHeaderView>
-#include "../../../src/config/Config.h"
+#include "../../../../src/config/Config.h"
 
 static QMap<QString, int> makeReductionIndex(const LR1ActionTable& t)
 {
