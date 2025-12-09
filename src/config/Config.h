@@ -12,6 +12,7 @@
 #pragma once
 #include <QString>
 #include <QVector>
+#include <QMap>
 
 /**
  * \brief 运行时配置中心

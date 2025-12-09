@@ -67,7 +67,7 @@ void LR1TreeTab::resizeEvent(QResizeEvent* e)
     QWidget::resizeEvent(e);
     if (auto t = findChild<QTableWidget*>("tblSemanticProcess"))
     {
-        int vw   = t->viewport()->width();
+        int vw    = t->viewport()->width();
         int wStep = qMax(60, vw / 10);
         int wDesc = qMax(200, vw - wStep - 20);
         t->setColumnWidth(0, wStep);

@@ -1,7 +1,8 @@
 letter=[A-Za-z]
 digit=[0-9]
+ws=[ \t\n\r]
 _identifier100=letter(letter|digit)*
 _number101=digit+
-_comment102={((digit|\+|-|\*|/|%|\^|<|<>|<=|>=|>|=|$|;|:=|letter)*)}
+_comment102={(digit|letter|ws|\+|-|\*|/|%|\^|<|<>|<=|>=|>|=|\$|;|:=)*}
 _special103S=\+|-|\*|/|%|\^|<|<>|<=|>=|>|=|:=|;
 _Keyword200S=(i|I)(f|F)|(t|T)(h|H)(e|E)(n|N)|(e|E)(l|L)(s|S)(e|E)|(E|e)(n|N)(D|d)|(r|R)(e|E)(p|P)(e|E)(a|A)(t|T)|(u|U)(n|N)(t|T)(I|i)(l|L)|(r|R)(e|E)(a|A)(D|d)|(w|W)(r|R)(i|I)(t|T)(E|e)

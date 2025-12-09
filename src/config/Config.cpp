@@ -114,8 +114,9 @@ void Config::load()
     s_dotNodeShape  = QStringLiteral("circle");
     s_dotEpsLabel   = QStringLiteral("ε");
     s_cfgSearchPaths.clear();
-    s_emitIdentifierLexeme   = true;
-    s_identifierNames        = QVector<QString>({QStringLiteral("identifier"), QStringLiteral("number")});
+    s_emitIdentifierLexeme = true;
+    s_identifierNames      = QVector<QString>(
+        {QStringLiteral("identifier"), QStringLiteral("number"), QStringLiteral("comment")});
     s_tokPrefix              = QStringLiteral("_");
     s_tokNameFirst           = QStringLiteral("A-Za-z");
     s_tokNameRest            = QStringLiteral("A-Za-z0-9_");
@@ -262,6 +263,13 @@ void Config::load()
                     }
                     if (s_identifierNames.isEmpty())
                         s_identifierNames.push_back(QStringLiteral("identifier"));
+                    bool hasComment = false;
+                    for (auto s : s_identifierNames)
+                        if (s.trimmed().compare(QStringLiteral("comment"), Qt::CaseInsensitive) ==
+                            0)
+                            hasComment = true;
+                    if (!hasComment)
+                        s_identifierNames.push_back(QStringLiteral("comment"));
                 }
                 if (obj.contains("token_header") && obj.value("token_header").isObject())
                 {
@@ -346,9 +354,8 @@ void Config::load()
     if (s_multiOps.isEmpty())
         s_multiOps = QVector<QString>({"<=", ">=", "<>", ":=", "==", "!="});
     if (s_singleOps.isEmpty())
-        s_singleOps = QVector<QString>({
-            "(", ")", ";", ",", "<", ">", "=", "+", "-", "*", "/", "%", "^", "{", "}", "[", "]"
-        });
+        s_singleOps = QVector<QString>(
+            {"(", ")", ";", ",", "<", ">", "=", "+", "-", "*", "/", "%", "^", "{", "}", "[", "]"});
     if (s_semRoleMeaning.isEmpty())
     {
         s_semRoleMeaning[0] = "discard";

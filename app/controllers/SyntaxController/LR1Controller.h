@@ -59,8 +59,11 @@ class LR1Controller : public QObject
     static void             fillProcessTable(QTableWidget*             tbl,
                                              const QVector<QString>&   cols,
                                              const QVector<ParseStep>& steps);
-    static void             fillSemanticTree(QTreeWidget* tree, const SemanticASTNode* root);
+    void                    fillSemanticTree(QTreeWidget* tree, const SemanticASTNode* root);
     // 缓存最近一次解析结果与表
     ParseResult    lastResult_;
     LR1ActionTable lastActionTable_;
+    // 动态跳过的结构性节点集合（由文法推导）
+    QSet<QString> skipTags_;
+    void          computeSkipTags(const Grammar& g);
 };

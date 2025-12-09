@@ -35,8 +35,8 @@ static bool parseReduction(const LR1ActionTable& t,
                            QString&              L,
                            QVector<QString>&     rhs)
 {
-    QString s = act.mid(1).trimmed();
-    bool    ok = false;
+    QString s   = act.mid(1).trimmed();
+    bool    ok  = false;
     int     idx = s.toInt(&ok);
     if (ok)
     {
@@ -117,7 +117,7 @@ ParseResult LR1Parser::parse(const QVector<QString>& tokens,
         QString act = actionFor(t, st, a);
         if (act.contains('|'))
         {
-            auto parts = act.split('|');
+            auto parts  = act.split('|');
             bool hasAcc = false;
             for (auto p : parts)
                 if (p == QStringLiteral("acc"))
@@ -235,8 +235,8 @@ ParseResult LR1Parser::parse(const QVector<QString>& tokens,
         }
         if (act.startsWith("r"))
         {
-            QString                 L;
-            QVector<QString>        rhs;
+            QString          L;
+            QVector<QString> rhs;
             if (!parseReduction(t, act, L, rhs))
             {
                 QString msg = QString("错误：归约解析失败，动作=%1，中止").arg(act);
@@ -319,8 +319,42 @@ static SemanticASTNode* buildSemantic(const QString&                   L,
                                       const QString&                   rootPolicy,
                                       const QString&                   childOrder)
 {
-    int               rootIdx = -1;
-    QVector<int>      rootIdxs;
+    if (roles.isEmpty())
+    {
+        if (semKids.size() == 1 && semKids[0])
+        {
+            return semKids[0];
+        }
+        SemanticASTNode* root = makeSemNode(L);
+        for (auto c : semKids)
+            if (c)
+                root->children.push_back(c);
+        return root;
+    }
+    // 若同一候选存在多个 root 标注，视为聚合节点：并列附加（列表型产生式）
+    int rootCount = 0;
+    for (int i = 0; i < roles.size(); ++i)
+        if (roleMeaning.value(roles[i]) == "root")
+            rootCount++;
+    if (rootCount > 1)
+    {
+        SemanticASTNode* root = makeSemNode(L);
+        QVector<int>     idxs;
+        for (int i = 0; i < roles.size(); ++i)
+        {
+            auto m = roleMeaning.value(roles[i]);
+            if (m == "root" || m == "child" || m == "sibling")
+                idxs.push_back(i);
+        }
+        for (int i : idxs)
+        {
+            if (i < semKids.size() && semKids[i])
+                root->children.push_back(semKids[i]);
+        }
+        return root;
+    }
+    int          rootIdx = -1;
+    QVector<int> rootIdxs;
     for (int i = 0; i < roles.size(); ++i)
     {
         auto m = roleMeaning.value(roles[i]);
@@ -374,8 +408,10 @@ static SemanticASTNode* buildSemantic(const QString&                   L,
     for (int i = 0; i < rootIdxs.size(); ++i)
     {
         int idx = rootIdxs[i];
-        if (idx == rootIdx) continue;
-        if (idx < semKids.size() && semKids[idx]) root->children.push_back(semKids[idx]);
+        if (idx == rootIdx)
+            continue;
+        if (idx < semKids.size() && semKids[idx])
+            root->children.push_back(semKids[idx]);
     }
     // sibling 附加
     for (int idx : siblingIdx)
@@ -410,7 +446,7 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
         QString act = actionFor(t, st, a);
         if (act.contains('|'))
         {
-            auto parts = act.split('|');
+            auto parts  = act.split('|');
             bool hasAcc = false;
             for (auto p : parts)
                 if (p == QStringLiteral("acc"))
@@ -481,7 +517,8 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
                         QString msg =
                             QString("错误：状态=%1, 前瞻=%2, 动作冲突未配置，中止").arg(st).arg(a);
                         pushStep(res.steps, step++, stack, input, QStringLiteral("error"), msg);
-                        pushStep(res.semanticSteps, step, stack, input, QStringLiteral("error"), msg);
+                        pushStep(
+                            res.semanticSteps, step, stack, input, QStringLiteral("error"), msg);
                         res.errorPos = res.steps.size();
                         break;
                     }
@@ -517,7 +554,7 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
             if (res.astRoot)
             {
                 SemanticASTNode* top = new SemanticASTNode();
-                top->tag              = g.startSymbol;
+                top->tag             = g.startSymbol;
                 top->children.push_back(res.astRoot);
                 res.astRoot = top;
             }
@@ -545,8 +582,8 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
         }
         if (act.startsWith("r"))
         {
-            QString                   L;
-            QVector<QString>          rhs;
+            QString          L;
+            QVector<QString> rhs;
             if (!parseReduction(t, act, L, rhs))
             {
                 QString msg = QString("错误：归约解析失败，动作=%1，中止").arg(act);
@@ -630,7 +667,7 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
             auto sem = buildSemantic(L, semKids, roles, roleMeaning, rootPolicy, childOrder);
             semStk.push_back(sem);
             res.astRoot = sem;
-            int rid = reductionIdFor(t, L, rhs);
+            int rid     = reductionIdFor(t, L, rhs);
             pushStep(res.semanticSteps,
                      step,
                      stack,
@@ -641,7 +678,12 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
                          .arg(sem ? sem->tag : L)
                          .arg(rid >= 0 ? QString("（编码:%1）").arg(rid) : QString()),
                      QString());
-            pushStep(res.steps, step++, stack, input, act, QString("%1 -> %2").arg(L).arg(rhs.isEmpty() ? QString("#") : rhs.join(" ")));
+            pushStep(res.steps,
+                     step++,
+                     stack,
+                     input,
+                     act,
+                     QString("%1 -> %2").arg(L).arg(rhs.isEmpty() ? QString("#") : rhs.join(" ")));
             continue;
         }
         pushStep(res.steps,
@@ -689,7 +731,7 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
         QString act = actionFor(t, st, a);
         if (act.contains('|'))
         {
-            auto parts = act.split('|');
+            auto parts  = act.split('|');
             bool hasAcc = false;
             for (auto p : parts)
                 if (p == QStringLiteral("acc"))
@@ -751,7 +793,7 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
             if (res.astRoot)
             {
                 SemanticASTNode* top = new SemanticASTNode();
-                top->tag              = g.startSymbol;
+                top->tag             = g.startSymbol;
                 top->children.push_back(res.astRoot);
                 res.astRoot = top;
             }
@@ -765,7 +807,7 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
             n->symbol        = a;
             res.root         = n;
             nodeStk.push_back(n);
-            // 语义：identifier 等使用词素作为叶子标签
+            // 语义：对携带词素的终结符使用“token(lexeme)”作为叶子标签
             QString tag  = a;
             QString mlow = a.trimmed().toLower();
             if (idNames.contains(mlow))
@@ -775,14 +817,10 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
                     QString lx = lexemes[ip].trimmed();
                     if (!lx.isEmpty())
                     {
-                        if (mlow == QStringLiteral("identifier"))
-                            tag = QString("id(%1)").arg(lx);
-                        else if (mlow == QStringLiteral("number"))
-                            tag = QString("num(%1)").arg(lx);
-                        else
-                            tag = lx;
+                        tag = QString("%1(%2)").arg(a).arg(lx);
                     }
                 }
+                ip++;
             }
             semStk.push_back(makeSemNode(tag));
             // 语义过程记录：移进叶子（可能替换为词素）
@@ -796,13 +834,12 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
                      QString());
             pushStep(res.steps, step++, stack, input, act, QString());
             input.pop_front();
-            ip++;
             continue;
         }
         if (act.startsWith("r"))
         {
-            QString                   L;
-            QVector<QString>          rhs;
+            QString          L;
+            QVector<QString> rhs;
             if (!parseReduction(t, act, L, rhs))
             {
                 res.errorPos = res.steps.size();
@@ -882,17 +919,19 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
             for (int i = 0; i < semKids.size(); ++i)
                 kidsStr += (i ? "," : "") + (semKids[i] ? semKids[i]->tag : QString());
             int rid2 = reductionIdFor(t, L, rhs);
-            pushStep(res.semanticSteps,
-                     step,
-                     stack,
-                     input,
-                     QString("准备归约：产生式 %1 → %2，执行语义动作构建非终结符节点 [%3]%4，子节点=[%5]")
-                         .arg(rid2 >= 0 ? QString::number(rid2) : QStringLiteral("?"))
-                         .arg(rhs.isEmpty() ? QString("#") : rhs.join(" "))
-                         .arg(sem ? sem->tag : L)
-                         .arg(rid2 >= 0 ? QString("（编码:%1）").arg(rid2) : QString())
-                         .arg(kidsStr),
-                     QString());
+            pushStep(
+                res.semanticSteps,
+                step,
+                stack,
+                input,
+                QString(
+                    "准备归约：产生式 %1 → %2，执行语义动作构建非终结符节点 [%3]%4，子节点=[%5]")
+                    .arg(rid2 >= 0 ? QString::number(rid2) : QStringLiteral("?"))
+                    .arg(rhs.isEmpty() ? QString("#") : rhs.join(" "))
+                    .arg(sem ? sem->tag : L)
+                    .arg(rid2 >= 0 ? QString("（编码:%1）").arg(rid2) : QString())
+                    .arg(kidsStr),
+                QString());
             pushStep(res.steps,
                      step++,
                      stack,

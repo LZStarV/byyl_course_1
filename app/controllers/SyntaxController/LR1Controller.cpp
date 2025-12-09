@@ -86,7 +86,7 @@ void LR1Controller::fillProcessTable(QTableWidget*             tbl,
     tbl->setWordWrap(true);
     tbl->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     tbl->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-    int vw = tbl->viewport()->width();
+    int vw    = tbl->viewport()->width();
     int wStep = qMax(60, vw / 10);
     int wDesc = qMax(200, vw - wStep - 20);
     tbl->setColumnWidth(0, wStep);
@@ -163,16 +163,25 @@ static QVector<ParseStep> buildSemanticActionAuditSteps(
     return out;
 }
 
-static void addTreeNode(QTreeWidgetItem* parent, const SemanticASTNode* n)
+static void addTreeNode(QTreeWidgetItem*              parent,
+                        const SemanticASTNode*        n,
+                        QSet<const SemanticASTNode*>& visited,
+                        const QSet<QString>&          skipTags)
 {
     if (!n)
         return;
-    auto item = new QTreeWidgetItem(QStringList(n->tag));
-    if (parent)
-        parent->addChild(item);
-    else
-        ;
-    for (auto c : n->children) addTreeNode(item, c);
+    if (visited.contains(n))
+        return;
+    visited.insert(n);
+    bool             skipSelf = skipTags.contains(n->tag);
+    QTreeWidgetItem* cur      = parent;
+    if (!skipSelf)
+    {
+        cur = new QTreeWidgetItem(QStringList(n->tag));
+        if (parent)
+            parent->addChild(cur);
+    }
+    for (auto c : n->children) addTreeNode(cur, c, visited, skipTags);
 }
 
 void LR1Controller::fillSemanticTree(QTreeWidget* tree, const SemanticASTNode* root)
@@ -180,11 +189,13 @@ void LR1Controller::fillSemanticTree(QTreeWidget* tree, const SemanticASTNode* r
     if (!tree)
         return;
     tree->clear();
-    auto item = new QTreeWidgetItem(QStringList(root ? root->tag : QString("(empty)")));
+    QString topTag = root ? root->tag + QStringLiteral("（文法开始符号）") : QString("(empty)");
+    auto    item   = new QTreeWidgetItem(QStringList(topTag));
     tree->addTopLevelItem(item);
     if (root)
     {
-        for (auto c : root->children) addTreeNode(item, c);
+        QSet<const SemanticASTNode*> visited;
+        for (auto c : root->children) addTreeNode(item, c, visited, skipTags_);
     }
     tree->expandAll();
 }
@@ -324,6 +335,8 @@ void LR1Controller::runLR1Process()
         notify_->error("文法错误:" + err);
         return;
     }
+    // 由文法推导结构性列表节点，供导出时跳过标签使用
+    computeSkipTags(g);
     auto    gr        = LR1Builder::build(g);
     auto    tbl       = LR1Builder::computeActionTable(g, gr);
     auto    tokView   = page_->findChild<QPlainTextEdit*>("txtTokensViewLR1");
@@ -390,12 +403,14 @@ void LR1Controller::runLR1Process()
     if (unknown > 0)
         notify_->warning(QString("存在未映射的Token编码数量: %1").arg(unknown));
     // 一致性校验：tokens ⊆ Grammar.Terminals
-    QSet<QString> gTerms = g.terminals;
+    QSet<QString>    gTerms = g.terminals;
     QVector<QString> bad;
     for (const auto& t : tokens)
     {
-        if (t == "$") continue;
-        if (!gTerms.contains(t)) bad.push_back(t);
+        if (t == "$")
+            continue;
+        if (!gTerms.contains(t))
+            bad.push_back(t);
     }
     if (!bad.isEmpty())
     {
@@ -407,7 +422,8 @@ void LR1Controller::runLR1Process()
     for (auto it = tokMap.begin(); it != tokMap.end(); ++it) mapNames.insert(it.value());
     QVector<QString> missing;
     for (const auto& s : gTerms)
-        if (!mapNames.contains(s)) missing.push_back(s);
+        if (!mapNames.contains(s))
+            missing.push_back(s);
     if (!missing.isEmpty())
     {
         notify_->error(QStringLiteral("文法终结符在映射中不存在: ") + missing.join(","));
@@ -524,17 +540,29 @@ void LR1Controller::openGrammarProcessDialog()
     dlg.exec();
 }
 
-static void writeTreeText(QTextStream& out, const SemanticASTNode* n, int indent, QSet<const SemanticASTNode*>& visited)
+static void writeTreeText(QTextStream&                  out,
+                          const SemanticASTNode*        n,
+                          int                           indent,
+                          QSet<const SemanticASTNode*>& visited,
+                          const QSet<QString>&          skipTags)
 {
     if (!n)
         return;
     if (visited.contains(n))
         return;
     visited.insert(n);
-    QString line(indent, ' ');
-    line += n->tag;
-    out << line << '\n';
-    for (auto c : n->children) writeTreeText(out, c, indent + 2, visited);
+    bool skipSelf = skipTags.contains(n->tag);
+    if (!skipSelf)
+    {
+        QString tag = n->tag;
+        if (indent == 0)
+            tag += QStringLiteral("（文法开始符号）");
+        QString line(indent, ' ');
+        line += tag;
+        out << line << '\n';
+        indent += 2;
+    }
+    for (auto c : n->children) writeTreeText(out, c, indent, visited, skipTags);
 }
 
 void LR1Controller::exportSemanticTree()
@@ -544,10 +572,11 @@ void LR1Controller::exportSemanticTree()
         notify_->warning(QStringLiteral("请先运行LR(1)分析以生成语法树"));
         return;
     }
-    auto path = QFileDialog::getSaveFileName(mw_,
-                                             QStringLiteral("导出语法树"),
-                                             QStringLiteral("semantic_tree.txt"),
-                                             QStringLiteral("Text (*.txt);;JSON (*.json);;All (*)"));
+    auto path =
+        QFileDialog::getSaveFileName(mw_,
+                                     QStringLiteral("导出语法树"),
+                                     QStringLiteral("semantic_tree.txt"),
+                                     QStringLiteral("Text (*.txt);;JSON (*.json);;All (*)"));
     if (path.isEmpty())
         return;
     QFile f(path);
@@ -576,10 +605,24 @@ void LR1Controller::exportSemanticTree()
     else
     {
         QSet<const SemanticASTNode*> visited;
-        writeTreeText(out, lastResult_.astRoot, 0, visited);
+        writeTreeText(out, lastResult_.astRoot, 0, visited, skipTags_);
     }
     f.close();
     notify_->info(QStringLiteral("语法树已导出"));
+}
+
+void LR1Controller::computeSkipTags(const Grammar& g)
+{
+    skipTags_.clear();
+    if (g.productions.isEmpty())
+        return;
+    QString start = g.startSymbol;
+    for (auto it = g.productions.begin(); it != g.productions.end(); ++it)
+    {
+        const QString& L = it.key();
+        if (L != start)
+            skipTags_.insert(L);
+    }
 }
 
 void LR1Controller::exportSemanticProcess()
@@ -593,7 +636,8 @@ void LR1Controller::exportSemanticProcess()
                                              QStringLiteral("导出语义分析过程"),
                                              QStringLiteral("semantic_process.txt"),
                                              QStringLiteral("Text (*.txt);;All (*)"));
-    if (path.isEmpty()) return;
+    if (path.isEmpty())
+        return;
     QFile f(path);
     if (!f.open(QIODevice::WriteOnly | QIODevice::Text))
     {
@@ -601,8 +645,7 @@ void LR1Controller::exportSemanticProcess()
         return;
     }
     QTextStream out(&f);
-    for (const auto& ps : lastResult_.semanticSteps)
-        out << ps.step << ": " << ps.action << '\n';
+    for (const auto& ps : lastResult_.semanticSteps) out << ps.step << ": " << ps.action << '\n';
     f.close();
     notify_->info(QStringLiteral("语义分析过程已导出"));
 }
@@ -618,7 +661,8 @@ void LR1Controller::exportGrammarProcess()
                                              QStringLiteral("导出语法分析过程"),
                                              QStringLiteral("grammar_process.txt"),
                                              QStringLiteral("Text (*.txt);;All (*)"));
-    if (path.isEmpty()) return;
+    if (path.isEmpty())
+        return;
     QFile f(path);
     if (!f.open(QIODevice::WriteOnly | QIODevice::Text))
     {

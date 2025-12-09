@@ -28,24 +28,43 @@ static QString trim(const QString& s)
 static QVector<QString> splitRhs(const QString& rhs)
 {
     QVector<QString> v;
-    QString          s       = rhs;
-    int              i       = 0;
-    auto isWordChar = [](QChar c) { return c.isLetterOrNumber() || c == '_' || c == '-'; };
-    auto isSingleOp = [](QChar c) {
+    QString          s = rhs;
+    int              i = 0;
+    auto isWordChar    = [](QChar c) { return c.isLetterOrNumber() || c == '_' || c == '-'; };
+    auto isSingleOp    = [](QChar c)
+    {
         static QSet<QChar> ops;
         if (ops.isEmpty())
         {
-            const QChar arr[] = { '(', ')', '{', '}', '[', ']', ';', ',', '<', '>', '=', '+', '-', '*', '/', '%', '^' };
+            const QChar arr[] = {'(',
+                                 ')',
+                                 '{',
+                                 '}',
+                                 '[',
+                                 ']',
+                                 ';',
+                                 ',',
+                                 '<',
+                                 '>',
+                                 '=',
+                                 '+',
+                                 '-',
+                                 '*',
+                                 '/',
+                                 '%',
+                                 '^'};
             for (QChar ch : arr) ops.insert(ch);
         }
         return ops.contains(c);
     };
-    auto matchMultiOp = [&](const QString& s, int i) -> QString {
-        static const QVector<QString> mops = { "<=", ">=", "==", "!=", ":=", "++", "--" };
+    auto matchMultiOp = [&](const QString& s, int i) -> QString
+    {
+        static const QVector<QString> mops = {"<=", ">=", "==", "!=", ":=", "++", "--"};
         for (const auto& op : mops)
         {
             int L = op.size();
-            if (L > 0 && i + L <= s.size() && s.mid(i, L) == op) return op;
+            if (L > 0 && i + L <= s.size() && s.mid(i, L) == op)
+                return op;
         }
         return QString();
     };

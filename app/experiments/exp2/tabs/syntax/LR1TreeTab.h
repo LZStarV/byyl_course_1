@@ -20,11 +20,12 @@
 class LR1TreeTab : public QWidget
 {
     Q_OBJECT
-  public:
+   public:
     explicit LR1TreeTab(QWidget* parent = nullptr);
     QTableWidget* tblProcess;
     QTableWidget* tblSemantic;
     QPushButton*  btnShowGrammarProcess;
-  protected:
+
+   protected:
     void resizeEvent(QResizeEvent* e) override;
 };
