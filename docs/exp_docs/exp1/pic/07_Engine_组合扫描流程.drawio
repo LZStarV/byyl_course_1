@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2025-12-12T00:00:00.000Z" agent="5.0 (Mac)" version="20.6.3" etag="flow-07" type="device">
+  <diagram id="Flow07" name="EngineRunMultiple">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="n_start" value="开始：输入源文本与 mdfas/codes/identifierCodes" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="80" y="100" width="420" height="60" as="geometry"/></mxCell>
+        <mxCell id="n_skip" value="跳过策略：空白/注释/字符串/模板（按配置）" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="80" y="180" width="360" height="60" as="geometry"/></mxCell>
+        <mxCell id="n_iter" value="遍历 DFA：对每个 idx 计算 matchLen 与 codeWeight" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="80" y="260" width="400" height="60" as="geometry"/></mxCell>
+        <mxCell id="n_select" value="选择规则：长度优先；等长权重优先；再按索引" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="80" y="340" width="380" height="60" as="geometry"/></mxCell>
+        <mxCell id="n_output" value="输出与推进：输出编码；命中标识符且配置开启则追加词素；失败输出 ERR 并前进 1" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="80" y="420" width="620" height="80" as="geometry"/></mxCell>
+        <mxCell id="n_done" value="完成：累积输出串" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="80" y="520" width="240" height="50" as="geometry"/></mxCell>
+
+        <mxCell id="e_start_skip" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_start" target="n_skip"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_skip_iter" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_skip" target="n_iter"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_iter_select" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_iter" target="n_select"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_select_output" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_select" target="n_output"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_output_done" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_output" target="n_done"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

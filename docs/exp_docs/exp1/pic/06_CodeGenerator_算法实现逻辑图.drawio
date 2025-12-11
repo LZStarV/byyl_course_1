@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2025-12-12T00:00:00.000Z" agent="5.0 (Mac)" version="20.6.3" etag="algo-06" type="device">
+  <diagram id="Algo06" name="LexerCodeGen_Algorithm">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="n_start" value="开始：&#xa;输入 mdfas / codes / alpha / identifierCodes" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="80" y="80" width="420" height="70" as="geometry"/></mxCell>
+
+        <mxCell id="n_funcs" value="生成函数：&#xa;对每个 DFA 生成&#xa;AcceptState_i / Step_i&#xa;（switch(state) / 字面字符匹配）" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="80" y="160" width="560" height="110" as="geometry"/></mxCell>
+        <mxCell id="n_tables" value="分发表初始化：&#xa;STEPS[] / ACCEPTS[] / STARTS[]" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="80" y="240" width="420" height="80" as="geometry"/></mxCell>
+
+        <mxCell id="n_judge" value="分类函数：&#xa;Judgechar（alpha.hasLetter / hasDigit）" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="80" y="320" width="420" height="80" as="geometry"/></mxCell>
+        <mxCell id="n_weight" value="权重策略：&#xa;codeWeight 解析 LEXER_WEIGHTS&#xa;默认回退&#xa;minCode 降序匹配" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="80" y="400" width="560" height="110" as="geometry"/></mxCell>
+        <mxCell id="n_match" value="最长匹配：&#xa;matchLen(idx, src, pos)&#xa;步进记录 last&#xa;ACCEPTS[idx] 判定" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="80" y="480" width="560" height="100" as="geometry"/></mxCell>
+
+        <mxCell id="n_skip" value="跳过策略（配置驱动）：&#xa;空白 / 注释 / 字符串 / 模板" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="740" y="200" width="420" height="80" as="geometry"/></mxCell>
+        <mxCell id="n_scan" value="主扫描：&#xa;遍历所有 DFA 计算 matchLen&#xa;选择（长度>权重>索引）&#xa;输出编码 / 可选词素&#xa;失败 ERR 前进 1" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="740" y="280" width="620" height="120" as="geometry"/></mxCell>
+        <mxCell id="n_out" value="输出：&#xa;生成的 C++ 源（概念）&#xa;支持 CLI / GUI 运行&#xa;测试截图位置" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="740" y="370" width="520" height="100" as="geometry"/></mxCell>
+
+        <mxCell id="e_start_funcs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_start" target="n_funcs"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_funcs_tables" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_funcs" target="n_tables"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_tables_judge" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_tables" target="n_judge"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_judge_weight" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_judge" target="n_weight"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_weight_match" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_weight" target="n_match"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_match_skip" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_match" target="n_skip"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="700" y="510"/></Array></mxGeometry></mxCell>
+        <mxCell id="e_skip_scan" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_skip" target="n_scan"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_scan_out" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_scan" target="n_out"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

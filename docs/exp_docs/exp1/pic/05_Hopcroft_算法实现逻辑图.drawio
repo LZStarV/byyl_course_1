@@ -1,0 +1,78 @@
+<mxfile host="65bd71144e">
+    <diagram id="Algo05" name="DFA_to_MinDFA_Algorithm">
+        <mxGraphModel dx="672" dy="522" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1200" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="n_start" value="开始：&#xa;输入 DFA" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="80" width="240" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_init" value="初始划分：&#xa;A（接受）/N（非接受）&#xa;空集合不入列&#xa;P 初始化" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="150" width="360" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_outer" value="外层循环：changed 是否为真？" style="shape=rhombus;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="90" y="220" width="220" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_inner" value="内层：&#xa;遍历分区 X 与符号 a&#xa;计算 Pre={ s | trans(s,a)∈X }" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="420" y="220" width="420" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_preempty" value="Pre 是否为空？" style="shape=rhombus;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="900" y="220" width="200" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_skip" value="跳过：&#xa;保留 P 不变&#xa;继续下一符号/分区" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="1140" y="220" width="280" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_split" value="切分：&#xa;对每个 Y∈P，用 Pre 将 Y→Y1/Y2&#xa;若均非空则替换 Y&#xa;changed=true" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="900" y="320" width="420" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_stable" value="稳定：&#xa;若一轮未发生切分，则收敛" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="330" width="320" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_rebuild" value="重建：&#xa;为每分区选代表 rid&#xa;repr[s]=newId&#xa;重映射转移&#xa;m.start=repr[dfa.start]" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="410" width="420" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_return" value="输出：&#xa;MinDFA（状态与转移重建完毕）" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="490" width="320" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_start_init" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_start" target="n_init" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_init_outer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_init" target="n_outer" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_outer_inner" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_outer" target="n_inner" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="360" y="265"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_inner_preempty" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_inner" target="n_preempty" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_preempty_skip" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_preempty" target="n_skip" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_preempty_split" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_preempty" target="n_split" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_split_outer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_split" target="n_outer" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="360" y="360"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_outer_stable" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_outer" target="n_stable" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_stable_rebuild" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_stable" target="n_rebuild" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_rebuild_return" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_rebuild" target="n_return" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
