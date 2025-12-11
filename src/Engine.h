@@ -134,5 +134,6 @@ class Engine
     Grammar                               parseGrammarText(const QString& text, QString& error);
     LL1Info                               computeLL1(const Grammar& g);
     QMap<QString, QVector<QString>>       firstFollowAsRows(const LL1Info& info);
+    QMap<QString, QVector<QString>>       firstAsRows(const Grammar& g, const LL1Info& info);
     QMap<QString, QMap<QString, QString>> parsingTableAsRows(const Grammar& g, const LL1Info& info);
 };

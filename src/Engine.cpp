@@ -668,6 +668,22 @@ QMap<QString, QVector<QString>> Engine::firstFollowAsRows(const LL1Info& info)
     return r;
 }
 
+QMap<QString, QVector<QString>> Engine::firstAsRows(const Grammar& g, const LL1Info& info)
+{
+    QMap<QString, QVector<QString>> r;
+    QList<QString> nts = QList<QString>(g.nonterminals.begin(), g.nonterminals.end());
+    std::sort(nts.begin(), nts.end());
+    for (const auto& A : nts)
+    {
+        QVector<QString> v;
+        QList<QString>   s = QList<QString>(info.first.value(A).begin(), info.first.value(A).end());
+        std::sort(s.begin(), s.end());
+        for (auto x : s) v.push_back(x);
+        r[A] = v;
+    }
+    return r;
+}
+
 QMap<QString, QMap<QString, QString>> Engine::parsingTableAsRows(const Grammar& g,
                                                                  const LL1Info& info)
 {

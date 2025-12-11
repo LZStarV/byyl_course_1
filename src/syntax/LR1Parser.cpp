@@ -319,6 +319,22 @@ static SemanticASTNode* buildSemantic(const QString&                   L,
                                       const QString&                   rootPolicy,
                                       const QString&                   childOrder)
 {
+    QString llow = L.trimmed().toLower();
+    {
+        auto             names = Config::identifierTokenNames();
+        QVector<QString> lowers;
+        for (auto s : names) lowers.push_back(s.trimmed().toLower());
+        if (lowers.contains(llow))
+        {
+            if (semKids.size() == 1 && semKids[0])
+                return semKids[0];
+            SemanticASTNode* root = makeSemNode(L);
+            for (auto c : semKids)
+                if (c)
+                    root->children.push_back(c);
+            return root;
+        }
+    }
     if (roles.isEmpty())
     {
         if (semKids.size() == 1 && semKids[0])
@@ -810,16 +826,20 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
             // 语义：对携带词素的终结符使用“token(lexeme)”作为叶子标签
             QString tag  = a;
             QString mlow = a.trimmed().toLower();
+            QString shownLex;
             if (idNames.contains(mlow))
             {
-                if (ip < lexemes.size())
+                if (ip >= lexemes.size() || lexemes[ip].trimmed().isEmpty())
                 {
-                    QString lx = lexemes[ip].trimmed();
-                    if (!lx.isEmpty())
-                    {
-                        tag = QString("%1(%2)").arg(a).arg(lx);
-                    }
+                    QString msg = QString("缺少词素: [%1] 需要紧随词素").arg(a);
+                    pushStep(res.semanticSteps, step, stack, input, QStringLiteral("error"), msg);
+                    pushStep(res.steps, step++, stack, input, QStringLiteral("error"), msg);
+                    res.errorPos = res.steps.size();
+                    break;
                 }
+                QString lx = lexemes[ip].trimmed();
+                tag        = QString("%1(%2)").arg(a).arg(lx);
+                shownLex   = lx;
                 ip++;
             }
             semStk.push_back(makeSemNode(tag));
@@ -830,7 +850,7 @@ ParseResult LR1Parser::parseWithSemantics(const QVector<QString>&               
                      input,
                      QString("移进符号[%1]%2，语义栈压入终结符节点")
                          .arg(a)
-                         .arg(tag != a ? QString("（lexeme=%1）").arg(tag) : QString()),
+                         .arg(!shownLex.isEmpty() ? QString("（lexeme=%1）").arg(shownLex) : QString()),
                      QString());
             pushStep(res.steps, step++, stack, input, act, QString());
             input.pop_front();

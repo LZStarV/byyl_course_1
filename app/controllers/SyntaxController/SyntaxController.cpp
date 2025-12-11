@@ -185,7 +185,7 @@ void SyntaxController::parseGrammar()
     }
     hasGrammar_    = true;
     ll1_           = engine_->computeLL1(grammar_);
-    auto firstRows = engine_->firstFollowAsRows(ll1_);
+    auto firstRows = engine_->firstAsRows(grammar_, ll1_);
     SyntaxTableHelper::fillFirstTable(tblF, firstRows);
     auto followRows = ll1_.follow;
     SyntaxTableHelper::fillFollowTable(tblFo, followRows);

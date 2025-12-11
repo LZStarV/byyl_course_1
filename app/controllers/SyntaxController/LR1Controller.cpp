@@ -348,7 +348,7 @@ void LR1Controller::runLR1Process()
     }
     auto                   tokensCodes = splitTokens(tokensStr);
     QVector<QString>       tokens;
-    QVector<QString>       lexemes;
+    QVector<QString>       lexemeStream;
     QMap<QString, QString> tokMap;
     // 始终使用当前正则重建映射
     QString regexText;
@@ -390,14 +390,20 @@ void LR1Controller::runLR1Process()
             QString lx;
             if (i + 1 < tokensCodes.size())
             {
-                lx = tokensCodes[i + 1];
-                i++;
+                QString cand = tokensCodes[i + 1];
+                if (!tokMap.contains(cand))
+                {
+                    lx = cand;
+                    i++;
+                }
             }
-            lexemes.push_back(lx);
+            if (!lx.isEmpty())
+                lexemeStream.push_back(lx);
+            else
+                lexemeStream.push_back(QString());
             continue;
         }
         tokens.push_back(mapped);
-        lexemes.push_back(QString());
     }
     // 解析前校验
     if (unknown > 0)
@@ -429,12 +435,56 @@ void LR1Controller::runLR1Process()
         notify_->error(QStringLiteral("文法终结符在映射中不存在: ") + missing.join(","));
         return;
     }
+    // 词素校验：需要追加词素的 token 必须紧随出现词素；未追加或追加到错误位置时中止
+    {
+        bool             lexErr = false;
+        QVector<QString> errs;
+        int              needCount = 0;
+        for (const auto& tname : tokens)
+            if (idNames.contains(tname.trimmed().toLower())) needCount++;
+        if (lexemeStream.size() != needCount)
+        {
+            lexErr = true;
+            errs.push_back(QString("词素数量不匹配：需要 %1，实际 %2")
+                               .arg(needCount)
+                               .arg(lexemeStream.size()));
+        }
+        for (int i = 0; i < lexemeStream.size(); ++i)
+        {
+            if (lexemeStream[i].trimmed().isEmpty())
+            {
+                lexErr = true;
+                errs.push_back(QString("第 %1 个需要词素的token缺少词素").arg(i));
+            }
+        }
+        if (lexErr)
+        {
+            QString dir = Config::syntaxOutputDir();
+            if (dir.trimmed().isEmpty()) dir = Config::generatedOutputDir() + "/syntax";
+            QDir d(dir);
+            if (!d.exists()) d.mkpath(".");
+            QFile lf(dir + "/lr1_last_error.log");
+            if (lf.open(QIODevice::WriteOnly | QIODevice::Text))
+            {
+                QTextStream out(&lf);
+                out << "Lexeme pairing error:\n";
+                for (const auto& e : errs) out << e << '\n';
+                out << "tokens(mapped): ";
+                for (const auto& t : tokens) out << t << ' ';
+                out << "\nlexemes: ";
+                for (const auto& lx : lexemeStream) out << lx << ' ';
+                lf.close();
+            }
+            notify_->error(QStringLiteral("词素对齐错误，已写入 lr1_last_error.log"));
+            return;
+        }
+    }
     // 语义动作策略（外部配置）
     auto roleMeaning = Config::semanticRoleMeaning();
     auto rootPolicy  = Config::semanticRootSelectionPolicy();
     auto childOrder  = Config::semanticChildOrderPolicy();
     auto r           = LR1Parser::parseWithSemantics(
-        tokens, g, tbl, semanticActions_, roleMeaning, rootPolicy, childOrder, lexemes);
+        tokens, g, tbl, semanticActions_, roleMeaning, rootPolicy, childOrder, lexemeStream);
     if (auto tblSem = page_->findChild<QTableWidget*>("tblSemanticProcess"))
     {
         QVector<QString> cols;
@@ -474,7 +524,7 @@ void LR1Controller::runLR1Process()
             out << "tokens(mapped): ";
             for (const auto& t : tokens) out << t << ' ';
             out << "\nlexemes: ";
-            for (const auto& lx : lexemes) out << lx << ' ';
+            for (const auto& lx : lexemeStream) out << lx << ' ';
             out << "\nerror: " << detail << "\n";
             // 当前状态的 ACTION/GOTO 明细
             out << "ACTION[state=" << stTop << "]: ";

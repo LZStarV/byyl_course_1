@@ -39,7 +39,7 @@ class LR1SemanticTreeExampleTest : public QObject
         // tokens mapped by token_map.json: read identifier ; if number < identifier then
         // 简化用例：program -> read-stmt
         QVector<QString> tokens  = {"read", "identifier"};
-        QVector<QString> lexemes = {QString(), "x"};
+        QVector<QString> lexemes = {"x"};
 
         // semantic actions (subset sufficient for path)
         QMap<QString, QVector<QVector<int>>> acts;
@@ -61,7 +61,6 @@ class LR1SemanticTreeExampleTest : public QObject
                                                  Config::semanticRootSelectionPolicy(),
                                                  Config::semanticChildOrderPolicy(),
                                                  lexemes);
-        // 允许错误位置非负，但应生成语义树
         QVERIFY(res.astRoot != nullptr);
         QCOMPARE(res.astRoot->tag, QStringLiteral("program"));
         std::function<bool(const SemanticASTNode*, const QString&)> findTag;

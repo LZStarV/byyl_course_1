@@ -9,7 +9,7 @@ variable-definition -> type-indicator identifier ; | type-indicator identifier [
 type-indicator -> int | float | real | void
 1 | 1 | 1 | 1
 function-definition -> type-indicator identifier ( parameters ) compound-stmt
-1 2 0 1 0 1
+1 2 0 2 0 2
 parameters -> parameter-list | void
 1 | 1
 parameter-list -> parameter-list , parameter | parameter
