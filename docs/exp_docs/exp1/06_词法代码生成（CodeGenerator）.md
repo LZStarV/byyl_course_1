@@ -5,7 +5,7 @@
 表 1 数据结构总览
 
 对象或变量名称 | 数据结构 | 存储结构用途
-- | - | -
+| - | - | -
 Judgechar | 函数 | 将字符按字母/数字分类，返回类别码（letter→1，digit→0，其它→-1）
 AcceptState / AcceptState_i | 函数 | 判定状态是否为接受态（单 DFA / 组合模式分别生成）
 Step / Step_i | 函数 | 按 `switch(state)` 与字面字符匹配执行一步状态转移（单/多 DFA）

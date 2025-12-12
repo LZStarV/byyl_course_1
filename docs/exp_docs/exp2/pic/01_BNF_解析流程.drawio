@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 <?xml version="1.0" encoding="UTF-8"?>
 <mxfile host="app.diagrams.net" version="20.2.12" editor="drawio">
   <diagram id="Exp2-01" name="BNF_Parse_Flow">
@@ -37,3 +38,76 @@
     </mxGraphModel>
   </diagram>
 </mxfile>
+=======
+<mxfile host="65bd71144e">
+    <diagram id="Exp2-01" name="BNF_Parse_Flow">
+        <mxGraphModel dx="1282" dy="754" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="n_start" value="开始：&#10;输入文法文本" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="195" y="100" width="110" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_read" value="读取文本：&#10;逐行处理&#10;跳过空行/注释行" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="185" y="220" width="130" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_has_arrow" value="判定：&#10;是否包含 '-&gt;' ?" style="shape=rhombus;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="170" y="370" width="160" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_error" value="错误输出：&#10;记录错误行号&#10;忽略该行" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry y="375" width="90" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_parse" value="行解析：&#10;A -&gt; α | β ...&#10;首个左部设为开始符" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="420" y="370" width="150" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_split" value="右部切分：&#10;多字符运算符优先&#10;单字符分隔符&#10;词法单词拼接" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="670" y="360" width="140" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_class" value="符号归类：&#10;左部→非终结符&#10;右部非左部且≠#→终结符" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="900" y="370" width="190" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_lr" value="左递归检测（可选）：&#10;扫描候选首符&#10;留空扩展" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="1210" y="370" width="150" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_out" value="输出：&#10;Grammar 对象&#10;开始符/产生式/集合摘要" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="1500" y="370" width="170" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_s_r" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_start" target="n_read" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_r_has" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_read" target="n_has_arrow" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_has_parse" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="n_has_arrow" target="n_parse" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="lbl_has_parse_yes" value="是" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="e_has_parse" vertex="1" connectable="0">
+                    <mxGeometry x="-0.5" y="-1" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_has_err" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_has_arrow" target="n_error" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="lbl_has_err_no" value="否" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="e_has_err" vertex="1" connectable="0">
+                    <mxGeometry x="-0.5" y="-1" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_parse_split" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_parse" target="n_split" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_split_class" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="n_split" target="n_class" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_class_lr" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_class" target="n_lr" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_lr_out" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="n_lr" target="n_out" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
+>>>>>>> Stashed changes

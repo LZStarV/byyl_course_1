@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 <?xml version="1.0" encoding="UTF-8"?>
 <mxfile host="app.diagrams.net" version="20.2.12" editor="drawio">
   <diagram id="Exp2-02" name="LL1_FIRST_FOLLOW_Table">
@@ -46,3 +47,111 @@
     </mxGraphModel>
   </diagram>
 </mxfile>
+=======
+<mxfile host="65bd71144e">
+    <diagram id="Exp2-02" name="LL1_FIRST_FOLLOW_Table">
+        <mxGraphModel dx="1831" dy="2077" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="n_start" value="开始：&#10;输入 Grammar" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="320" y="10" width="100" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_finit" value="FIRST 初始化：&#10;非终结符置空&#10;终结符置 {a}" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="-5" width="130" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_floop" value="判定：&#10;FIRST 是否变化？" style="shape=rhombus;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="700" width="220" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="2" style="edgeStyle=none;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="n_fiter" target="n_floop">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1100" y="-80"/>
+                            <mxPoint x="810" y="-80"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="n_fiter" value="FIRST 迭代：&#10;遍历产生式 A→α&#10;并入 FIRST(α) 至 FIRST(A)" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="1010" y="-10" width="180" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_folinit" value="FOLLOW 初始化：&#10;开始符含 $&#10;其他置空" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="680" y="245" width="260" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_folloop" value="判定：&#10;FOLLOW 是否变化？" style="shape=rhombus;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="1000" y="245" width="220" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_foliter" value="FOLLOW 迭代：&#10;A→α B β&#10;FIRST(β)\{#} → FOLLOW(B)&#10;β 为空或含 # → FOLLOW(A) 并入 FOLLOW(B)" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="1360" y="220" width="270" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_table" value="预测表生成：&#10;TABLE[A][a]=k（a∈FIRST(α)\{#}）&#10;ε∈FIRST(α) → b∈FOLLOW(A) 填表" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="990" y="430" width="240" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_conf" value="冲突记录：&#10;同一表项多产式&#10;记录冲突位置" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="1350" y="440" width="120" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_out" value="输出：&#10;FIRST/FOLLOW 集合摘要&#10;预测表摘要" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="1550" y="440" width="170" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_s_fi" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_start" target="n_finit" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_fi_fl" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_finit" target="n_floop" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_fl_iter" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="n_floop" target="n_fiter" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="lbl_fl_iter_yes" value="是" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="e_fl_iter" vertex="1" connectable="0">
+                    <mxGeometry x="-0.5" y="-1" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_fl_folinit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="n_floop" target="n_folinit" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="810" y="150" as="sourcePoint"/>
+                        <Array as="points"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="lbl_fl_folinit_no" value="否" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="e_fl_folinit" vertex="1" connectable="0">
+                    <mxGeometry x="-0.5" y="-1" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_folinit_folloop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_folinit" target="n_folloop" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_folloop_foliter" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="n_folloop" target="n_foliter" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="lbl_folloop_foliter_yes" value="是" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="e_folloop_foliter" vertex="1" connectable="0">
+                    <mxGeometry x="-0.5" y="-1" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_foliter_folloop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="1" source="n_foliter" target="n_folloop" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1495" y="170"/>
+                            <mxPoint x="1110" y="170"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_folloop_table" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_folloop" target="n_table" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="lbl_folloop_table_no" value="否" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="e_folloop_table" vertex="1" connectable="0">
+                    <mxGeometry x="-0.5" y="-1" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_table_conf" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_table" target="n_conf" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_conf_out" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="n_conf" target="n_out" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
+>>>>>>> Stashed changes

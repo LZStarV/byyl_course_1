@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 <?xml version="1.0" encoding="UTF-8"?>
 <mxfile host="app.diagrams.net" version="20.2.12" editor="drawio">
   <diagram id="Exp2-07" name="LR1_Parse_Process">
@@ -39,3 +40,102 @@
     </mxGraphModel>
   </diagram>
 </mxfile>
+=======
+<mxfile host="65bd71144e">
+    <diagram id="Exp2-07" name="LR1_Parse_Process">
+        <mxGraphModel dx="1605" dy="1943" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="n_start" value="开始：&#10;栈入初始状态&#10;输入追加 $&#10;步计数清零" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="105" width="110" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_read" value="读取动作：&#10;查询 action[st][a]&#10;并列策略选择（prefer_shift / prefer_reduce / 指定 token）" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="260" y="100" width="320" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_branch" value="判定：&#10;动作类型？（sN / rK / acc / 缺失）" style="shape=rhombus;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="680" y="110" width="300" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_shift" value="移进：&#10;压栈状态与终结符&#10;构造叶子节点&#10;记录步骤并前进输入" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="520" y="360" width="180" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_reduce" value="归约：&#10;弹栈 |α| 收集子树&#10;goto(stTop, A) 压栈&#10;构造以 A 为根的子树并记录步骤" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="730" y="-110" width="190" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_accept" value="接受：&#10;设语法树根并终止分析&#10;记录最终步骤" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="980" y="360" width="160" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_error" value="错误：&#10;缺动作或 goto 失败&#10;记录错误步骤并终止&#10;若上一步为移进且有下一前瞻&#10;可重试一次" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="1090" y="90" width="200" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_out" value="输出：&#10;步骤表占位（stack/rest/action/prod）&#10;语法树预览占位" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="955" y="570" width="210" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_s_read" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_start" target="n_read" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_read_branch" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_read" target="n_branch" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_branch_shift" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="n_branch" target="n_shift" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="lbl_branch_shift" value="sN" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="e_branch_shift" vertex="1" connectable="0">
+                    <mxGeometry x="-0.5" y="-1" relative="1" as="geometry">
+                        <mxPoint x="52" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_branch_reduce" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="1" source="n_branch" target="n_reduce" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="lbl_branch_reduce" value="rK / r A-&gt;α" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="e_branch_reduce" vertex="1" connectable="0">
+                    <mxGeometry x="-0.2" y="-1" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_branch_accept" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="n_branch" target="n_accept" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="lbl_branch_accept" value="acc" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="e_branch_accept" vertex="1" connectable="0">
+                    <mxGeometry x="-0.5" y="-1" relative="1" as="geometry">
+                        <mxPoint x="-100" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_branch_error" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="n_branch" target="n_error" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="lbl_branch_error" value="缺失/失败" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="e_branch_error" vertex="1" connectable="0">
+                    <mxGeometry x="-0.5" y="-1" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_accept_out" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_accept" target="n_out" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_shift_read" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="n_shift" target="n_read">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="420" y="420"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_reduce_read" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;entryX=0.477;entryY=-0.022;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryPerimeter=0;" edge="1" parent="1" source="n_reduce" target="n_read">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="413" y="-40"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_error_out" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="n_error" target="n_out" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1340" y="160"/>
+                            <mxPoint x="1340" y="660"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
+>>>>>>> Stashed changes

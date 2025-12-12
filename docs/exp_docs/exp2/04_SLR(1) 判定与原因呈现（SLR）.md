@@ -3,7 +3,7 @@
 ## 数据结构总览
 
 对象或变量名称 | 数据结构 | 存储结构用途
-- | - | -
+| - | - | -
 SLRCheckResult.isSLR1 | bool | 是否为 SLR(1) 的结论标记
 SLRCheckResult.conflicts | QVector<SLRConflict> | 冲突条目集合
 SLRConflict.state/terminal/type/detail | 结构体字段 | 状态编号/终结符/类型/明细字符串

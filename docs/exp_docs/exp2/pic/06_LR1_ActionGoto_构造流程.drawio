@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 <?xml version="1.0" encoding="UTF-8"?>
 <mxfile host="app.diagrams.net" version="20.2.12" editor="drawio">
   <diagram id="Exp2-06" name="LR1_Action_Goto_Build">
@@ -35,3 +36,63 @@
     </mxGraphModel>
   </diagram>
 </mxfile>
+=======
+<mxfile host="65bd71144e">
+    <diagram id="Exp2-06" name="LR1_Action_Goto_Build">
+        <mxGraphModel dx="1282" dy="754" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="n_start" value="开始：&#10;输入 LR(1) 项集图" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="100" width="120" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_redidx" value="规约编号：&#10;建立 k: A -&gt; α 列表&#10;编号→文本映射" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="230" y="85" width="120" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_shift" value="填充移进：&#10;点后终结符 X 且存在边&#10;action[i][X] = s{to}" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="430" y="80" width="160" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_acc" value="接受项：&#10;增广产生式的 $ 前瞻&#10;action[i]['$'] = acc" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="670" y="85" width="140" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_reduce" value="填充规约：&#10;优先 rK，缺编号用文本 r A -&gt; α&#10;action[i][a] = rK / r A -&gt; α" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="900" y="75" width="180" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_goto" value="填充 GOTO：&#10;非终结符 A 的迁移&#10;goto[i][A] = to" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="220" y="260" width="140" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_merge" value="并列冲突：&#10;同一表项已有不同动作&#10;合并为 prev|val（保留至解析阶段）" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="1170" y="80" width="220" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_out" value="输出：&#10;action/goto 表摘要&#10;接受/移进/规约统计" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="1480" y="85" width="130" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_s_redidx" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_start" target="n_redidx" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_redidx_shift" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_redidx" target="n_shift" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_shift_acc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="n_shift" target="n_acc" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_acc_reduce" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="n_acc" target="n_reduce" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_redidx_goto" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_redidx" target="n_goto" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_goto_merge" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_goto" target="n_merge" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_reduce_merge" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_reduce" target="n_merge" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_merge_out" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_merge" target="n_out" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
+>>>>>>> Stashed changes

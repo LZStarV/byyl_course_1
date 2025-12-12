@@ -3,7 +3,7 @@
 ## 数据结构总览
 
 对象或变量名称 | 数据结构 | 存储结构用途
-- | - | -
+| - | - | -
 LL1Info.first | QMap<QString, QSet<QString>> | FIRST 集合映射（符号→集合）
 LL1Info.follow | QMap<QString, QSet<QString>> | FOLLOW 集合映射（非终结符→集合）
 LL1Info.table | QMap<QString, QMap<QString,int>> | LL(1) 预测表（A×a→产生式索引）

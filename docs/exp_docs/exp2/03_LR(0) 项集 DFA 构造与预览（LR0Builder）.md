@@ -3,7 +3,7 @@
 ## 数据结构总览
 
 对象或变量名称 | 数据结构 | 存储结构用途
-- | - | -
+| - | - | -
 LR0Item.left/right/dot | 结构体字段 | 项的左部/右部序列/点位
 LR0Graph.states | QVector<QVector<LR0Item>> | 项集族（每个状态的项集合）
 LR0Graph.edges | QMap<int, QMap<QString,int>> | 状态迁移边（i×符号→目标 j）

@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 <?xml version="1.0" encoding="UTF-8"?>
 <mxfile host="app.diagrams.net" version="20.2.12" editor="drawio">
   <diagram id="Exp2-05" name="LR1_DFA_Build">
@@ -33,3 +34,84 @@
     </mxGraphModel>
   </diagram>
 </mxfile>
+=======
+<mxfile host="65bd71144e">
+    <diagram id="Exp2-05" name="LR1_DFA_Build">
+        <mxGraphModel dx="1831" dy="2077" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="n_start" value="开始：&#10;输入 Grammar&#10;初始前瞻 $" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="110" y="70" width="110" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_aug" value="增广：&#10;S' → S&#10;设置增广开始符" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="310" y="65" width="130" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_i0" value="初始闭包：&#10;I0 = closureLL1({S'→•S / $})&#10;加入为首个状态" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="540" y="60" width="190" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_loop" value="判定：&#10;是否新增状态？" style="shape=rhombus;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="830" y="70" width="130" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_first" value="FIRST(β+a)：&#10;β 全可空 → 带入 a&#10;否则 FIRST(β)\{#}" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="1060" y="60" width="150" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_closure" value="闭包（LR(1)）：&#10;A→α•Bβ / a&#10;对 a'∈FIRST(β+a) 展开 B→•γ / a'" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="1280" y="55" width="190" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="2" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="n_goto" target="n_dedup">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_goto" value="枚举符号与 GOTO：&#10;点后符号集合→右移点&#10;对结果做 LR(1) 闭包" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="1540" y="55" width="150" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_dedup" value="去重与入图：&#10;序列化键判断是否出现&#10;建边并记录索引" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="1760" y="65" width="150" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_done" value="终止：&#10;无新增→结束&#10;输出项集与边摘要" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="820" y="-80" width="150" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_s_aug" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_start" target="n_aug" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_aug_i0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_aug" target="n_i0" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_i0_loop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_i0" target="n_loop" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_loop_first_yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="n_loop" target="n_first" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="lbl_loop_first_yes" value="是" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="e_loop_first_yes" vertex="1" connectable="0">
+                    <mxGeometry x="-0.5" y="-1" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_first_closure" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="n_first" target="n_closure" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_closure_goto" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="n_closure" target="n_goto" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_dedup_loop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="n_dedup" target="n_loop" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1835" y="240"/>
+                            <mxPoint x="895" y="240"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_loop_done_no" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_loop" target="n_done" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="lbl_loop_done_no" value="否" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="e_loop_done_no" vertex="1" connectable="0">
+                    <mxGeometry x="-0.7" y="1" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
+>>>>>>> Stashed changes

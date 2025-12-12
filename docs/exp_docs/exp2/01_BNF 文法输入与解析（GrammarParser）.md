@@ -3,7 +3,7 @@
 ## 数据结构总览
 
 对象或变量名称 | 数据结构 | 存储结构用途
-- | - | -
+| - | - | -
 Production.left/right/line | 结构体字段 | 左部、右部符号序列、来源行号
 Grammar.terminals | QSet<QString> | 终结符集合
 Grammar.nonterminals | QSet<QString> | 非终结符集合

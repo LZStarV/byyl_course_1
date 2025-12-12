@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 <?xml version="1.0" encoding="UTF-8"?>
 <mxfile host="app.diagrams.net" version="20.2.12" editor="drawio">
   <diagram id="Exp2-08" name="ParseTree_SemanticAST_Build">
@@ -35,3 +36,48 @@
     </mxGraphModel>
   </diagram>
 </mxfile>
+=======
+<mxfile host="65bd71144e">
+    <diagram id="Exp2-08" name="ParseTree_SemanticAST_Build">
+        <mxGraphModel dx="1282" dy="754" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="n_start" value="开始：&#10;准备语法/语义栈&#10;词素序列（可选）" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="100" width="140" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_leaf" value="移进叶子：&#10;ParseTreeNode 叶子入栈&#10;SemanticASTNode 入语义栈&#10;标识符类可打包 token(lexeme)" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="85" width="210" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_reduce" value="归约建子树：&#10;弹出 |α| 并逆序恢复&#10;以 A 为根附加孩子&#10;goto 查询并压栈状态" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="570" y="85" width="170" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_roles" value="角色策略：&#10;roles/roleMeaning 标注根/孩子/并列兄弟&#10;rootPolicy 选择根位&#10;childOrder 控制孩子顺序" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="820" y="85" width="240" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_wrap" value="顶层包装：&#10;接受后以开始符包裹语义树&#10;统一根节点标签" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="1140" y="95" width="170" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_preview" value="预览/导出：&#10;生成 DOT 文本&#10;渲染 PNG 或导出文件" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="1390" y="100" width="140" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_s_leaf" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_start" target="n_leaf" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_leaf_reduce" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_leaf" target="n_reduce" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_reduce_roles" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="n_reduce" target="n_roles" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_roles_wrap" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="n_roles" target="n_wrap" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_wrap_preview" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_wrap" target="n_preview" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
+>>>>>>> Stashed changes
