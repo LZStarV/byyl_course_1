@@ -24,11 +24,12 @@ actionsSet | 映射 | `(state, terminal) → 动作集合` 的聚合结构
 
 ## 关键代码（可选）
 ```
-// SLR(1) 检查（项目源码节选，不超过100行）
+// SLR(1) 检查（项目源码节选，已格式化）
 SLRCheckResult SLR::check(const Grammar& g, const LL1Info& ll1)
 {
     auto gr = LR0Builder::build(g);
     QMap<int, QMap<QString, QSet<QString>>> actionsSet;
+
     for (int st = 0; st < gr.states.size(); ++st)
     {
         const auto& items = gr.states[st];
@@ -40,7 +41,10 @@ SLRCheckResult SLR::check(const Grammar& g, const LL1Info& ll1)
                 if (g.terminals.contains(a))
                 {
                     int to = gr.edges.value(st).value(a, -1);
-                    if (to >= 0) actionsSet[st][a].insert(QString("s%1").arg(to));
+                    if (to >= 0)
+                    {
+                        actionsSet[st][a].insert(QString("s%1").arg(to));
+                    }
                 }
             }
             else
@@ -48,10 +52,14 @@ SLRCheckResult SLR::check(const Grammar& g, const LL1Info& ll1)
                 auto    followA = ll1.follow.value(it.left);
                 QString rhsText = it.right.isEmpty() ? QString("#") : it.right.join(" ");
                 QString red     = QString("r %1 -> %2").arg(it.left).arg(rhsText);
-                for (const auto& a : followA) actionsSet[st][a].insert(red);
+                for (const auto& a : followA)
+                {
+                    actionsSet[st][a].insert(red);
+                }
             }
         }
     }
+
     SLRCheckResult res;
     for (auto sit = actionsSet.begin(); sit != actionsSet.end(); ++sit)
     {
@@ -62,14 +70,27 @@ SLRCheckResult SLR::check(const Grammar& g, const LL1Info& ll1)
             const auto&    set = ait.value();
             if (set.size() >= 2)
             {
-                bool hasShift = false, hasReduce = false;
-                for (const auto& act : set) { if (act.startsWith("s")) hasShift = true; if (act.startsWith("r")) hasReduce = true; }
-                QStringList list = QStringList(set.begin(), set.end()); std::sort(list.begin(), list.end());
-                SLRConflict c; c.state = st; c.terminal = a; c.type = (hasShift && hasReduce) ? "shift/reduce" : "reduce/reduce"; c.detail = list.join("|");
+                bool hasShift  = false;
+                bool hasReduce = false;
+                for (const auto& act : set)
+                {
+                    if (act.startsWith("s")) hasShift  = true;
+                    if (act.startsWith("r")) hasReduce = true;
+                }
+
+                QStringList list = QStringList(set.begin(), set.end());
+                std::sort(list.begin(), list.end());
+
+                SLRConflict c;
+                c.state    = st;
+                c.terminal = a;
+                c.type     = (hasShift && hasReduce) ? "shift/reduce" : "reduce/reduce";
+                c.detail   = list.join("|");
                 res.conflicts.push_back(c);
             }
         }
     }
+
     res.isSLR1 = res.conflicts.isEmpty();
     return res;
 }

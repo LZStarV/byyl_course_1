@@ -24,41 +24,111 @@ tokens | 序列 | 右部切分后的符号序列
 
 ## 关键代码（可选）
 ```
-// 右部切分与行解析（项目源码节选，不超过100行）
+// 右部切分（项目源码节选，已格式化）
 static QVector<QString> splitRhs(const QString& rhs)
 {
-    QVector<QString> v; QString s = rhs; int i = 0;
-    auto isWordChar = [](QChar c) { return c.isLetterOrNumber() || c == '_' || c == '-'; };
+    QVector<QString> v;
+    QString s = rhs;
+    int i = 0;
+
+    auto isWordChar = [](QChar c)
+    {
+        return c.isLetterOrNumber() || c == '_' || c == '-';
+    };
+
     auto isSingleOp = [](QChar c)
     {
-        static QSet<QChar> ops; if (ops.isEmpty()) { const QChar arr[] = {'(',')','{','}','[',']',';',',','<','>','=','+','-','*','/','%','^'}; for (QChar ch : arr) ops.insert(ch); }
+        static QSet<QChar> ops;
+        if (ops.isEmpty())
+        {
+            const QChar arr[] = {
+                '(', ')', '{', '}', '[', ']', ';', ',',
+                '<', '>', '=', '+', '-', '*', '/', '%', '^'
+            };
+            for (QChar ch : arr) ops.insert(ch);
+        }
         return ops.contains(c);
     };
+
     auto matchMultiOp = [&](const QString& s, int i) -> QString
     {
         static const QVector<QString> mops = {"<=", ">=", "==", "!=", ":=", "++", "--"};
-        for (const auto& op : mops) { int L = op.size(); if (L > 0 && i + L <= s.size() && s.mid(i, L) == op) return op; }
+        for (const auto& op : mops)
+        {
+            int L = op.size();
+            if (L > 0 && i + L <= s.size() && s.mid(i, L) == op)
+                return op;
+        }
         return QString();
     };
+
     while (i < s.size())
     {
-        QChar c = s[i]; if (c.isSpace()) { i++; continue; }
-        QString mop = matchMultiOp(s, i); if (!mop.isEmpty()) { v.push_back(mop); i += mop.size(); continue; }
-        if (isSingleOp(c)) { v.push_back(QString(c)); i++; continue; }
-        QString w; while (i < s.size() && isWordChar(s[i])) { w += s[i]; i++; }
-        if (!w.isEmpty()) v.push_back(w); else i++;
+        QChar c = s[i];
+        if (c.isSpace()) { i++; continue; }
+
+        QString mop = matchMultiOp(s, i);
+        if (!mop.isEmpty())
+        {
+            v.push_back(mop);
+            i += mop.size();
+            continue;
+        }
+
+        if (isSingleOp(c))
+        {
+            v.push_back(QString(c));
+            i++;
+            continue;
+        }
+
+        QString w;
+        while (i < s.size() && isWordChar(s[i]))
+        {
+            w += s[i];
+            i++;
+        }
+        if (!w.isEmpty()) v.push_back(w);
+        else i++;
     }
     return v;
 }
 
+// 行解析（项目源码节选，已格式化）
 static bool parseLine(const QString& line, int lineNo, Grammar& g, QString& err)
 {
-    QString t = line; if (t.trimmed().isEmpty()) return true; if (t.trimmed().startsWith("//")) return true;
-    if (t.indexOf("->") < 0) { err = QString::number(lineNo); return false; }
-    auto parts = t.split("->"); if (parts.size() != 2) { err = QString::number(lineNo); return false; }
-    QString left = parts[0].trimmed(); QString rhs = parts[1].trimmed(); auto alts = rhs.split('|');
-    if (g.startSymbol.isEmpty() && !left.isEmpty()) g.startSymbol = left;
-    for (auto a : alts) { Production p; p.left = left; p.right = splitRhs(a.trimmed()); p.line = lineNo; g.productions[left].push_back(p); }
+    QString t = line;
+    if (t.trimmed().isEmpty()) return true;
+    if (t.trimmed().startsWith("//")) return true;
+
+    if (t.indexOf("->") < 0)
+    {
+        err = QString::number(lineNo);
+        return false;
+    }
+
+    auto parts = t.split("->");
+    if (parts.size() != 2)
+    {
+        err = QString::number(lineNo);
+        return false;
+    }
+
+    QString left = parts[0].trimmed();
+    QString rhs  = parts[1].trimmed();
+    auto    alts = rhs.split('|');
+
+    if (g.startSymbol.isEmpty() && !left.isEmpty())
+        g.startSymbol = left;
+
+    for (auto a : alts)
+    {
+        Production p;
+        p.left  = left;
+        p.right = splitRhs(a.trimmed());
+        p.line  = lineNo;
+        g.productions[left].push_back(p);
+    }
     return true;
 }
 ```

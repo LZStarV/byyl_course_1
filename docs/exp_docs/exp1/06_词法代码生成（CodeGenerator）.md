@@ -3,17 +3,21 @@
 ## 数据结构
 
 表 1 数据结构总览
-对象或结构名称 生成物（单 DFA）
-数据结构类型 函数族
-存储结构用途 Judgechar/AcceptState/Step 三类函数的代码生成
 
-对象或结构名称 生成物（组合模式）
-数据结构类型 函数族/数组
-存储结构用途 为每个 DFA 生成 AcceptState_i/Step_i，构造分发表 STEPS/ACCEPTS/STARTS 与 IDENT_CODES，主流程进行最长匹配与权重比较
-
-对象或结构名称 输入/输出定义
-数据结构类型 文本说明
-存储结构用途 输入：MinDFA（单/多）、编码映射/列表；输出：C++ 源码字符串（可编译）
+对象或变量名称 | 数据结构 | 存储结构用途
+- | - | -
+Judgechar | 函数 | 将字符按字母/数字分类，返回类别码（letter→1，digit→0，其它→-1）
+AcceptState / AcceptState_i | 函数 | 判定状态是否为接受态（单 DFA / 组合模式分别生成）
+Step / Step_i | 函数 | 按 `switch(state)` 与字面字符匹配执行一步状态转移（单/多 DFA）
+StepFn / AcceptFn | 类型别名 | 函数指针类型：`int (*)(int,char)` 与 `bool (*)(int)`
+STEPS / ACCEPTS / STARTS | 数组 | 每个 DFA 的步进函数、接受判定函数与起始态编号分发表
+IDENT_CODES | 数组 | 标识符编码集合（升序），用于决定是否追加词素
+isIdentifierCode | 函数 | 判断编码是否属于标识符类（线性扫描 `IDENT_CODES`）
+emitIdLex | 函数 | 是否追加词素（读取 `LEXER_EMIT_IDENTIFIER_LEXEME` 环境变量）
+codeWeight | 函数 | 等长匹配的权重函数（解析 `LEXER_WEIGHTS`，内部 `mins[]/ws[]/cnt`）
+matchLen | 函数 | 计算指定 DFA 在位置 `pos` 的最长可接受前缀长度（用 `STARTS/STEPS/ACCEPTS`）
+codeList | 数组 | 组合模式下的编码列表，用于权重与选择规则（长度>权重>索引）
+输出源码 | 文本 | 生成的 C++ 源码字符串（包含主程序、读入与打印输出）
 
 ## 算法实现过程
 

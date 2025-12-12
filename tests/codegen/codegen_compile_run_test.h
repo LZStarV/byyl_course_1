@@ -118,10 +118,13 @@ class CodegenTest : public QObject
         QVERIFY(proc.exitStatus() == QProcess::NormalExit);
         QProcess run;
         run.start(binPath);
-        run.write("abc123 def456\n");
+        QString inputLine = "abc123 def456\n";
+        QTextStream(stdout) << "【输入】" << inputLine;
+        run.write(inputLine.toUtf8());
         run.closeWriteChannel();
         run.waitForFinished();
         auto output = run.readAllStandardOutput();
+        QTextStream(stdout) << "【关键步骤】跳过空白/注释 → 逐字符步进（Step） → 不可移停止 → 接受判定（AcceptState） → 编码输出\n";
         QTextStream(stdout) << "【生成器运行输出】" << QString::fromUtf8(output) << "\n";
         QVERIFY(!output.isEmpty());
         QFile::remove(outPath);

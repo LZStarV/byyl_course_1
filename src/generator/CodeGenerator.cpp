@@ -69,17 +69,43 @@ QString CodeGenerator::generate(const MinDFA& mdfa, const QMap<QString, int>& to
     for (auto it = mdfa.states.begin(); it != mdfa.states.end(); ++it)
     {
         code += "        case " + QString::number(it->id) + ":\n";
-        for (auto a : mdfa.alpha.ordered())
+        int letterT = -2; // 聚合字母类目标（-2 未设，-1 混合）
+        int digitT  = -2; // 聚合数字类目标
+        for (auto tr = it->trans.begin(); tr != it->trans.end(); ++tr)
         {
-            int t = it->trans.value(a, -1);
+            const QString& a = tr.key();
+            int t = tr.value();
             if (t != -1)
             {
                 if (a.size() == 1)
                 {
                     code += "            if (ch=='" + a + "') return " + QString::number(t) + ";\n";
+                    // 聚合：字母/数字统一目标（若存在）
+                    unsigned char uc = static_cast<unsigned char>(a[0].toLatin1());
+                    if (isalpha(uc))
+                    {
+                        if (letterT == -2) letterT = t; else if (letterT != t) letterT = -1;
+                    }
+                    if (isdigit(uc))
+                    {
+                        if (digitT == -2) digitT = t; else if (digitT != t) digitT = -1;
+                    }
                 }
+                else if (a.trimmed().toLower() == QStringLiteral("letter") && mdfa.alpha.hasLetter)
+                {
+                    code += "            if (isalpha((unsigned char)ch)) return " + QString::number(t) + ";\n";
+                }
+                else if (a.trimmed().toLower() == QStringLiteral("digit") && mdfa.alpha.hasDigit)
+                {
+                    code += "            if (isdigit((unsigned char)ch)) return " + QString::number(t) + ";\n";
+                }
+                // ...... 其它类别标签可在此扩展（如空白、符号类等）
             }
         }
+        if (mdfa.alpha.hasLetter && letterT >= 0)
+            code += "            if (isalpha((unsigned char)ch)) return " + QString::number(letterT) + ";\n";
+        if (mdfa.alpha.hasDigit && digitT >= 0)
+            code += "            if (isdigit((unsigned char)ch)) return " + QString::number(digitT) + ";\n";
         code += "            return -1;\n";
     }
     code += "        default: return -1;\n";
@@ -117,17 +143,36 @@ static QString genStepI(const MinDFA& mdfa, int idx)
     for (auto it = mdfa.states.begin(); it != mdfa.states.end(); ++it)
     {
         code += "        case " + QString::number(it->id) + ":\n";
-        for (auto a : mdfa.alpha.ordered())
+        int letterT = -2;
+        int digitT  = -2;
+        for (auto tr = it->trans.begin(); tr != it->trans.end(); ++tr)
         {
-            int t = it->trans.value(a, -1);
+            const QString& a = tr.key();
+            int t = tr.value();
             if (t != -1)
             {
                 if (a.size() == 1)
                 {
                     code += "            if (ch=='" + a + "') return " + QString::number(t) + ";\n";
+                    unsigned char uc = static_cast<unsigned char>(a[0].toLatin1());
+                    if (isalpha(uc)) { if (letterT == -2) letterT = t; else if (letterT != t) letterT = -1; }
+                    if (isdigit(uc)) { if (digitT == -2) digitT = t; else if (digitT != t) digitT = -1; }
                 }
+                else if (a.trimmed().toLower() == QStringLiteral("letter") && mdfa.alpha.hasLetter)
+                {
+                    code += "            if (isalpha((unsigned char)ch)) return " + QString::number(t) + ";\n";
+                }
+                else if (a.trimmed().toLower() == QStringLiteral("digit") && mdfa.alpha.hasDigit)
+                {
+                    code += "            if (isdigit((unsigned char)ch)) return " + QString::number(t) + ";\n";
+                }
+                // ...... 其它类别标签可在此扩展
             }
         }
+        if (mdfa.alpha.hasLetter && letterT >= 0)
+            code += "            if (isalpha((unsigned char)ch)) return " + QString::number(letterT) + ";\n";
+        if (mdfa.alpha.hasDigit && digitT >= 0)
+            code += "            if (isdigit((unsigned char)ch)) return " + QString::number(digitT) + ";\n";
         code += "            return -1;\n";
     }
     code += "        default: return -1;\n";

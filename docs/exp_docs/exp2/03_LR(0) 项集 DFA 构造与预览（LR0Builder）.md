@@ -24,11 +24,13 @@ added | 布尔 | 构造过程中是否新增状态的标记
 
 ## 关键代码（可选）
 ```
-// 闭包与构造（项目源码节选，不超过100行）
-static QVector<LR0Item> closure(const QVector<LR0Item>& I, const Grammar& g)
+// 闭包与构造（项目源码节选，已格式化）
+static QVector<LR0Item>
+closure(const QVector<LR0Item>& I, const Grammar& g)
 {
     QVector<LR0Item> res = I;
     bool changed = true;
+
     while (changed)
     {
         changed = false;
@@ -44,8 +46,15 @@ static QVector<LR0Item> closure(const QVector<LR0Item>& I, const Grammar& g)
                     {
                         LR0Item ni{B, p.right, 0};
                         bool exists = false;
-                        for (const auto& x : res) if (x == ni) { exists = true; break; }
-                        if (!exists) { res.push_back(ni); changed = true; }
+                        for (const auto& x : res)
+                        {
+                            if (x == ni) { exists = true; break; }
+                        }
+                        if (!exists)
+                        {
+                            res.push_back(ni);
+                            changed = true;
+                        }
                     }
                 }
             }
@@ -58,16 +67,23 @@ LR0Graph LR0Builder::build(const Grammar& g)
 {
     Grammar aug = g;
     QString Sdash = g.startSymbol + Config::augSuffix();
+
     if (!aug.productions.contains(Sdash))
     {
-        Production p; p.left = Sdash; p.right = QVector<QString>{g.startSymbol}; p.line = -1;
+        Production p;
+        p.left  = Sdash;
+        p.right = QVector<QString>{g.startSymbol};
+        p.line  = -1;
         aug.productions[Sdash].push_back(p);
         aug.nonterminals.insert(Sdash);
     }
+
     LR0Graph gr;
-    QVector<LR0Item> I0; I0.push_back(LR0Item{Sdash, QVector<QString>{g.startSymbol}, 0});
+    QVector<LR0Item> I0;
+    I0.push_back(LR0Item{Sdash, QVector<QString>{g.startSymbol}, 0});
     I0 = closure(I0, aug);
     gr.states.push_back(I0);
+
     bool added = true;
     while (added)
     {
@@ -76,18 +92,38 @@ LR0Graph LR0Builder::build(const Grammar& g)
         for (int i = 0; i < n; ++i)
         {
             QSet<QString> symbols;
-            for (const auto& it : gr.states[i]) if (it.dot < it.right.size()) symbols.insert(it.right[it.dot]);
+            for (const auto& it : gr.states[i])
+                if (it.dot < it.right.size())
+                    symbols.insert(it.right[it.dot]);
+
             for (const auto& X : symbols)
             {
-                auto J = closure(gotoSet(gr.states[i], X, aug), aug);
-                if (J.isEmpty()) continue;
+                auto J = gotoSet(gr.states[i], X, aug);
+                if (J.isEmpty())
+                    continue;
+
                 int existing = -1;
-                for (int k = 0; k < gr.states.size(); ++k) if (equalSet(gr.states[k], J)) { existing = k; break; }
-                if (existing < 0) { gr.states.push_back(J); existing = gr.states.size() - 1; added = true; }
+                for (int k = 0; k < gr.states.size(); ++k)
+                {
+                    if (equalSet(gr.states[k], J))
+                    {
+                        existing = k;
+                        break;
+                    }
+                }
+
+                if (existing < 0)
+                {
+                    gr.states.push_back(J);
+                    existing = gr.states.size() - 1;
+                    added    = true;
+                }
+
                 gr.edges[i][X] = existing;
             }
         }
     }
+
     return gr;
 }
 ```
