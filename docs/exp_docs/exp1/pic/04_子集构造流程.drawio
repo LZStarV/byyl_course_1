@@ -1,30 +1,67 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<mxfile host="app.diagrams.net" modified="2025-12-12T00:00:00.000Z" agent="5.0 (Mac)" version="20.6.3" etag="flow-04" type="device">
-  <diagram id="Flow04" name="SubsetConstruction">
-    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
-      <root>
-        <mxCell id="0"/>
-        <mxCell id="1" parent="0"/>
-
-        <mxCell id="n_start" value="开始：输入 NFA" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="80" y="100" width="240" height="50" as="geometry"/></mxCell>
-        <mxCell id="n_init" value="初始化：startSet→ε-闭包命名；建 d0（接受判定）；入队 work；nextId++" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="80" y="170" width="320" height="70" as="geometry"/></mxCell>
-        <mxCell id="n_loop" value="循环：出队 S，遍历字母表 alpha" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="80" y="260" width="300" height="60" as="geometry"/></mxCell>
-
-        <mxCell id="n_move" value="计算 U：U = ε-闭包(move(nfa,S,a))（空则跳过）" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="480" y="120" width="320" height="60" as="geometry"/></mxCell>
-        <mxCell id="n_id" value="命名与编号：Uname；新集合建 ds（接受判定）入队或复用 idmap" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="480" y="200" width="360" height="70" as="geometry"/></mxCell>
-        <mxCell id="n_trans" value="记录转移：d.states[sid].trans[a] = uid" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="480" y="290" width="300" height="60" as="geometry"/></mxCell>
-
-        <mxCell id="n_stable" value="稳定结束：work 队列为空" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="80" y="350" width="240" height="50" as="geometry"/></mxCell>
-        <mxCell id="n_return" value="输出：DFA（含 nfaSet 展示）与状态表可视化要点" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="80" y="420" width="360" height="70" as="geometry"/></mxCell>
-
-        <mxCell id="e_start_init" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_start" target="n_init"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e_init_loop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_init" target="n_loop"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e_loop_move" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_loop" target="n_move"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="420" y="290"/></Array></mxGeometry></mxCell>
-        <mxCell id="e_move_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_move" target="n_id"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e_id_trans" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_id" target="n_trans"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e_trans_stable" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_trans" target="n_stable"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="420" y="320"/><mxPoint x="420" y="360"/></Array></mxGeometry></mxCell>
-        <mxCell id="e_stable_return" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_stable" target="n_return"><mxGeometry relative="1" as="geometry"/></mxCell>
-      </root>
-    </mxGraphModel>
-  </diagram>
+<mxfile host="65bd71144e">
+    <diagram id="Flow04" name="SubsetConstruction">
+        <mxGraphModel dx="672" dy="811" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="n_start" value="开始：输入 NFA" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="100" width="240" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_init" value="初始化：&lt;div&gt;startSet→ε-闭包命名；&lt;/div&gt;&lt;div&gt;建 d0（接受判定）；&lt;div&gt;入队 work；&lt;/div&gt;&lt;div&gt;nextId++&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="130" y="200" width="140" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_loop" value="循环：出队 S，遍历字母表 alpha" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="105" y="375" width="190" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_move" value="计算 U：U = ε-闭包(move(nfa,S,a))（空则跳过）" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="365" y="170" width="320" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_id" value="命名与编号：&lt;span style=&quot;color: rgb(63, 63, 63); background-color: transparent;&quot;&gt;Uname；&lt;/span&gt;&lt;div&gt;新集合建 ds（接受判定）入队或复用 idmap&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="405" y="305" width="240" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_trans" value="记录转移：d.states[sid].trans[a] = uid" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="410" y="502.5" width="230" height="45" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_stable" value="稳定结束：work 队列为空" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="500" width="160" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="n_return" value="输出：DFA（含 nfaSet 展示）与状态表可视化要点" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="55" y="650" width="290" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_start_init" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_start" target="n_init" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_init_loop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_init" target="n_loop" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_loop_move" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="n_loop" target="n_move" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="330" y="405"/>
+                            <mxPoint x="330" y="200"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_move_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_move" target="n_id" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_id_trans" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_id" target="n_trans" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_trans_stable" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="n_trans" target="n_stable" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="370" y="525"/>
+                            <mxPoint x="370" y="525"/>
+                        </Array>
+                        <mxPoint x="410" y="590" as="sourcePoint"/>
+                        <mxPoint x="260" y="590" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_stable_return" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" parent="1" source="n_stable" target="n_return" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
 </mxfile>

@@ -16,13 +16,24 @@ move(nfa,S,a) 计算在符号 a 下的直接可达集合 子过程
 ## 算法实现过程
 
 1. 初始集合与编号：以 NFA 起始态的 ε-闭包作为 `S`，用 `setName(S)` 命名；为其分配 `id=1` 并作为 `DFA.start`，将 `S` 入队到 `work`。
+   - `startSet = {nfa.start}`，`st = epsilonClosure(nfa, startSet)`，`nameStart = setName(st)`；`idmap[nameStart] = 1`
+   - 建立 `d0`：`d0.id=1`，`d0.nfaSet=st`，`d0.accept` 初始为 `false`
+   - `work.enqueue(st)`；`nextId = 2`
 2. 接受态判定：若 `S` 中任一 NFA 状态 `accept=true`，则将对应 `DFAState.accept=true`。
-3. 广度推进（按字母表）：出队一个集合 `S`，遍历 `alpha.ordered()` 中每个符号 `a`：
-   - 计算 `U = epsilonClosure(nfa, move(nfa, S, a))`；若 `U` 为空则跳过。
-   - 命名 `Uname = setName(U)`，如未出现则分配新 `id`，判定接受性，插入 `d.states[uid]` 并入队；否则复用已有编号。
-   - 在 `d.states[sid].trans[a] = uid` 上记录转移。
+   - 具体做法：遍历 `st` 或新集合 `U` 中的每个 `s`，若 `nfa.states[s].accept` 为真，则将 `d0.accept` 或 `ds.accept` 置真
+   - 该判定保证“包含接受态的集合”在确定化后依然是接受态
+3. 广度推进（按字母表）：出队一个集合 `S`，遍历 `alpha.ordered()` 中每个符号 `a`。
+   - 计算 `U = epsilonClosure(nfa, move(nfa, S, a))`：先以 `move` 求直接字符边可达集合，再以 ε-闭包扩张；若 `U` 为空则跳过，不记录迁移
+   - 集合命名与编号：`Uname = setName(U)`；若 `idmap` 尚无该键，则 `uid = nextId`、登记映射、构造 `ds`（判定接受性、记录 `nfaSet=U`）、`d.states[uid]=ds`、`work.enqueue(U)`、`nextId++`
+   - 复用已有编号：若 `Uname` 已存在，则 `uid = idmap[Uname]`
+   - 记录当前集合到目标集合的确定转移：`d.states[sid].trans[a] = uid`
+   - 遍历顺序由 `alpha.ordered()` 保证稳定输出（表格渲染时按字母表顺序显示）
 4. 去重与稳定：依靠 `idmap` 保证集合唯一编号与去重，直到 `work` 队列耗尽。
+   - `idmap` 的键由 `setName` 生成稳定字符串（集合按升序序列化），避免重复集合被赋予多个编号
+   - 循环终止条件：当 `work` 空，表示所有新集合均已被处理且无新增集合入队
 5. 输出与展示：结果 `DFA` 中的每个状态带有 `nfaSet` 展示（如 `{1,3,5}`），便于查阅与表格渲染。
+   - `d.alpha = nfa.alpha`，确保字母表一致性；表格展示时可直接按符号列显示 `trans[a]`
+   - `nfaSet` 字段用于直观展示该确定状态对应的 NFA 集合来源（便于调试与验证）
 
 下图展示子集构造的核心循环（ε-闭包与 move 以及集合去重与编号）：
 <!--【流程图】此处需要添加 '子集构造流程图'：闭包/move/编号的循环示意。 -->
