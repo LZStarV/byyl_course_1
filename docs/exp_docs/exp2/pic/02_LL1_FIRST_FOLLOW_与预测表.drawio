@@ -7,15 +7,16 @@
         <mxCell id="1" parent="0"/>
 
         <mxCell id="n_start" value="开始：&#xa;输入 Grammar" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="140" y="100" width="240" height="70" as="geometry"/></mxCell>
-        <mxCell id="n_finit" value="FIRST 初始化：&#xa;非终结符置空&#xa;终结符置 {a}" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="460" y="100" width="280" height="100" as="geometry"/></mxCell>
+        <mxCell id="n_finit" value="FIRST 初始化：&#xa;for A∈nonterminals: first[A]=∅&#xa;for a∈terminals: first[a]={a}" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="460" y="100" width="320" height="110" as="geometry"/></mxCell>
         <mxCell id="n_floop" value="判定：&#xa;FIRST 是否变化？" style="shape=rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="780" y="100" width="220" height="90" as="geometry"/></mxCell>
-        <mxCell id="n_fiter" value="FIRST 迭代：&#xa;遍历产生式 A→α&#xa;并入 FIRST(α) 至 FIRST(A)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="540" y="220" width="320" height="110" as="geometry"/></mxCell>
+        <mxCell id="n_fiter" value="FIRST 迭代：&#xa;for A→α: S=firstSeq(α)&#xa;first[A]+=S（去重）" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="540" y="220" width="320" height="110" as="geometry"/></mxCell>
 
-        <mxCell id="n_folinit" value="FOLLOW 初始化：&#xa;开始符含 $&#xa;其他置空" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="140" y="360" width="260" height="90" as="geometry"/></mxCell>
+        <mxCell id="n_folinit" value="FOLLOW 初始化：&#xa;for A∈nonterminals: follow[A]=∅&#xa;follow[start]+= '$'" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="140" y="360" width="300" height="100" as="geometry"/></mxCell>
         <mxCell id="n_folloop" value="判定：&#xa;FOLLOW 是否变化？" style="shape=rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="440" y="360" width="220" height="90" as="geometry"/></mxCell>
-        <mxCell id="n_foliter" value="FOLLOW 迭代：&#xa;A→α B β&#xa;FIRST(β)\{#} → FOLLOW(B)&#xa;β 为空或含 # → FOLLOW(A) 并入 FOLLOW(B)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="700" y="340" width="380" height="140" as="geometry"/></mxCell>
+        <mxCell id="n_foliter" value="FOLLOW 迭代：&#xa;A→α B β： fβ=firstSeq(β)&#xa;follow[B]+= fβ\{#}&#xa;β==∅ 或 '#'∈fβ → follow[B]+=follow[A]" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="700" y="340" width="400" height="140" as="geometry"/></mxCell>
 
-        <mxCell id="n_table" value="预测表生成：&#xa;TABLE[A][a]=k（a∈FIRST(α)\{#}）&#xa;ε∈FIRST(α) → b∈FOLLOW(A) 填表" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="140" y="540" width="420" height="120" as="geometry"/></mxCell>
+        <mxCell id="n_table" value="预测表生成：&#xa;TABLE[A][a]=k（a∈FIRST(α)\{#}）&#xa;若 '#'∈FIRST(α)：TABLE[A][b]=k（b∈FOLLOW(A)）" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="140" y="540" width="440" height="120" as="geometry"/></mxCell>
+        <mxCell id="n_ct" value="判定：&#xa;是否存在冲突？" style="shape=rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="600" y="520" width="240" height="100" as="geometry"/></mxCell>
         <mxCell id="n_conf" value="冲突记录：&#xa;同一表项多产式&#xa;记录冲突位置" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="600" y="560" width="300" height="100" as="geometry"/></mxCell>
         <mxCell id="n_out" value="输出：&#xa;FIRST/FOLLOW 集合摘要&#xa;预测表摘要" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="960" y="560" width="300" height="100" as="geometry"/></mxCell>
 
@@ -36,10 +37,12 @@
         <mxCell id="e_folloop_table" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_folloop" target="n_table"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="lbl_folloop_table_no" value="否" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="e_folloop_table"><mxGeometry x="-0.5" y="-1" relative="1" as="geometry"><mxPoint as="offset"/></mxGeometry></mxCell>
 
-        <mxCell id="e_table_conf" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_table" target="n_conf"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e_conf_out" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="n_conf" target="n_out"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_table_ct" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_table" target="n_ct"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_ct_conf_yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="n_ct" target="n_conf"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="lbl_ct_conf_yes" value="是" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="e_ct_conf_yes"><mxGeometry x="-0.5" y="-1" relative="1" as="geometry"><mxPoint as="offset"/></mxGeometry></mxCell>
+        <mxCell id="e_ct_out_no" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="n_ct" target="n_out"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="lbl_ct_out_no" value="否" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="e_ct_out_no"><mxGeometry x="-0.5" y="-1" relative="1" as="geometry"><mxPoint as="offset"/></mxGeometry></mxCell>
       </root>
     </mxGraphModel>
   </diagram>
 </mxfile>
-

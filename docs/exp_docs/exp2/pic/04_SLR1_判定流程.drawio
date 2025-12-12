@@ -8,8 +8,8 @@
 
         <mxCell id="n_start" value="开始：&#xa;输入 Grammar 与 FOLLOW" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="140" y="100" width="300" height="70" as="geometry"/></mxCell>
         <mxCell id="n_lr0" value="构造支持集：&#xa;LR(0) states/edges&#xa;用于移进判定" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="500" y="100" width="320" height="100" as="geometry"/></mxCell>
-        <mxCell id="n_shift" value="聚合移进：&#xa;点后为终结符 a 且存在边&#xa;动作 sN 加入 (state,a)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="900" y="100" width="320" height="110" as="geometry"/></mxCell>
-        <mxCell id="n_reduce" value="聚合规约：&#xa;末项 A→α&#xa;对 b∈FOLLOW(A) 加入 r A -> α 至 (state,b)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="900" y="240" width="360" height="120" as="geometry"/></mxCell>
+        <mxCell id="n_shift" value="聚合移进：&#xa;点后终结符 a 且存在边 to&#xa;actionsSet[st][a] += 's' + to" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="900" y="100" width="360" height="110" as="geometry"/></mxCell>
+        <mxCell id="n_reduce" value="聚合规约：&#xa;末项 A→α&#xa;for b∈FOLLOW(A): actionsSet[st][b] += 'r ' + A + ' -> ' + α" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="900" y="240" width="420" height="120" as="geometry"/></mxCell>
 
         <mxCell id="n_conf" value="判定：&#xa;(state,terminal) 动作集合 size ≥ 2 ?" style="shape=rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="140" y="300" width="360" height="100" as="geometry"/></mxCell>
         <mxCell id="n_class" value="分类冲突：&#xa;移进+规约 → shift/reduce&#xa;多规约 → reduce/reduce&#xa;detail=排序后拼接" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="560" y="320" width="380" height="120" as="geometry"/></mxCell>
@@ -29,4 +29,3 @@
     </mxGraphModel>
   </diagram>
 </mxfile>
-

@@ -14,7 +14,8 @@
         <mxCell id="n_reduce" value="填充规约：&#xa;优先 rK，缺编号用文本 r A -> α&#xa;action[i][a] = rK / r A -> α" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="860" y="360" width="360" height="120" as="geometry"/></mxCell>
 
         <mxCell id="n_goto" value="填充 GOTO：&#xa;非终结符 A 的迁移&#xa;goto[i][A] = to" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="460" y="240" width="300" height="100" as="geometry"/></mxCell>
-        <mxCell id="n_merge" value="并列冲突：&#xa;同一表项已有不同动作&#xa;合并为 prev|val（保留至解析阶段）" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="520" y="360" width="360" height="110" as="geometry"/></mxCell>
+        <mxCell id="n_hasMerge" value="判定：&#xa;是否存在并列动作？" style="shape=rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="520" y="360" width="280" height="100" as="geometry"/></mxCell>
+        <mxCell id="n_merge" value="并列冲突：&#xa;同一表项已有不同动作&#xa;合并为 prev|val（保留至解析阶段）" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="820" y="360" width="360" height="110" as="geometry"/></mxCell>
 
         <mxCell id="n_out" value="输出：&#xa;action/goto 表摘要&#xa;接受/移进/规约统计" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="900" y="520" width="320" height="100" as="geometry"/></mxCell>
 
@@ -24,11 +25,13 @@
         <mxCell id="e_acc_reduce" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="n_acc" target="n_reduce"><mxGeometry relative="1" as="geometry"/></mxCell>
 
         <mxCell id="e_redidx_goto" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_redidx" target="n_goto"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e_goto_merge" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_goto" target="n_merge"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e_reduce_merge" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_reduce" target="n_merge"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e_merge_out" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_merge" target="n_out"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_goto_hasMerge" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_goto" target="n_hasMerge"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_reduce_hasMerge" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_reduce" target="n_hasMerge"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_hasMerge_merge_yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="n_hasMerge" target="n_merge"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="lbl_hasMerge_merge_yes" value="是" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="e_hasMerge_merge_yes"><mxGeometry x="-0.5" y="-1" relative="1" as="geometry"><mxPoint as="offset"/></mxGeometry></mxCell>
+        <mxCell id="e_hasMerge_out_no" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="n_hasMerge" target="n_out"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="lbl_hasMerge_out_no" value="否" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="e_hasMerge_out_no"><mxGeometry x="-0.5" y="-1" relative="1" as="geometry"><mxPoint as="offset"/></mxGeometry></mxCell>
       </root>
     </mxGraphModel>
   </diagram>
 </mxfile>
-

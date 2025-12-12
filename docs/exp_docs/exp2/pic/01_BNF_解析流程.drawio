@@ -7,18 +7,23 @@
         <mxCell id="1" parent="0"/>
 
         <mxCell id="n_start" value="开始：&#xa;输入文法文本" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="140" y="100" width="220" height="70" as="geometry"/></mxCell>
-        <mxCell id="n_read" value="读取文本：&#xa;逐行处理&#xa;跳过空行/注释行" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="140" y="200" width="260" height="90" as="geometry"/></mxCell>
+        <mxCell id="n_read" value="读取行：&#xa;t = line.trimmed()&#xa;lineNo 递增" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="140" y="200" width="260" height="90" as="geometry"/></mxCell>
+        <mxCell id="n_skip" value="判定：&#xa;t.isEmpty()? / t.startsWith('//')? / t == '#' ?" style="shape=rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="140" y="260" width="300" height="110" as="geometry"/></mxCell>
         <mxCell id="n_has_arrow" value="判定：&#xa;是否包含 '->' ?" style="shape=rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="140" y="320" width="240" height="100" as="geometry"/></mxCell>
         <mxCell id="n_error" value="错误输出：&#xa;记录错误行号&#xa;忽略该行" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="420" y="320" width="240" height="90" as="geometry"/></mxCell>
 
-        <mxCell id="n_parse" value="行解析：&#xa;A -> α | β ...&#xa;首个左部设为开始符" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="520" y="180" width="300" height="100" as="geometry"/></mxCell>
-        <mxCell id="n_split" value="右部切分：&#xa;多字符运算符优先&#xa;单字符分隔符&#xa;词法单词拼接" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="860" y="180" width="280" height="120" as="geometry"/></mxCell>
-        <mxCell id="n_class" value="符号归类：&#xa;左部→非终结符&#xa;右部非左部且≠#→终结符" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="520" y="330" width="300" height="100" as="geometry"/></mxCell>
+        <mxCell id="n_parse" value="行解析：&#xa;parts = t.split('->')&#xa;left=parts[0].trimmed()&#xa;rhs=parts[1].trimmed()&#xa;alts = rhs.split('|')&#xa;若 startSymbol 为空→设为 left" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="520" y="180" width="320" height="140" as="geometry"/></mxCell>
+        <mxCell id="n_split" value="右部切分：&#xa;mops/ops/isWordChar&#xa;多字符优先→单字符→词法单词&#xa;tokens = splitRhs(a)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="860" y="180" width="300" height="140" as="geometry"/></mxCell>
+        <mxCell id="n_class" value="符号归类：&#xa;nonterminals += left&#xa;terminals += tokens（不等于 # 且不在非终）" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="520" y="330" width="320" height="110" as="geometry"/></mxCell>
         <mxCell id="n_lr" value="左递归检测（可选）：&#xa;扫描候选首符&#xa;留空扩展" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="860" y="330" width="280" height="100" as="geometry"/></mxCell>
         <mxCell id="n_out" value="输出：&#xa;Grammar 对象&#xa;开始符/产生式/集合摘要" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="900" y="520" width="300" height="100" as="geometry"/></mxCell>
 
         <mxCell id="e_s_r" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_start" target="n_read"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e_r_has" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_read" target="n_has_arrow"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_r_skip" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_read" target="n_skip"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_skip_read_yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="n_skip" target="n_read"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="lbl_skip_read_yes" value="是（跳过本行）" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="e_skip_read_yes"><mxGeometry x="-0.7" y="1" relative="1" as="geometry"><mxPoint as="offset"/></mxGeometry></mxCell>
+        <mxCell id="e_skip_has_no" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_skip" target="n_has_arrow"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="lbl_skip_has_no" value="否（继续解析）" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="e_skip_has_no"><mxGeometry x="-0.7" y="-1" relative="1" as="geometry"><mxPoint as="offset"/></mxGeometry></mxCell>
         <mxCell id="e_has_parse" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="n_has_arrow" target="n_parse"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="lbl_has_parse_yes" value="是" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="e_has_parse"><mxGeometry x="-0.5" y="-1" relative="1" as="geometry"><mxPoint as="offset"/></mxGeometry></mxCell>
         <mxCell id="e_has_err" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="n_has_arrow" target="n_error"><mxGeometry relative="1" as="geometry"/></mxCell>
@@ -32,4 +37,3 @@
     </mxGraphModel>
   </diagram>
 </mxfile>
-
